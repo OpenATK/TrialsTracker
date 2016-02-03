@@ -1,0 +1,35 @@
+.note-list {
+  width: 34%;
+  height: 100vh;
+  background-color: LightGray;
+  border-radius: 2px;
+  padding: 5px;
+}
+.notes-container {
+  position: relative;
+  height: 75%;
+  overflow: scroll;
+}
+.add-note-button {
+  position: relative;
+  bottom:5px;
+  left:5px;
+  border-width: 2px;
+  border-color: #ABABAB;
+  border-style: solid;
+  width: 97%;
+  height: 50px;
+  font-size: larger;
+  margin: 5px;
+}
+.note-tag-headings {
+  background-color: #cde69c;
+  border-radius: 2px;
+  border: 1px solid #a5d24a;
+  color: #638421;
+  display: inline-block;
+  font-family: sans-serif;
+  font-size: large;
+  font-weight: 400;
+  margin: 5px;
+}

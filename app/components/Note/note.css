@@ -1,0 +1,71 @@
+.note {
+  position: relative;
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 2px;
+  background-color: white;
+  width: initial;
+  height: initial;
+  margin: 7px;
+  padding: 5px;
+  box-shadow: 3px 3px 3px black;
+}
+.selected-note {
+  position: relative;
+  border-style: solid;
+  border-width: 3px;
+  border-radius: 2px;
+  background-color: white;
+  width: initial;
+  height: initial;
+  margin: 7px;
+  padding: 5px;
+  box-shadow: 5px 5px 5px black;
+}
+.note-hide-show-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 2px;
+}
+.note-remove-button {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 2px;
+}
+.note-text-input {
+  width: 99%;
+  resize: none;
+  border: none;
+  outline: none;
+}
+.tag {
+  position: relative;
+  background-color: #cde69c;
+  border-radius: 2px;
+  border: 1px solid #a5d24a;
+  color: #638421;
+  display: inline-block;
+  font-family: sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  margin: 5px;
+}
+@media (min-width: 1000px) {
+  .note-edit-tags-button {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    margin: 2px;
+  }
+}
+
+@media (max-width: 500px) {
+  .note-edit-tags-button {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    margin: 2px;
+  }
+}

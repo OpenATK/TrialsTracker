@@ -1,0 +1,10 @@
+.sorting-tabs {
+  position: relative;
+  padding: 5px;
+  z-index: 1;
+  width: initial;
+}
+.tab-button {
+  width: 33.33%; 
+  font-size:medium;
+}
