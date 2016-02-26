@@ -14,7 +14,11 @@ module.exports = {
           ["transform-decorators-legacy"]
         ]
       }
-    }]
+    },
+	{
+	  test: /\.png$/,
+      loader: 'url-loader?limit=8192'
+	}]
   },
   postcss: [
 	require('autoprefixer')

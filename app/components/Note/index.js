@@ -37,9 +37,9 @@ class Note extends React.Component {
     return (
       <div style={{borderColor:this.props.note.color}} className={this.props.className} onClick={() => signals.noteSelected({currentSelectedNote: this.props.selectedNote, newSelectedNote:this.props.id})}>
         <TextAreaAutoSize value={this.props.text} minRows={3} className={styles['note-text-input']} onChange={(e) => signals.noteTextChanged.sync({value: e.target.value})}></TextAreaAutoSize>
-        <button type="button" className="note-remove-button" onClick={() => signals.noteRemoved(['home', 'model', 'notes', this.props.id])}>Delete Note</button>
-        <button type="button" className="note-edit-tags-button">Edit Tags</button>
-        <button type="button" className="note-show-hide-button" onClick={() => signals.showHide({cursor: ['home', 'model', 'notes', this.props.id, 'showHide']})}>{this.props.showHide}</button>
+        <button type="button" className={styles['note-remove-button']} onClick={() => signals.noteRemoved(['home', 'model', 'notes', this.props.id])}>Delete Note</button>
+        <button type="button" className={styles['note-edit-tags-button']}>Edit Tags</button>
+        <button type="button" className={styles['note-show-hide-button']} onClick={() => signals.showHide({cursor: ['home', 'model', 'notes', this.props.id, 'showHide']})}>{this.props.showHide}</button>
         {tags}
       </div>
     );

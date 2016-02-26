@@ -1,7 +1,7 @@
 module.exports = {
   module: {
     loaders: [{
-      test: /\.css$/,
+      test: /\.css?$/,
       loader: 'style!css?modules&localIdentName=[name]---[local]---[hash:base64:5]!postcss'
     },
 	{
@@ -14,7 +14,11 @@ module.exports = {
           ["transform-decorators-legacy"]
         ]
       }
-    }]
+    },
+	{
+	  test: /\.png$/,
+      loader: 'url-loader?limit=8192'
+	}]
   },
   postcss: [
 	require('autoprefixer')

@@ -8,13 +8,13 @@
     "url": "https://github.com/openatk/trialstracker"
   },
   "keywords": [
-		"trial",
-	  "tracker"
+    "trial",
+    "tracker"
   ],
   "contributors": [
-		"Sam Noel <sanoel@purdue.edu>",
-		"Yang Wang <wang701@purdue.edu>",
-	  "Andrew Balmos <abalmos@purdue.edu>"
+    "Sam Noel <sanoel@purdue.edu>",
+    "Yang Wang <wang701@purdue.edu>",
+    "Andrew Balmos <abalmos@purdue.edu>"
   ],
   "license": "Apache 2.0",
   "bugs": {
@@ -34,12 +34,14 @@
     "cerebral-module-devtools": "^0.5.3",
     "cerebral-module-router": "^0.12.5",
     "cerebral-view-react": "^0.11.6",
+    "file-loader": "^0.8.5",
     "leaflet": "^0.7.7",
     "lodash": "^4.5.1",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "react-leaflet": "^0.10.1",
     "react-textarea-autosize": "^3.3.0",
+    "url-loader": "^0.5.7",
     "uuid": "^2.0.1"
   },
   "devDependencies": {

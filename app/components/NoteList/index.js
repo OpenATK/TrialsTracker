@@ -11,7 +11,7 @@ import SortingTabs from '../SortingTabs/';
 import Note from '../Note/';
 import _ from 'lodash';
 import uuid from 'uuid';
-require("./note-list.css");
+import styles from './note-list.css';
 
 @Cerebral({
   notes: ['home', 'model', 'notes'], 
@@ -34,10 +34,10 @@ class NoteList extends React.Component {
     const signals = this.props.signals.home;
 
     return (
-      <div className="note-list">
+      <div className={styles['note-list']}>
         <SortingTabs />
-        <div className="notes-container">{notes_array} </div>
-        <button type= "button" className="add-note-button" onClick={() => signals.noteAdded()}>
+        <div className={styles['notes-container']}>{notes_array} </div>
+        <button type= "button" className={styles['add-note-button']} onClick={() => signals.noteAdded()}>
           Add Note
         </button>
       </div>
