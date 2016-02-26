@@ -1,7 +1,6 @@
-var Baobab = require('baobab');
 var uuid = require('uuid');
 
-var tree = new Baobab({
+var tree = {
   model: {
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
@@ -21,7 +20,7 @@ var tree = new Baobab({
     sort_mode: 'all', //'all' 'fields' 'tags'
     map: {$isLoading: true}, 
   }
-}); 
+}; 
 
 function initial_tags() {
   var text1 = 'herbicide';
@@ -46,13 +45,15 @@ function initial_notes() {
         geojson_visible: 'Show',
         tags_modal_visibility: false,
         color: col,
+        completions: [],
+        class_name: "note",
     };
     if (i === 2) {
       var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
       var text = 'low area';
       note = {
         text: 'drown out; replanted 6/18/2015',
-        tags: {text: {text:text}},
+        tags: {},
         fields: ['Smith40'],
         geojson: { "type": "Polygon",
           "coordinates": [
@@ -62,6 +63,8 @@ function initial_notes() {
         geojson_visible: 'Show',
         tags_modal_visibility: false,
         color: col,
+        completions: [],
+        class_name: "note",
       };
       note.tags['low area'] = {text:'low area'};
     }
@@ -78,6 +81,8 @@ function initial_notes() {
         geojson_visible: 'Show',
         tags_modal_visibility: false,
         color: col,
+        completions: [],
+        class_name: "note",
       };
     }
     note.order = i;
@@ -94,4 +99,4 @@ function getColor() {
   return '#' + r.toString() + g.toString() + b.toString();
 }
 
-module.exports = tree; 
+export default tree; 

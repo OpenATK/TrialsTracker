@@ -31,7 +31,7 @@ class NoteList extends React.Component {
       notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
     });
 
-    const signals = this.props.signals.app;
+    const signals = this.props.signals.home;
 
     return (
       <div className="note-list">
