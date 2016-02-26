@@ -13,7 +13,7 @@ class _Map extends React.Component {
     var position = [4.418, -72.9];
 
     return (
-      <div id='map-panel' visible={this.state.tagsInputVisible}>
+      <div id='map-panel'>
         <Map center={position} zoom={11}>
           <TileLayer
             url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
