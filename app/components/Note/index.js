@@ -10,10 +10,6 @@ import styles from './note.css'
     selectedNote: ['home', 'model', 'selected_note'],
     notes: ['home', 'model', 'notes'],
     note: ['home', 'model', 'notes', props.id],
-    text: ['home', 'model', 'notes', props.id, 'text'],
-    tags: ['home', 'model', 'notes', props.id, 'tags'],
-    selected: ['home', 'model', 'notes', props.id, 'selected'],
-    showHide: ['home', 'model', 'notes', props.id, 'geojson_visible'],
     className: ['home', 'model', 'notes', props.id, 'class_name'],
   };
 })
@@ -31,15 +27,13 @@ class Note extends React.Component {
     _.each(this.props.tags, function(tag) {
       tags.push(<span className={styles.tag} key={uuid.v4()}>{tag.text}</span>);
     });
-    console.log(this.props.selecteNote);
     const signals = this.props.signals.home;
-
     return (
-      <div style={{borderColor:this.props.note.color}} className={this.props.className} onClick={() => signals.noteSelected({currentSelectedNote: this.props.selectedNote, newSelectedNote:this.props.id})}>
-        <TextAreaAutoSize value={this.props.text} minRows={3} className={styles['note-text-input']} onChange={(e) => signals.noteTextChanged.sync({value: e.target.value})}></TextAreaAutoSize>
-        <button type="button" className={styles['note-remove-button']} onClick={() => signals.noteRemoved(['home', 'model', 'notes', this.props.id])}>Delete Note</button>
-        <button type="button" className={styles['note-edit-tags-button']}>Edit Tags</button>
-        <button type="button" className={styles['note-show-hide-button']} onClick={() => signals.showHide({cursor: ['home', 'model', 'notes', this.props.id, 'showHide']})}>{this.props.showHide}</button>
+      <div style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} className={styles[this.props.selected ? 'selected-note' : 'note']} onClick={() => signals.noteSelected({newSelectedNote:this.props.id})}>
+        <TextAreaAutoSize style={{backgroundColor:this.props.note.color}} value={this.props.text} minRows={1} className={styles['note-text-input']} onChange={(e) => signals.noteTextChanged.sync({value: e.target.value, noteId:this.props.id})}></TextAreaAutoSize>
+        <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.noteRemoved()}>Delete Note</button>
+        <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']}>Edit Tags</button>
+        <button type="button" className={styles['note-show-hide-button']} onClick={() => signals.showHide()}>{this.props.showHide}</button>
         {tags}
       </div>
     );

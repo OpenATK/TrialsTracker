@@ -14,9 +14,6 @@ var tree = {
     },
   },
   view: {
-    tags_modal: false,
-    tags_modal_note_id: {},
-    tags_modal_completions: [],
     sort_mode: 'all', //'all' 'fields' 'tags'
     map: {$isLoading: true}, 
   }
@@ -46,7 +43,7 @@ function initial_notes() {
         tags_modal_visibility: false,
         color: col,
         completions: [],
-        class_name: "note",
+        selected: false,
     };
     if (i === 2) {
       var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
@@ -64,7 +61,7 @@ function initial_notes() {
         tags_modal_visibility: false,
         color: col,
         completions: [],
-        class_name: "note",
+        selected: false,
       };
       note.tags['low area'] = {text:'low area'};
     }
@@ -82,7 +79,7 @@ function initial_notes() {
         tags_modal_visibility: false,
         color: col,
         completions: [],
-        class_name: "note",
+        selected: false,
       };
     }
     note.order = i;

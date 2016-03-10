@@ -1,4 +1,7 @@
 .note-list {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 34%;
   height: 100vh;
   background-color: LightGray;
@@ -11,7 +14,9 @@
   overflow: scroll;
 }
 .add-note-button {
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: 0;
   bottom:5px;
   left:5px;
   border-width: 2px;
