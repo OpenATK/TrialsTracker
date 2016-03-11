@@ -13,30 +13,32 @@ import _ from 'lodash';
 import uuid from 'uuid';
 import styles from './note-list.css';
 
-@Cerebral({
-  notes: ['home', 'model', 'notes'], 
-  sortMode: ['home', 'view', 'sort_mode'], 
+@Cerebral((props) => {
+  return {
+    notes: ['home', 'model', 'notes'], 
+    sortMode: ['home', 'view', 'sort_mode'], 
+  };
 })
 
 class NoteList extends React.Component {
 
   static propTypes = {
-    notes : PropTypes.arrayOf(PropTypes.instanceOf(Note)),
+    sortMode : PropTypes.string,
   };
 
   getNotes () {
     var notes_array = [];
+    var self = this;
     switch (this.props.sortMode){
       case 'all':
-        var self = this;
-        _.each(this.props.notes, function (note) {
+        _.each(self.props.notes, function (note) {
+          console.log(notes_array);
           notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
         });
         break;
 
       case 'fields':
         var note_groups = _.groupBy(this.props.notes, 'fields');
-        var self = this;
         _.each(note_groups, function(group, key) {
           notes_array.push(<h1 key={uuid.v4()}>[key]</h1>);
           notes_array.push(<hr key={uuid.v4()}/>);
@@ -47,8 +49,7 @@ class NoteList extends React.Component {
         break;
 
       case 'tags':
-        var self = this;
-         _.each(self.state.notes, function(note) {
+        _.each(self.state.notes, function(note) {
         if (_.isEmpty(note.tags)) {
           notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={self.deleteNote} />);
         }
@@ -71,7 +72,12 @@ class NoteList extends React.Component {
   }
   
   render() {
-    var notes_array = this.getNotes();
+    //var notes_array = this.getNotes();
+    var notes_array = [];
+    _.each(this.props.notes, function (note) {
+          console.log(notes_array);
+          notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+        });
     const signals = this.props.signals.home;
     
     return (
