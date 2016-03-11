@@ -15,14 +15,17 @@ var tree = {
   },
   view: {
     sort_mode: 'all', //'all' 'fields' 'tags'
-    map: {$isLoading: true}, 
+    map: {$isLoading: true},
+    edittingTags: false,
   }
 }; 
 
 function initial_tags() {
   var text1 = 'herbicide';
   var text2 = 'low area';
-  var tags_list = {text1: {text: text1, references: 1}, text2: {text: text2, references: 1}};
+  var tags_list = {};
+  tags_list[text1] = {text: text1, references: 1};
+  tags_list[text2] = {text: text2, references: 1};
   return tags_list;
 }
 
@@ -32,7 +35,7 @@ function initial_notes() {
     var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
     var note = {
         text: 'ran low on herbicide and applied lower rate here',
-        tags: {herbicide: {text: 'herbicide'}},
+        tags: ['herbicide'],
         fields: ['Smith40'],
         geojson: { "type": "Polygon",
           "coordinates": [
@@ -50,7 +53,7 @@ function initial_notes() {
       var text = 'low area';
       note = {
         text: 'drown out; replanted 6/18/2015',
-        tags: {},
+        tags: ['low area'],
         fields: ['Smith40'],
         geojson: { "type": "Polygon",
           "coordinates": [
@@ -63,7 +66,6 @@ function initial_notes() {
         completions: [],
         selected: false,
       };
-      note.tags['low area'] = {text:'low area'};
     }
     if (i === 3) {
       var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);

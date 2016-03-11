@@ -20,11 +20,8 @@ export var selectNote = [
   unselectNote, selectNewNote,
 ];
 
-export var clickedShowHideButton = [
-  getState, {
-    show: [setState],
-    set: [setState]
-  },
+export var changeShowHideState = [
+  changeShowHide,
 ];
 
 function setSortMode ({input, state}) {
@@ -57,6 +54,13 @@ function unsetState({input, state}) {
   state.unset(input);
 };
 
-function setState({input, state}) {
- state.set(input.cursor, input.vale);
+function changeShowHide({input, state}) {
+  var currentVisibility = state.get('home', 'model', 'notes', input.id, 'geojson_visible');
+  console.log(currentVisibility);
+  if (currentVisibility === 'Show') {
+    state.set('home', 'model', 'notes', input.id, 'geojson_visible', 'Hide');
+  } else {
+    state.set('home', 'model', 'notes', input.id, 'geojson_visible', 'Show');
+  }
+  //state.set(input.cursor, input.vale);
 };

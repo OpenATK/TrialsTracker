@@ -1,6 +1,7 @@
 import { selectNote } from './chains';
 import { textInputChanged } from './chains';
 import { changeSortMode } from './chains';
+import { changeShowHideState } from './chains';
 import uuid from 'uuid';
 import tree from './stateTree.js';
 
@@ -29,6 +30,10 @@ export default (options = {}) => {
  
       noteTextChanged: [
         ...textInputChanged
+      ],
+
+      clickedShowHideButton: [
+        changeShowHideState
       ],
     })
   };
