@@ -1,4 +1,6 @@
 import { selectNote } from './chains';
+import { textInputChanged } from './chains';
+import { changeSortMode } from './chains';
 import uuid from 'uuid';
 import tree from './stateTree.js';
 import { dropPoint } from './mapchain';
@@ -10,6 +12,10 @@ export default (options = {}) => {
     );
 
     module.addSignals({
+      sortingTabClicked: [
+      ...changeSortMode
+      ],
+
       noteAdded: [
         
       ],
@@ -23,7 +29,7 @@ export default (options = {}) => {
       ],
  
       noteTextChanged: [
-
+        ...textInputChanged
       ],
 
 			mouseDownOnMap: [
