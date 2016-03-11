@@ -22,7 +22,6 @@ class Note extends React.Component {
  
   static propTypes = {
     text: PropTypes.string,
-    tags: PropTypes.arrayOf(PropTypes.string),
     showHide: PropTypes.string,
   };
 

@@ -16,6 +16,7 @@ import styles from './note-list.css';
 @Cerebral((props) => {
   return {
     notes: ['home', 'model', 'notes'], 
+    tags: ['home', 'model', 'tags'],
     sortMode: ['home', 'view', 'sort_mode'], 
   };
 })
@@ -40,44 +41,40 @@ class NoteList extends React.Component {
       case 'fields':
         var note_groups = _.groupBy(this.props.notes, 'fields');
         _.each(note_groups, function(group, key) {
-          notes_array.push(<h1 key={uuid.v4()}>[key]</h1>);
+          notes_array.push(<h1 key={uuid.v4()}>{key}</h1>);
           notes_array.push(<hr key={uuid.v4()}/>);
-          for (var i in group) {
-            notes_array.push(<Note id={group[i].id} key={group[i].id} deleteNote={() => signals.noteRemoved()} />);  
-          }
+          _.each(group, function(note) {
+            notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+          });
         });
         break;
 
       case 'tags':
-        _.each(self.state.notes, function(note) {
+        // First, add notes without any tags.
+        _.each(self.props.notes, function(note) {
         if (_.isEmpty(note.tags)) {
-          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={self.deleteNote} />);
+          notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
         }
       });
-      _.each(this.state.allTags, function(tag) {
-        notes_array.push(<span className='note-tag-headings' key={uuid.v4()}>{tag}</span>);
+      // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
+      _.each(this.props.tags, function(tag) {
+        notes_array.push(<span className='note-tag-headings' key={uuid.v4()}>{tag.text}</span>);
         notes_array.push(<hr key={uuid.v4()}/>);
-        _.each(self.state.notes, function(note) {
+        _.each(self.props.notes, function(note) {
           _.each(note.tags, function(noteTag) {
-            if (noteTag.text === tag) {
-              notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={self.deleteNote} />);
+            if (noteTag === tag.text) {
+              notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
             }
           });
         });
       });  
       break;
     }
-    console.log(notes_array);
     return notes_array;
   }
   
   render() {
-    //var notes_array = this.getNotes();
-    var notes_array = [];
-    _.each(this.props.notes, function (note) {
-          console.log(notes_array);
-          notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
-        });
+    var notes_array = this.getNotes();
     const signals = this.props.signals.home;
     
     return (
