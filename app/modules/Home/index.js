@@ -4,6 +4,7 @@ import { changeSortMode } from './chains';
 import { changeShowHideState } from './chains';
 import uuid from 'uuid';
 import tree from './stateTree.js';
+import { dropPoint } from './mapchain';
 
 export default (options = {}) => {
   return (module, controller) => {
@@ -33,8 +34,13 @@ export default (options = {}) => {
       ],
 
       clickedShowHideButton: [
-        changeShowHideState
+        ...changeShowHideState
       ],
+
+			mouseDownOnMap: [
+				...dropPoint
+			],
+
     })
   };
 }

@@ -10,6 +10,9 @@ import styles from './note.css'
     selectedNote: ['home', 'model', 'selected_note'],
     notes: ['home', 'model', 'notes'],
     note: ['home', 'model', 'notes', props.id],
+    text: ['home', 'model', 'notes', props.id, 'text'],
+    tags: ['home', 'model', 'notes', props.id, 'tags'],
+    selected: ['home', 'model', 'notes', props.id, 'selected'],
     className: ['home', 'model', 'notes', props.id, 'class_name'],
     showHide: ['home', 'model', 'notes', props.id, 'geojson_visible'],
   };
@@ -19,7 +22,6 @@ class Note extends React.Component {
  
   static propTypes = {
     text: PropTypes.string,
-    tags: PropTypes.arrayOf(PropTypes.string),
     showHide: PropTypes.string,
   };
 
@@ -27,11 +29,11 @@ class Note extends React.Component {
     var tags = [];
     var self = this;
     _.each(this.props.tags, function(tag) {
-      if (self.state.editTags && self.state.note.id === self.state.selectedNote) {
-        tags.push(React.createElement("div", {key:uuid.v4(), className: "tag"}, React.createElement("button", {key:uuid.v4(), onClick:self.removeTag.bind(null, tag)}, "X"), tag));
-      } else {
+//      if (self.state.editTags && self.state.note.id === self.state.selectedNote) {
+//        tags.push(React.createElement("div", {key:uuid.v4(), className: "tag"}, React.createElement("button", {key:uuid.v4(), onClick:self.removeTag.bind(null, tag)}, "X"), tag));
+//      } else {
         tags.push(<span className={styles.tag} key={uuid.v4()}>{tag.text}</span>);
-      }
+//      }
     });
     const signals = this.props.signals.home;
 
@@ -47,7 +49,9 @@ class Note extends React.Component {
         {tags}
 
         <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.noteRemoved()}>Delete Note</button>
-        <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']}>Edit Tags</button>
+        <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']} >Edit Tags</button>
+        <button type="button" className={styles['note-show-hide-button']} onClick={() => signals.showHide()}>{this.props.showHide}</button>
+        {tags}
       </div>
     );
   }

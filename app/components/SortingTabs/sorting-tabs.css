@@ -4,7 +4,12 @@
   z-index: 1;
   width: initial;
 }
-.tab-button {
+.sorting-tab {
   width: 33.33%; 
   font-size:medium;
+}
+.selected-sorting-tab {
+  width: 33.33%; 
+  font-size:medium;
+  font-weight:bold;
 }

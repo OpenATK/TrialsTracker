@@ -12,6 +12,12 @@ var tree = {
       completions: [],
       temp_tags: [],
     },
+    fields: {
+      Smith40: {
+        name: 'Smith40',
+        area_acres: '40',
+      },
+    }, 
   },
   view: {
     sort_mode: 'all', //'all' 'fields' 'tags'
