@@ -30,7 +30,7 @@ class Note extends React.Component {
 //      if (self.state.editTags && self.state.note.id === self.state.selectedNote) {
 //        tags.push(React.createElement("div", {key:uuid.v4(), className: "tag"}, React.createElement("button", {key:uuid.v4(), onClick:self.removeTag.bind(null, tag)}, "X"), tag));
 //      } else {
-        tags.push(<span className={styles.tag} key={uuid.v4()}>{tag.text}</span>);
+        tags.push(<span className={styles.tag} key={uuid.v4()}>{tag}</span>);
 //      }
     });
     const signals = this.props.signals.home;
