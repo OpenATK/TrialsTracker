@@ -24,15 +24,15 @@ class _Map extends React.Component {
   render() {
 		var position = [40.3686, -87.0909];
 		var geoJSONData = [];
-		console.log('map signals');
-		console.log(this.props.notes);
+		//console.log('map signals');
+		//console.log(this.props.notes);
 
 		//var self = this;
 		_.each(this.props.notes, function(note) {
 			geoJSONData.push(<GeoJSON data={note.geojson} color={note.color} key={uuid.v4()}/>);
 		});
 
-		console.log('check error');
+		//console.log('check error');
 		//console.log(this.props.signals);
 		//console.log(event);
 		const signals = this.props.signals.home;

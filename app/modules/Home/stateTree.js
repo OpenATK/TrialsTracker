@@ -1,11 +1,11 @@
-var uuid = require('uuid');
+import uuid from 'uuid';
 
 var tree = {
   model: {
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
     tags: initial_tags(),
-    tags_modal: {
+    edit_tags: {
       input_text:'',
       visible: false,
       note_id: {},
@@ -21,8 +21,7 @@ var tree = {
   },
   view: {
     sort_mode: 'all', //'all' 'fields' 'tags'
-    map: {$isLoading: true},
-    edittingTags: false,
+    map: {$isLoading: true}, 
   }
 }; 
 
@@ -49,7 +48,6 @@ function initial_notes() {
           ]
         },
         geojson_visible: 'Show',
-        tags_modal_visibility: false,
         color: col,
         completions: [],
         selected: false,
@@ -67,7 +65,6 @@ function initial_notes() {
           ]
         }, 
         geojson_visible: 'Show',
-        tags_modal_visibility: false,
         color: col,
         completions: [],
         selected: false,
@@ -84,14 +81,13 @@ function initial_notes() {
 {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-87.0964,40.5603],[-86.7733,40.5603],[-86.6966,40.5603],[-86.6966,40.4343],[-86.6966,40.2152],[-86.9211,40.2152],[-87.0909,40.2152],[-87.0909,40.3686],[-87.0964,40.4781]]]]}}
 ]},
         geojson_visible: 'Show',
-        tags_modal_visibility: false,
         color: col,
         completions: [],
         selected: false,
       };
     }
     note.order = i;
-    note.id = uuid.v4().replace('-','');
+    note.id = uuid.v4();
     notes_list[note.id] = note;
   };
   return notes_list;
