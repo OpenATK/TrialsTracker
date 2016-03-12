@@ -2,11 +2,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 34%;
+  width: 35vw;
   height: 100vh;
   background-color: LightGray;
   border-radius: 2px;
-  padding: 5px;
 }
 .notes-container {
   position: relative;
