@@ -47,7 +47,7 @@ function initial_notes() {
             [ ]
           ]
         },
-        geojson_visible: 'Show',
+        geometry_visible: true,
         color: col,
         completions: [],
         selected: false,
@@ -64,7 +64,7 @@ function initial_notes() {
             [ ]
           ]
         }, 
-        geojson_visible: 'Show',
+        geometry_visible: true,
         color: col,
         completions: [],
         selected: false,
@@ -80,7 +80,7 @@ function initial_notes() {
 {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
 {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-87.0964,40.5603],[-86.7733,40.5603],[-86.6966,40.5603],[-86.6966,40.4343],[-86.6966,40.2152],[-86.9211,40.2152],[-87.0909,40.2152],[-87.0909,40.3686],[-87.0964,40.4781]]]]}}
 ]},
-        geojson_visible: 'Show',
+        geometry_visible: true,
         color: col,
         completions: [],
         selected: false,

@@ -1,7 +1,7 @@
 import { selectNote } from './chains';
 import { textInputChanged } from './chains';
 import { changeSortMode } from './chains';
-//import { changeShowHideState } from './chains';
+import { changeShowHideState } from './chains';
 import { addNewNote } from './chains';
 import { removeNote } from './chains';
 import uuid from 'uuid';
@@ -19,10 +19,6 @@ export default (options = {}) => {
       ...changeSortMode
       ],
 
-      noteAdded: [
-        
-      ],
-
       noteSelected: [
         ...selectNote
       ], 
@@ -35,9 +31,9 @@ export default (options = {}) => {
         ...textInputChanged
       ],
 
-//      clickedShowHideButton: [
-//        ...changeShowHideState
-//      ],
+      clickedShowHideButton: [
+        ...changeShowHideState
+      ],
 
       mouseDownOnMap: [
         ...dropPoint

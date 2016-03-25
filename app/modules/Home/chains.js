@@ -24,6 +24,19 @@ export var addNewNote = [
   unselectNote, createNewNote
 ];
 
+export var changeShowHideState = [
+  changeShowHide, 
+];
+
+function changeShowHide ({input, state}) {
+  var geometryVisible = state.get(['home', 'model', 'notes', input.id, 'geometry_visible']);
+  if (geometryVisible) {
+    state.set(['home', 'model', 'notes', input.id, 'geometry_visible'], false);
+  } else {
+    state.set(['home', 'model', 'notes', input.id, 'geometry_visible'], true);
+  }
+};
+
 function setSortMode ({input, state}) {
   state.set(['home', 'view', 'sort_mode'], input.newSortMode);
 };
@@ -59,9 +72,7 @@ function checkTags ({input, state}) {
 };
 
 function deleteNote({input, state}) {
-  console.log(input.id);
   state.unset(['home', 'model', 'notes', input.id]); 
-  console.log(state.get(['home', 'model', 'notes']));
 };
 
 function updateTagsList({state}) {

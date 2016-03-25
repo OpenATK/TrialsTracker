@@ -2,7 +2,6 @@ import React, { Proptypes } from 'react';
 import { Decorator as Cerebral, Link } from 'cerebral-view-react';
 import { Map, TileLayer, ImageOverlay } from 'react-leaflet';
 import styles from './map.css';
-import om from '../../images/om.png';
 import uuid from 'uuid';
 
 var GeoJSON = require('react-leaflet').GeoJson;
@@ -20,23 +19,58 @@ class _Map extends React.Component {
   static propTypes = {
     
   };
-
+  
   render() {
-		var position = [40.3686, -87.0909];
-		var geoJSONData = [];
-		//console.log('map signals');
-		//console.log(this.props.notes);
+    var position = [40.50000, -87.666666];
+    var geoJSONData = [];
+    _.each(this.props.notes, function(note) {
+      geoJSONData.push(<GeoJSON data={note.geojson} color={note.color} key={uuid.v4()}/>);
+    });
+    
+    var testData = {
+      "dp1wmhg1d": {
+        lat: 40.500000,
+        lon: -87.666666,
+        val: 15
+      },
+      "dp1wmhg19": {
+        lat: 40.500004,
+        lon: -87.666714,
+        val: 12
+      },
+      "dp1wmhg13": {
+        lat: 40.499961,
+        lon: -87.666714,
+        val: 17
+      },
+      "dp1wmhg16": {
+        lat: 40.499961,
+        lon: -87.666671,
+        val: 18
+      }
+    };
 
-		//var self = this;
-		_.each(this.props.notes, function(note) {
-			geoJSONData.push(<GeoJSON data={note.geojson} color={note.color} key={uuid.v4()}/>);
-		});
+    var geoj = {
+      "type":"FeatureCollection",
+      "features":[{
+        "type":"Feature",
+        "geometry": {
+          "type":"MultiPolygon",
+          "coordinates": [[[
+            [-87.666666, 40.500000], 
+            [-87.666714, 40.500004], 
+            [-87.666714, 40.499961], 
+            [-87.666671, 40.499961]
+          ]]]
+        },
+      }]
+    }
 
-		//console.log('check error');
-		//console.log(this.props.signals);
-		//console.log(event);
-		const signals = this.props.signals.home;
-    //var position = [4.418, -72.9];
+    var b = _(testData).filter('val').reduce(function(a,m,i,p) {
+      return a + m.val/p.length;
+    },0);
+
+    const signals = this.props.signals.home;
 
     return (
       <div id='map-panel'>
@@ -45,7 +79,7 @@ class _Map extends React.Component {
             url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
             attribution='Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency'
           />
-					{geoJSONData}
+          {geoJSONData}
           <ImageOverlay
             url={om}
             bounds={[[4.418, -72.91],[4.5935, -72.7814]]}
@@ -56,4 +90,3 @@ class _Map extends React.Component {
   }
 }
 export default _Map;
-

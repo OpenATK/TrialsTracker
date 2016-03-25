@@ -4,6 +4,7 @@ import _ from 'lodash';
 import uuid from 'uuid';
 import NoteList from '../NoteList/';
 import Map from '../Map';
+import MenuBar from '../MenuBar';
 
 @Cerebral({
 })
@@ -17,6 +18,7 @@ class App extends React.Component {
 
     return (
       <div className="app">
+        <MenuBar />
         <NoteList />
         <Map />
       </div>
