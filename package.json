@@ -1,5 +1,5 @@
 {
-  "name": "TrialsTrackere",
+  "name": "TrialsTracker",
   "version": "0.1.0",
   "description": "An app used to track farm yield trials",
   "main": "app/main.js",
