@@ -25,29 +25,29 @@ export var drawOnMap = [
 
 function dropPointFunc ({input, state}) {
 	if(state.get(['home', 'view', 'drawMode']) === true){
-		console.log('mapMouseDown drop a point');
-		console.log(input);
-		console.log(state.get());
+		//console.log('mapMouseDown drop a point');
+		//console.log(input);
+		//console.log(state.get());
 	
 		mouse_up_flag = false;
 		var vertex = [input.vertex_value.lng, input.vertex_value.lat];
 		var currentSelectedNoteId = input.select_note;
-		console.log(vertex);
-		console.log(currentSelectedNoteId);
+		//console.log(vertex);
+		//console.log(currentSelectedNoteId);
 		
 		_.each(state.get(['home', 'model', 'notes']), function(note) {
-			console.log('note.id and selectedNote');
-			console.log(note.id);	
+			//console.log('note.id and selectedNote');
+			//console.log(note.id);	
 			if(note.id === currentSelectedNoteId){
-				console.log(note.id);
-				console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']));
-				console.log(vertex);
-				console.log('before push');
+				//console.log(note.id);
+				//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']));
+				//console.log(vertex);
+				//console.log('before push');
 
 			//state.select(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']).push(vertex);
 				state.push(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0'], vertex);
-				console.log('after push');
-				console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates']));
+				//console.log('after push');
+				//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates']));
 			}
 		});
 	
@@ -98,32 +98,32 @@ function mapMouseMove ({input, state}) {
 
 function mapMouseUp ({input, state}) {
 	if(state.get(['home', 'view', 'drawMode']) === true){
-		console.log('mouse up!');
+		//console.log('mouse up!');
 		mouse_up_flag = true;
 	}
 };
 
 
 function dragMapToggle ({state}) {
-	console.log('dragMapToggle');
-	console.log(state.get(['home', 'view', 'drag']));
+	//console.log('dragMapToggle');
+	//console.log(state.get(['home', 'view', 'drag']));
 	if (state.get(['home', 'view', 'drag'])) {
 		state.set(['home', 'view', 'drag'], false);
 	} else {
 		state.set(['home', 'view', 'drag'], true);
 	}
 	
-	console.log(state.get(['home', 'view', 'drag']));
+	//console.log(state.get(['home', 'view', 'drag']));
 }
 
 function drawOnMapp ({state}) {
-	console.log('draw on map function called');
-	console.log(state.get(['home', 'view', 'drawMode']));
+	//console.log('draw on map function called');
+	//console.log(state.get(['home', 'view', 'drawMode']));
 	if(state.get(['home', 'view', 'drawMode']) === false){
 		state.set(['home', 'view', 'drawMode'], true);
 	}else{
 		state.set(['home', 'view', 'drawMode'], false);
 	}
-	console.log(state.get(['home', 'view', 'drawMode']));
+	//console.log(state.get(['home', 'view', 'drawMode']));
 }
 

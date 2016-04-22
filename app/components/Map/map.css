@@ -1,6 +1,6 @@
 :global #map-panel {
   position:absolute;
-  top:0px;
+  top:25px;
   right:0px;
   width:65vw;
   height:100vh;
@@ -15,7 +15,7 @@
 
 :global .leaflet-container {
   width: 100%;
-  height: 97%;
+  height: 100vh;
   z-index: 2;
 }
 

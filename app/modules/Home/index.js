@@ -1,6 +1,9 @@
 import { selectNote } from './chains';
 import { textInputChanged } from './chains';
 import { changeSortMode } from './chains';
+import { changeShowHideState } from './chains';
+import { addNewNote } from './chains';
+import { removeNote } from './chains';
 import uuid from 'uuid';
 import tree from './stateTree.js';
 import { dropPoint } from './mapchain';
@@ -20,16 +23,12 @@ export default (options = {}) => {
       ...changeSortMode
       ],
 
-      noteAdded: [
-        
-      ],
-
       noteSelected: [
         ...selectNote
       ], 
 
-      noteRemoved: [
-
+      deleteNoteButtonClicked: [
+        ...removeNote
       ],
  
       noteTextChanged: [
@@ -55,6 +54,16 @@ export default (options = {}) => {
 			DrawMode: [
 				...drawOnMap
 			],
+
+      clickedShowHideButton: [
+        ...changeShowHideState
+      ],
+
+
+      addNoteButtonClicked: [
+        ...addNewNote,
+      ],
+
     })
   };
 }

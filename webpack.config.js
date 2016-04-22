@@ -4,7 +4,7 @@ module.exports = {
       test: /\.css?$/,
       loader: 'style!css?modules&localIdentName=[name]---[local]---[hash:base64:5]!postcss'
     },
-	{
+    {
       test: /\.js?$/,
       exclude: /node_modules/,
       loader: 'babel',
@@ -15,12 +15,12 @@ module.exports = {
         ]
       }
     },
-	{
-	  test: /\.png$/,
+    {
+      test: /\.png$/,
       loader: 'url-loader?limit=8192'
-	}]
+    }]
   },
   postcss: [
-	require('autoprefixer')
+    require('autoprefixer')
   ]
 };

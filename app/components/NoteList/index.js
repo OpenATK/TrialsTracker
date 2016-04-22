@@ -33,8 +33,7 @@ class NoteList extends React.Component {
     switch (this.props.sortMode){
       case 'all':
         _.each(self.props.notes, function (note) {
-          console.log(notes_array);
-          notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
         });
         break;
 
@@ -44,7 +43,7 @@ class NoteList extends React.Component {
           notes_array.push(<h1 key={uuid.v4()}>{key}</h1>);
           notes_array.push(<hr key={uuid.v4()}/>);
           _.each(group, function(note) {
-            notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+            notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
           });
         });
         break;
@@ -53,7 +52,7 @@ class NoteList extends React.Component {
         // First, add notes without any tags.
         _.each(self.props.notes, function(note) {
         if (_.isEmpty(note.tags)) {
-          notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
         }
       });
       // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
@@ -76,12 +75,12 @@ class NoteList extends React.Component {
   render() {
     var notes_array = this.getNotes();
     const signals = this.props.signals.home;
-    
+
     return (
       <div className={styles['note-list']}>
         <SortingTabs />
         <div className={styles['notes-container']}>{notes_array} </div>
-        <button type= "button" className={styles['add-note-button']} onClick={() => signals.noteAdded()}>
+        <button type="button" className={styles['add-note-button']} onClick={() => signals.addNoteButtonClicked()}>
           Add Note
         </button>
       </div>
