@@ -16,13 +16,14 @@
     "Yang Wang <wang701@purdue.edu>",
     "Andrew Balmos <abalmos@purdue.edu>"
   ],
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/openatk/trailstracker/issues"
   },
   "homepage": "https://github.com/openatk/trailstracker",
   "scripts": {
     "start": "cross-env kotatsu serve app/main.js --index index.html --config webpack.config.js --devtool eval-source-map",
+    "start-run": "node server.js",
     "build": "cross-env NODE_ENV=production kotatsu build client app/main.js --config webpack.production.config.js --minify -o dist/client_bundle.js "
   },
   "dependencies": {

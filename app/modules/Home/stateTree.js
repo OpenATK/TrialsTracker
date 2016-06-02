@@ -1,6 +1,13 @@
 import uuid from 'uuid';
 
 var tree = {
+  
+  yield: [],
+
+  user: {},
+  
+  token: {},
+
   model: {
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
@@ -21,7 +28,9 @@ var tree = {
   },
   view: {
     sort_mode: 'all', //'all' 'fields' 'tags'
-    map: {$isLoading: true}, 
+    map: {$isLoading: true},
+		dragMode: true,
+		drawMode: false,
   }
 }; 
 
@@ -42,12 +51,16 @@ function initial_notes() {
         text: 'ran low on herbicide and applied lower rate here',
         tags: ['herbicide'],
         fields: ['Smith40'],
-        geojson: { "type": "Polygon",
-          "coordinates": [
-            [ ]
-          ]
-        },
-        geometry_visible: true,
+        geojson: 				
+				{"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
+				{"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-88.0964,40.5603],[-87.7733,40.5603],[-87.6966,40.5603],[-87.6966,40.4343],[-87.6966,40.2152],[-87.9211,40.2152],[-88.0909,40.2152],[-88.0909,40.3686],[-88.0964,40.4781]]]]}}
+				]},
+
+        geojson_visible: 'Show',
+        tags_modal_visibility: false,
+        // ???
+				geometry_visible: true,
+				//
         color: col,
         completions: [],
         selected: false,
@@ -59,12 +72,16 @@ function initial_notes() {
         text: 'drown out; replanted 6/18/2015',
         tags: ['low area'],
         fields: ['Smith40'],
-        geojson: { "type": "Polygon",
-          "coordinates": [
-            [ ]
-          ]
-        }, 
+        geojson: 				
+				{"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
+				{"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-86.0964,40.5603],[-85.7733,40.5603],[-85.6966,40.5603],[-85.6966,40.4343],[-85.6966,40.2152],[-85.9211,40.2152],[-86.0909,40.2152],[-86.0909,40.3686],[-86.0964,40.4781]]]]}}
+				]},
+				 
+        geojson_visible: 'Show',
+        tags_modal_visibility: false,
+				// ???? 
         geometry_visible: true,
+				//
         color: col,
         completions: [],
         selected: false,

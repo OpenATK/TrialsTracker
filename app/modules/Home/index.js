@@ -4,9 +4,17 @@ import { changeSortMode } from './chains';
 import { changeShowHideState } from './chains';
 import { addNewNote } from './chains';
 import { removeNote } from './chains';
+import { getYieldData } from './chains';
+import { handleAuth } from './chains';
+import { handleRequestResponse } from './chains';
+import { initialize } from './chains';
 import uuid from 'uuid';
 import tree from './stateTree.js';
 import { dropPoint } from './mapchain';
+import { mouseMoveOnmap } from './mapchain';
+import { mouseUpOnmap } from './mapchain';
+import { ToggleMap } from './mapchain';
+import { drawOnMap } from './mapchain';
 
 export default (options = {}) => {
   return (module, controller) => {
@@ -15,8 +23,25 @@ export default (options = {}) => {
     );
 
     module.addSignals({
+
+      init: [
+        ...initialize
+      ],
+    
+      recievedRequestResponse: [
+        ...handleRequestResponse,
+      ],
+
+      recievedAccessToken: [
+        ...handleAuth,
+      ],
+
+      mapMoved: [
+        ...getYieldData
+      ],
+
       sortingTabClicked: [
-      ...changeSortMode
+        ...changeSortMode
       ],
 
       noteSelected: [
@@ -31,13 +56,30 @@ export default (options = {}) => {
         ...textInputChanged
       ],
 
+			mouseDownOnMap: [
+				...dropPoint
+			],
+
+			mouseMoveOnMap: [
+				...mouseMoveOnmap
+			],
+
+			mouseUpOnMap: [
+				...mouseUpOnmap
+			],
+
+			ToggleMapp: [
+				...ToggleMap
+			],
+
+			DrawMode: [
+				...drawOnMap
+			],
+
       clickedShowHideButton: [
         ...changeShowHideState
       ],
 
-      mouseDownOnMap: [
-        ...dropPoint
-      ],
 
       addNoteButtonClicked: [
         ...addNewNote,

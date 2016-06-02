@@ -1,27 +1,33 @@
 import React, { Proptypes } from 'react';
 import { Decorator as Cerebral, Link } from 'cerebral-view-react';
-import { Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, latLngBounds} from 'react-leaflet';
+import { CircleMarker, Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, latLngBounds} from 'react-leaflet';
 import styles from './map.css';
 import uuid from 'uuid';
-import YieldTileLayer from '../CustomTileLayer/';
-var LatLon = require('geodesy').LatLonEllipsoidal;
+//import YieldTileLayer from '../CustomTileLayer/';
+//var LatLon = require('geodesy').LatLonEllipsoidal;
 var GeoJSON = require('react-leaflet').GeoJson;
 //import jsonData from './2015J4.js';
 //import jsonDataPoly from './2015J4Poly.js';
-import converter from 'hsl-to-rgb';
-import Color from 'color';
-import geojsonvt from 'geojson-vt';
+//import converter from 'hsl-to-rgb';
+//import Color from 'color';
+//import geojsonvt from 'geojson-vt';
 //import { makeGeoJsonPolygons, makeGeoJsonPoints } from './geotiffConverter.js';
 import { buildImage } from './geotiffConverter.js';
-//import { create } from 'lwip';
-//var c = require('lwip').create;
-import ph from './ph_4326.js';
+//import bair from './Bair100.js';
+import gh from 'ngeohash';
+import oadaIdClient from 'oada-id-client';
+import { request } from 'superagent';
+import RasterLayer from '../RasterLayer';
+
 var tileIndex;
 
 @Cerebral((props) => {
   return{
     notes: ['home', 'model', 'notes'],
     selectedNote: ['home', 'model', 'selected_note'],
+    dragMode: ['home', 'view', 'dragMode'],
+    drawMode: ['home', 'view', 'drawMode'],
+    yield: ['home', 'yield' ],
     //note: ['home', 'model', 'notes', props.id],
   };
 })
@@ -29,12 +35,16 @@ var tileIndex;
 class _Map extends React.Component {
 
   componentWillMount() {
-    console.log('component will mount');
-    
     let tileOptions = {
       maxZoom:20
     };
  //   tileIndex = geojsonvt(ph, tileOptions);
+  }
+
+  getTiles(e) {
+    console.log(this.refs);
+    var bounds = e.target.getBounds();
+    var geohashesNeeded = gh.bboxes(bounds.getSouth(), bounds.getWest(), bounds.getNorth(), bounds.getEast(), 7);
   }
 
 /* 
@@ -96,50 +106,46 @@ class _Map extends React.Component {
   } 
 */
   render() {
-  //  var position = [48.99, -104.05];
-  //  var position = [jsonData.features[0].geometry.coordinates[1], jsonData.features[0].geometry.coordinates[0]];
-    var geoJSONData = [];
+    const signals = this.props.signals.home;
+    var self = this;
+    var position = [40.8512578, -86.138977];
+/*
+    var notePolygons = [];
     _.each(this.props.notes, function(note) {
-      geoJSONData.push(<GeoJSON data={note.geojson} color={note.color} key={uuid.v4()}/>);
+      notePolygons.push(<GeoJSON data={note.geojson} color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color } dragging={true} key={uuid.v4()}/>);
     });
 
-/*
-    var pollies = [];
-    var positions;
-    for (let i = jsonData.features.length-1; i > 1; i--) {
-      positions = this.getPolygonVertices(jsonData.features[i], jsonData.features[i-1]);
-      var col = this.getColor(jsonData.features[i].properties.Yld_Vol_We,min,max);
-      var poly = <Polygon positions={positions} key={uuid.v4()} stroke={false} fillColor={col} fillOpacity={1.0} />;
-      pollies.push(poly);
-      newJson.features[i] = this.createPoly(jsonData.features[i], jsonData.features[i-1]);
-    }
-    newJson.features.splice(0, 1);
-    var geoj = <GeoJSON data={newJson} key={uuid.v4()}/>;
+    var markerList = [];
+    console.log(this.props.yield.length);
+    _.each(this.props.yield, function(point) {
+      var loc = L.latLng(point.lat, point.lon);
+      markerList.push(<CircleMarker center={loc} radius={2} key={uuid.v4()}/>);
+    });
 */  
-    var position = [4.497, -72.842];
-    const signals = this.props.signals.home;
-//            url='http://{s}.{base}.maps.cit.api.here.com/maptile/2.1/{type}/{mapID}/hybrid.day/{z}/{x}/{y}/{size}/{format}?app_id={app_id}&app_code={app_code}&lg={language}'
-//            attribution='Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>'
-
-//            url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
-//            attribution='Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency'
-
-//            url='http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-//            attribution='Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency'
-  //        <YieldTileLayer tileIndex={tileIndex}/>
-
-      //    <ImageOverlay 
-       //     url={buildImage(ph)}
-       //     bounds={bounds}
-       //   />
+    var drag_flag = this.props.dragMode;
     return (
       <div id='map-panel'>
-        <Map onLeafletMousedown={(e) => {signals.mouseDownOnMap({vertex_value: e.latlng, select_note: this.props.selectedNote, newSelectedNote:this.props.id})}} dragging={true} center={position} zoom={19} tms={true}>
+        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMapp()}>Lock Map</button>
+        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>
+        <Map 
+          onLeafletMousedown={ (e) => signals.mouseDownOnMap({vertex_value: e.latlng, select_note: this.props.selectedNote, newSelectedNote:this.props.id}) } 
+          onLeafletMouseMove={ (e) => signals.mouseMoveOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
+          onLeafletMouseUp={ (e) => signals.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
+          dragging={this.props.dragMode} 
+          center={position} 
+          ref='map'
+          zoom={13}>
+
           <TileLayer
             url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
             attribution='Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency'
           />
-          <YieldTileLayer/>
+  
+          <RasterLayer 
+            url="http://localhost:3000/bookmarks/"
+            accessToken={this.accessToken}
+          />
+
         </Map> 
       </div>
     );
