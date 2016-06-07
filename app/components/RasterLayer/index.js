@@ -79,7 +79,7 @@ export default class RasterLayer extends CanvasTileLayer {
             _.each(result.data, function(val) {
               var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
               var pt = self.props.map.project(latlng);
-              pt.x = Math.floor(pt. - tilePoint.x*256);
+              pt.x = Math.floor(pt.x - tilePoint.x*256);
               pt.y = Math.floor(pt.y - tilePoint.y*256);
               if (bounds.contains(latlng)) {
                 var color = self.colorForvalue(val.value);
