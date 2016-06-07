@@ -2,7 +2,7 @@ import uuid from 'uuid';
 
 var tree = {
   
-  yield: [],
+  yield_hashes: {},
 
   user: {},
   

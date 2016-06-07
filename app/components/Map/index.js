@@ -134,7 +134,7 @@ class _Map extends React.Component {
           dragging={this.props.dragMode} 
           center={position} 
           ref='map'
-          zoom={13}>
+          zoom={17}>
 
           <TileLayer
             url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
@@ -142,8 +142,8 @@ class _Map extends React.Component {
           />
   
           <RasterLayer 
-            url="http://localhost:3000/bookmarks/"
-            accessToken={this.accessToken}
+            url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
+            async={true}
           />
 
         </Map> 

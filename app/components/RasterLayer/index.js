@@ -3,10 +3,13 @@ import { CanvasTileLayer, Point } from 'react-leaflet';
 import React from 'react';
 import styles from './style.css';
 import gh from 'ngeohash';
-import PouchDB from 'pouchdb';
 import request from 'superagent';
 import _ from 'lodash';
-
+import PouchDB from 'pouchdb';
+import bair from './Bair100.js';
+import md5 from 'md5';
+import { Promise } from 'bluebird';
+import cache from './cache.js';
 
 function blendColors(c1, c2, percent) {
   let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
@@ -23,7 +26,7 @@ function blendColors(c1, c2, percent) {
   return {
     selectedMap: [ 'home', 'model', 'selected_map' ],
     token: [ 'home', 'token' ],
-    yield: [ 'home', 'yield' ],
+    yieldHashes: [ 'home', 'yield_hashes' ],
   };
 })
 
@@ -32,93 +35,111 @@ export default class RasterLayer extends CanvasTileLayer {
   componentWillMount() {
     super.componentWillMount();
     this.leafletElement.drawTile = this.drawTile.bind(this);
+    console.log(this);
+//    this.leafletElement.tileDrawn = super.tileDrawn.bind(this);
   }
 
   componentWillUnmount() {
     this.canvas.remove();
   }
- 
+
   drawTile(canvas, tilePoint, zoom) {
-    if (!_.isEmpty(this.props.token)) {
-      var ctx = canvas.getContext('2d');
-      var img = ctx.createImageData(256, 256);
-      var data = img.data;
-      for (var j = 0; j < 256; j++) {
-        for (var i = 0; i < 256; i++) {
-           data[((j*256+i)*4)]   = 255; // red
-           data[((j*256+i)*4)+1] = 255; // green
-           data[((j*256+i)*4)+2] = 255; // blue
-           data[((j*256+i)*4)+3] = 128; // alpha
-        }
-      } 
-      ctx.putImageData(img, 0, 0);
-      ctx.drawImage(canvas, 0, 0); 
+    var db = new PouchDB('yield-data');
+    var self = this;
+    const signals = this.props.signals.home;
+    var ctx = canvas.getContext('2d');
+    var imgData = ctx.createImageData(256, 256);
+    var pixelData = imgData.data;
 
-      var tileSwPt = new L.Point(tilePoint.x*256, (tilePoint.y*256)+256);
-      var tileNePt = new L.Point((tilePoint.x*256)+256, tilePoint.y*256);
-      var sw = this.props.map.unproject(tileSwPt, zoom);
-      var ne = this.props.map.unproject(tileNePt, zoom);
-      var bounds = L.latLngBounds(sw, ne);
-      var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
-    
-      //TODO: Send off a request for the data.   Give a handle to this canvas 
-      // so that it may be modified after the request returns data.
-      const signals = this.props.signals.home;
-      request
-        .get('https://localhost:3000/bookmarks')
-        .set('Authorization', 'Bearer '+ this.props.token.access_token)
-        .end((err, res) => { signals.recievedRequestResponse({error: err, data: res, contex: ctx, canvas:canvas})});
-//        .end(function(err, res){
-//          () => { this.props.signals.home.handleRequestResponse({data: res})};
-/*
-          console.log(res);
-          console.log(data);
-          if (!err) { 
-            for (var j = 0; j < 100; j++) {
-              for (var i = 0; i < 100; i++) {
-                data[((j*256+i)*4)]   = 0; // red
-                data[((j*256+i)*4)+1] = 0; // green
-                data[((j*256+i)*4)+2] = 0; // blue
-                data[((j*256+i)*4)+3] = 128; // alpha
-              }
-            } 
-            ctx.putImageData(img, 0, 0);
-            ctx.drawImage(canvas, 0, 0); 
-          }
-
-        });
-
-*/
-      }
-      //TODO: Handle the requested data. Create arrays that record the sum and count of
-      //values for each pixel (if multiple points fall within a pixel).
-   
-      //TODO: Convert value to color.
+//Optionally, a cached tile may be requested here and loaded immediately! Then asynctasks move forward
  
+    //Compute the geohash tiles needed for this image tile
+    var tileSwPt = new L.Point(tilePoint.x*256, (tilePoint.y*256)+256);
+    var tileNePt = new L.Point((tilePoint.x*256)+256, tilePoint.y*256);
+    var sw = this.props.map.unproject(tileSwPt, zoom);
+    var ne = this.props.map.unproject(tileNePt, zoom);
+    var bounds = L.latLngBounds(sw, ne);
+    var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
+    
+    var filtGeos = [];
+    for (var g = 0; g < geohashes.length; g++) {
+      if (bair[geohashes[g]]) {
+        filtGeos.push(geohashes[g]); 
+      }
+    }
+    if (this.props.token.access_token) {
+      var promises = [];
+      for (var g = 0; g < geohashes.length; g++) {
+        const cache_result = cache.get('dp68rue', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+        if (cache_result.isFulfilled()) {
+          console.log(result);
+//          signals.storeHash({in
+        } else {
+          cache_result.then(function(result) {
+            _.each(result.data, function(val) {
+              var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
+              var pt = self.props.map.project(latlng);
+              pt.x = Math.floor(pt. - tilePoint.x*256);
+              pt.y = Math.floor(pt.y - tilePoint.y*256);
+              if (bounds.contains(latlng)) {
+                var color = self.colorForvalue(val.value);
+                pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
+                pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
+                pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
+                pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
+              }
+            });
+          });
+        }
+        promises.push(cache_result);
+      }
+      Promise.all(promises).then(function() {
+        ctx.putImageData(imgData, 0, 0);
+        ctx.drawImage(canvas, 0, 0); 
+        tileDrawn(canvas);
+      });
+    }
   }
     
   colorForvalue(val) {
-//    const raster = allMaps[this.props.selectedMap];
-    const raster = this.props.raster;
-    if (val == raster.nodataval) {
-      return {r: 0, g: 0, b: 0, a: 0 };
-    }
-    const levels = raster.legend.levels;
-    const numlevels = levels.length;
-    if (val <= levels[0].value) {
-      return levels[0].color;
-    }
-    if (val >= levels[numlevels-1].value) {
-      return levels[numlevels-1].color;
-    }
-    for (let i = 0; i < numlevels-1; i++) {
-      let bottom = levels[i];
-      let top = levels[i+1];
+
+//    if (val == raster.nodataval) {
+//      return {r: 0, g: 0, b: 0, a: 0 };
+//    }
+//    const levels = raster.legend.levels;
+//    const numlevels = levels.length;
+//    if (val <= levels[0].value) {
+//      return levels[0].color;
+//    }
+//    if (val >= levels[numlevels-1].value) {
+//      return levels[numlevels-1].color;
+//    }
+//    for (let i = 0; i < numlevels-1; i++) {
+//      let bottom = levels[i];
+      let bottom = {
+        value: 560,
+        color: {
+          r: 255,
+          g: 0,
+          b: 0,
+          a: 255,
+        },
+      }
+//      let top = levels[i+1];
+      let top = {
+        value: 22325,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }; 
       if (val > bottom.value && val <= top.value) {
         let percentIntoRange = (val - bottom.value) / (top.value - bottom.value);
         return blendColors(top.color, bottom.color, percentIntoRange);
       }
-    }
+ //   }
     console.log('ERROR: val = ', val, ', but did not find color!');
     return null;
   }

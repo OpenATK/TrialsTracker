@@ -7,14 +7,11 @@ import md5 from 'md5';
 import PouchDB from 'pouchdb';
 import oadaIdClient from 'oada-id-client';
 
-getAccessToken.outputs = ['success', 'error'];
-
 export var initialize = [
   getAccessToken, {
     success: [storeToken],
     error: []
   },
-  initPouch, 
 ];
 
 export var changeSortMode = [
@@ -53,11 +50,11 @@ export var getYieldData = [
 ];
 
 export var handleRequestResponse = [
-  storeMd5, storeData,
+  storeRev,
 ];
 
-function initPouch({input, state}) {
-//  this._db = new PouchDB('yield-data');
+function initPouch({}) {
+  this._db = new PouchDB('yield-data');
 };
 
 function getAccessToken({input, state, output}) {
@@ -69,22 +66,20 @@ function getAccessToken({input, state, output}) {
   var domain = 'localhost:3000';
   oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
     if (err) { console.dir(err); output.error(); } // Soemthing went wrong  
-    console.log('got a token');
     output.success({token:accessToken});
   });
 };
 
+getAccessToken.outputs = ['success', 'error'];
+getAccessToken.async = true;
 
-function storeMd5({input, state}) {
-  var allData = state.get([ 'home', 'yield' ]);
-  if (!_.includes(allData, input.data)) {
-    state.push([ 'home', 'yield' ], md5(JSON.stringify(input.data)));
-  }
+function storeRev({input, state}) {
+  state.set([ 'home', 'yield_hashes', input.geohash], input.rev);
 };
 
 function storeData({input, state}) {
-  console.log(this);
-  if (!err) { 
+/*
+  if (!input.error) { 
     var img = input.context.getImageData(0,0,256,256);
     var data = img.data;
 
@@ -99,46 +94,20 @@ function storeData({input, state}) {
       }
     } 
     input.context.putImageData(img, 0, 0);
-    input.context.drawImage(input.canvas, 0, 0); 
+    input.context.drawImage(input.context.canvas, 0, 0); 
   }
   var doc = {data: input.data, imageData: data};
   //TODO: after I get data in oada, get the geohash-7 as the ID
   var docId = input.data.geohash7;
   this._db.put(doc, docId);
-};
-
-function getCanvas({input, state}) {
-
+*/
 };
 
 function storeToken({input, state}) {
-  console.log('auth info stored');
   state.set(['home', 'token'], input.token);
 };
 
 function getData ({input, state}) {
-  var bounds = input.bounds;
-  var geohashesNeeded = gh.bboxes(bounds.getSouth(), bounds.getWest(), bounds.getNorth(), bounds.getEast(), 7);
-//  var data = request
-//    .get('localhost:3000/bookmarks/')
-//    .auth(state.get(['home', 'user']), state.get(['home', 'token']))
-//    .end();
-  var yieldData = [];
-  for (var g = 0; g < geohashesNeeded.length; g++) {
-    if (bair[geohashesNeeded[g]]) {
-      var data = bair[geohashesNeeded[g]].data;
-      _.each(data, function (value, key) {
-        if (value.location) {
-          yieldData.push({
-            lat: value.location.lat,
-            lon: value.location.lon,
-            val: value.value,
-          });
-        }
-      });
-    }
-  }
-  state.set(['home', 'yield'], yieldData);
 };
 
 function changeShowHide ({input, state}) {

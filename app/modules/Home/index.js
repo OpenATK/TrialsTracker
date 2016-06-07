@@ -17,6 +17,7 @@ import { ToggleMap } from './mapchain';
 import { drawOnMap } from './mapchain';
 
 export default (options = {}) => {
+  
   return (module, controller) => {
     module.addState(
       tree
