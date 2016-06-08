@@ -60,35 +60,40 @@ export default class RasterLayer extends CanvasTileLayer {
     var ne = this.props.map.unproject(tileNePt, zoom);
     var bounds = L.latLngBounds(sw, ne);
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
-    
+
     var filtGeos = [];
     for (var g = 0; g < geohashes.length; g++) {
       if (bair[geohashes[g]]) {
         filtGeos.push(geohashes[g]); 
       }
     }
+    
     if (this.props.token.access_token) {
       var promises = [];
-      for (var g = 0; g < geohashes.length; g++) {
-        const cache_result = cache.get('dp68rue', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+//      for (var g = 0; g < geohashes.length; g++) {
+      for (var g = 0; g < filtGeohashes[g]; g++) {
+        //const cache_result = cache.get(geohashes[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
         if (cache_result.isFulfilled()) {
           console.log(cache_result);
-//          signals.storeHash({in
         } else {
+          //TODO: show loading tile image
           cache_result.then(function(result) {
-            _.each(result.data, function(val) {
-              var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
-              var pt = self.props.map.project(latlng);
-              pt.x = Math.floor(pt.x - tilePoint.x*256);
-              pt.y = Math.floor(pt.y - tilePoint.y*256);
-              if (bounds.contains(latlng)) {
-                var color = self.colorForvalue(val.value);
-                pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
-                pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
-                pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
-                pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
-              }
-            });
+            if (result) {
+              _.each(result.data, function(val) {
+                var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
+                var pt = self.props.map.project(latlng);
+                pt.x = Math.floor(pt.x - tilePoint.x*256);
+                pt.y = Math.floor(pt.y - tilePoint.y*256);
+                if (bounds.contains(latlng)) {
+                  var color = self.colorForvalue(val.value);
+                  pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
+                  pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
+                  pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
+                  pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
+                }
+              });
+            }
           });
         }
         promises.push(cache_result);
@@ -96,7 +101,6 @@ export default class RasterLayer extends CanvasTileLayer {
       Promise.all(promises).then(function() {
         ctx.putImageData(imgData, 0, 0);
         ctx.drawImage(canvas, 0, 0); 
-        console.log(self);
         self.leafletElement.tileDrawn(canvas);
       });
     }

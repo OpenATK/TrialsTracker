@@ -21,8 +21,8 @@ var global_cache = {};
 */
 module.exports = {
   get: function(geohash, url, token) {
-    var db = new PouchDB('yield-data');
     return Promise.try(function() {
+      var db = new PouchDB('yield-data');
       // 1. Attempt to retrieve from global cache in memory
       if (global_cache[geohash]) 
         return global_cache[geohash];
@@ -52,7 +52,28 @@ module.exports = {
           return JSON.parse(response.text);
         }, function onError(err) {
 //          console.log(err);
+            return false;
         });
+      });
+    });
+  },
+
+  // Get cached data to load a tile with some content immediately
+  tryGet: function(geohash) {
+    return Promise.try(function() {
+      var db = new PouchDB('yield-data');
+      // 1. Attempt to retrieve from global cache in memory
+      if (global_cache[geohash]) 
+        return global_cache[geohash];
+      // 2. Attempt to retrieve from Pouch cache (not in memory)
+//      console.log('not in global cache');
+      return db.get(geohash)
+      .then(function(doc) {
+        global_cache[geohash] = response;
+        return doc.jsonData.data;
+      // 3. Attempt to retrieve from the server
+      }).catch(function(err) {
+        console.log('not in pouch');
       });
     });
   }
