@@ -72,7 +72,7 @@ export default class RasterLayer extends CanvasTileLayer {
       for (var g = 0; g < geohashes.length; g++) {
         const cache_result = cache.get('dp68rue', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
         if (cache_result.isFulfilled()) {
-          console.log(result);
+          console.log(cache_result);
 //          signals.storeHash({in
         } else {
           cache_result.then(function(result) {
@@ -96,7 +96,8 @@ export default class RasterLayer extends CanvasTileLayer {
       Promise.all(promises).then(function() {
         ctx.putImageData(imgData, 0, 0);
         ctx.drawImage(canvas, 0, 0); 
-        tileDrawn(canvas);
+        console.log(self);
+        self.leafletElement.tileDrawn(canvas);
       });
     }
   }

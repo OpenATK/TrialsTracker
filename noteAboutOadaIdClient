@@ -1,0 +1,8 @@
+instructions:
+
+git clone https://github.com/OADA/oada-id-client-js.git
+cd node_modules/oada-id-client-js
+npm i
+npm run prepublish
+
+package.json: "oada-id-client": "file:node_modules/oada-id-client"

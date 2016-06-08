@@ -27,15 +27,14 @@ module.exports = {
       if (global_cache[geohash]) 
         return global_cache[geohash];
       // 2. Attempt to retrieve from Pouch cache (not in memory)
-      console.log('not in global cache');
+//      console.log('not in global cache');
       return db.get(geohash)
       .then(function(doc) {
         return doc.jsonData.data;
       // 3. Attempt to retrieve from the server
       }).catch(function(err) {
-        console.log('not in pouch');
-//        console.log(geohash+' not in cache. Requesting from ' + url);
-        console.log('Requesting ' + url + geohash);
+//        console.log('not in pouch');
+//        console.log('Requesting ' + url + geohash);
         return agent('GET', url+geohash)
         .set('Authorization', 'Bearer '+ token)
         .end()
