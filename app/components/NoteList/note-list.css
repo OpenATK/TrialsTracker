@@ -1,6 +1,5 @@
 .note-list {
   position: absolute;
-  top: 0;
   left: 0;
   width: 35vw;
   height: 100vh;
@@ -17,7 +16,7 @@
   bottom: 0;
   left: 0;
   bottom:5px;
-  left:5px;
+  left:1px;
   border-width: 2px;
   border-color: #ABABAB;
   border-style: solid;

@@ -1,6 +1,5 @@
 :global #map-panel {
   position:absolute;
-  top:25px;
   right:0px;
   width:65vw;
   height:100vh;
@@ -8,8 +7,8 @@
 
 :global #draw-polygon {
 	position: absolute;
-	right: 80px;
-	top: 100px;
+	right: 40px;
+	top: 50px;
 	z-index: 4;
 }
 

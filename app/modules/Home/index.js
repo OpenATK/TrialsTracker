@@ -1,3 +1,6 @@
+import uuid from 'uuid';
+import tree from './stateTree.js';
+
 import { selectNote } from './chains';
 import { textInputChanged } from './chains';
 import { changeSortMode } from './chains';
@@ -8,13 +11,15 @@ import { getYieldData } from './chains';
 import { handleAuth } from './chains';
 import { handleRequestResponse } from './chains';
 import { initialize } from './chains';
-import uuid from 'uuid';
-import tree from './stateTree.js';
-import { dropPoint } from './mapchain';
+import { handleNoteClick } from './chains';
+
+import { drawComplete } from './mapchain';
+import { handleMouseDown } from './mapchain';
 import { mouseMoveOnmap } from './mapchain';
 import { mouseUpOnmap } from './mapchain';
 import { ToggleMap } from './mapchain';
 import { drawOnMap } from './mapchain';
+import { handleDoneDrawing } from './mapchain';
 
 export default (options = {}) => {
   
@@ -27,6 +32,14 @@ export default (options = {}) => {
 
       init: [
         ...initialize
+      ],
+
+      mapDoubleClicked: [
+        ...handleMouseDown, drawComplete,
+      ],
+
+      doneDrawingButtonClicked: [
+        ...drawComplete,
       ],
     
       recievedRequestResponse: [
@@ -45,8 +58,8 @@ export default (options = {}) => {
         ...changeSortMode
       ],
 
-      noteSelected: [
-        ...selectNote
+      noteClicked: [
+        ...handleNoteClick
       ], 
 
       deleteNoteButtonClicked: [
@@ -57,27 +70,27 @@ export default (options = {}) => {
         ...textInputChanged
       ],
 
-			mouseDownOnMap: [
-				...dropPoint
-			],
+      mouseDownOnMap: [
+        ...handleMouseDown
+      ],
 
-			mouseMoveOnMap: [
-				...mouseMoveOnmap
-			],
+      mouseMoveOnMap: [
+        ...mouseMoveOnmap
+      ],
 
-			mouseUpOnMap: [
-				...mouseUpOnmap
-			],
+      mouseUpOnMap: [
+        ...mouseUpOnmap
+      ],
 
-			ToggleMapp: [
-				...ToggleMap
-			],
+      ToggleMapp: [
+        ...ToggleMap
+      ],
 
-			DrawMode: [
-				...drawOnMap
-			],
+      DrawMode: [
+        ...drawOnMap
+      ],
 
-      clickedShowHideButton: [
+      showHideButtonClicked: [
         ...changeShowHideState
       ],
 

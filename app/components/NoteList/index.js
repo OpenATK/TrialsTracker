@@ -1,10 +1,3 @@
-//var Note = require('../Note/note.js');
-//var SortingTabs = require('../SortingTabs/sorting-tabs.js');
-//var SearchBar = require('react-search-bar');
-//var _ = require('lodash');
-//var uuid = require('uuid');
-//var branch = require('baobab-react/mixins').branch;
-//var TagsModal = require('../TagsModal/tags-modal.js');
 import React, { PropTypes } from 'react';
 import { Decorator as Cerebral, Link } from 'cerebral-view-react';
 import SortingTabs from '../SortingTabs/';
@@ -80,7 +73,10 @@ class NoteList extends React.Component {
       <div className={styles['note-list']}>
         <SortingTabs />
         <div className={styles['notes-container']}>{notes_array} </div>
-        <button type="button" className={styles['add-note-button']} onClick={() => signals.addNoteButtonClicked()}>
+        <button 
+          type="button" 
+          className={styles['add-note-button']} 
+          onClick={() => {signals.addNoteButtonClicked({drawMode:true})}}>
           Add Note
         </button>
       </div>

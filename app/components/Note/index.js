@@ -3,7 +3,7 @@ import { Decorator as Cerebral, Link } from 'cerebral-view-react';
 import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
-import styles from './note.css'
+import styles from './note.css';
 
 @Cerebral((props) => {
   return {
@@ -12,6 +12,7 @@ import styles from './note.css'
     text: ['home', 'model', 'notes', props.id, 'text'],
     tags: ['home', 'model', 'notes', props.id, 'tags'],
     selected: ['home', 'model', 'notes', props.id, 'selected'],
+    drawMode: ['home', 'view', 'drawMode'],
     geometryVisible: ['home', 'model', 'notes', props.id, 'geometry_visible'],
   };
 })
@@ -34,14 +35,20 @@ class Note extends React.Component {
 //      }
     });
     const signals = this.props.signals.home;
-
     return (
       <div 
         key={uuid.v4()}
         style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
         className={styles[this.props.selected ? 'selected-note' : 'note']} 
-        onClick={() => signals.noteSelected({newSelectedNote:this.props.id})}
+        onClick={() => signals.noteClicked({note:this.props.id})}
       >
+     
+        <button
+          type="button" 
+          className={styles[this.props.drawMode ? 'done-drawing-button' : 'hidden']}
+          onClick={() => signals.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
+          >{'Done Drawing'}
+        </button>
 
         <TextAreaAutoSize 
           key={uuid.v4()} 
@@ -55,12 +62,16 @@ class Note extends React.Component {
         <button 
           type="button" 
           className={styles['note-show-hide-button']} 
-          onClick={() => signals.clickedShowHideButton({id: this.props.id})}
+          onClick={() => signals.showHideButtonClicked({id: this.props.id})}
           >{this.props.geometryVisible ? 'Hide' : 'Show'}
         </button>
    
         <hr/>
-        {'(43.36 acres)'}
+        {'Area: ' + this.props.note.area}
+        <br/>
+        {'Mean Yield: ' + this.props.note.mean}
+        <br/>
+        {'Data Points: ' + this.props.note.count}
         <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}>Delete Note</button>
         <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']} >Edit Tags</button>
         <EditTagsBar id={this.props.id} color={this.props.note.color}/>

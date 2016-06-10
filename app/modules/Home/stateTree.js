@@ -2,7 +2,7 @@ import uuid from 'uuid';
 
 var tree = {
   
-  yield_hashes: {},
+  yield_revs: {},
 
   user: {},
   
@@ -29,8 +29,8 @@ var tree = {
   view: {
     sort_mode: 'all', //'all' 'fields' 'tags'
     map: {$isLoading: true},
-		dragMode: true,
-		drawMode: false,
+    dragMode: true,
+    drawing: false,
   }
 }; 
 
@@ -45,43 +45,42 @@ function initial_tags() {
 
 function initial_notes() { 
   var notes_list = {};
-  for (var i = 1; i<4;i++) {
+//  for (var i = 1; i<4;i++) {
+  for (var i = 1; i<3;i++) {
     var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
     var note = {
-        text: 'ran low on herbicide and applied lower rate here',
-        tags: ['herbicide'],
-        fields: ['Smith40'],
-        geojson: 				
-				{"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-				{"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-88.0964,40.5603],[-87.7733,40.5603],[-87.6966,40.5603],[-87.6966,40.4343],[-87.6966,40.2152],[-87.9211,40.2152],[-88.0909,40.2152],[-88.0909,40.3686],[-88.0964,40.4781]]]]}}
-				]},
+      text: 'applied lower rate here',
+      tags: ['herbicide'],
+      fields: ['Bair100'],
+      geometry: [{latitude: 40.858384, longitude: -86.138859},{latitude: 40.851257, longitude: -86.138790}, {latitude: 40.851244, longitude: -86.139479}, {latitude: 40.858316, longitude: -86.139746}],
+//      geojson:         
+//        {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
+//        {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-88.0964,40.5603],[-87.7733,40.5603],[-87.6966,40.5603],[-87.6966,40.4343],[-87.6966,40.2152],[-87.9211,40.2152],[-88.0909,40.2152],[-88.0909,40.3686],[-88.0964,40.4781]]]]}}
+//      ]},
 
-        geojson_visible: 'Show',
-        tags_modal_visibility: false,
-        // ???
-				geometry_visible: true,
-				//
-        color: col,
-        completions: [],
-        selected: false,
+      geojson_visible: 'Show',
+      tags_modal_visibility: false,
+      geometry_visible: true,
+      color: col,
+      completions: [],
+      selected: false,
     };
     if (i === 2) {
       var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
       var text = 'low area';
       note = {
-        text: 'drown out; replanted 6/18/2015',
+        text: 'drown out; replanted 6/3/2015',
         tags: ['low area'],
         fields: ['Smith40'],
-        geojson: 				
-				{"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-				{"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-86.0964,40.5603],[-85.7733,40.5603],[-85.6966,40.5603],[-85.6966,40.4343],[-85.6966,40.2152],[-85.9211,40.2152],[-86.0909,40.2152],[-86.0909,40.3686],[-86.0964,40.4781]]]]}}
-				]},
-				 
+        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
+//        geojson:         
+//          {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
+//          {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-86.0964,40.5603],[-85.7733,40.5603],[-85.6966,40.5603],[-85.6966,40.4343],[-85.6966,40.2152],[-85.9211,40.2152],[-86.0909,40.2152],[-86.0909,40.3686],[-86.0964,40.4781]]]]}}
+//        ]},
+         
         geojson_visible: 'Show',
         tags_modal_visibility: false,
-				// ???? 
         geometry_visible: true,
-				//
         color: col,
         completions: [],
         selected: false,
@@ -93,10 +92,11 @@ function initial_notes() {
         text: 'applied snake oil',
         tags: [],
         fields: ['Smith40'],
-        geojson:
-{"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-{"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-87.0964,40.5603],[-86.7733,40.5603],[-86.6966,40.5603],[-86.6966,40.4343],[-86.6966,40.2152],[-86.9211,40.2152],[-87.0909,40.2152],[-87.0909,40.3686],[-87.0964,40.4781]]]]}}
-]},
+        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
+//        geojson:
+//          {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
+//          {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-87.0964,40.5603],[-86.7733,40.5603],[-86.6966,40.5603],[-86.6966,40.4343],[-86.6966,40.2152],[-86.9211,40.2152],[-87.0909,40.2152],[-87.0909,40.3686],[-87.0964,40.4781]]]]}}
+//        ]},
         geometry_visible: true,
         color: col,
         completions: [],

@@ -7,7 +7,6 @@ import request from 'superagent';
 import _ from 'lodash';
 import PouchDB from 'pouchdb';
 import bair from './Bair100.js';
-import md5 from 'md5';
 import { Promise } from 'bluebird';
 import cache from './cache.js';
 
@@ -26,7 +25,7 @@ function blendColors(c1, c2, percent) {
   return {
     selectedMap: [ 'home', 'model', 'selected_map' ],
     token: [ 'home', 'token' ],
-    yieldHashes: [ 'home', 'yield_hashes' ],
+    yieldRevs: [ 'home', 'yield_revs' ],
   };
 })
 
@@ -35,8 +34,6 @@ export default class RasterLayer extends CanvasTileLayer {
   componentWillMount() {
     super.componentWillMount();
     this.leafletElement.drawTile = this.drawTile.bind(this);
-    console.log(this);
-//    this.leafletElement.tileDrawn = super.tileDrawn.bind(this);
   }
 
   componentWillUnmount() {
@@ -68,18 +65,15 @@ export default class RasterLayer extends CanvasTileLayer {
       }
     }
     
+    //TODO: presence of a token should change state, cause a rerender
     if (this.props.token.access_token) {
       var promises = [];
-//      for (var g = 0; g < geohashes.length; g++) {
-      for (var g = 0; g < filtGeohashes[g]; g++) {
-        //const cache_result = cache.get(geohashes[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
-        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+      for (var g = 0; g < filtGeos.length; g++) {
+        const cache_result = cache.tryGet(filtGeos[g]);
         if (cache_result.isFulfilled()) {
-          console.log(cache_result);
-        } else {
-          //TODO: show loading tile image
           cache_result.then(function(result) {
             if (result) {
+              signals.recievedRequestResponse({geohash: filtGeos[g], rev:result._rev});
               _.each(result.data, function(val) {
                 var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
                 var pt = self.props.map.project(latlng);
@@ -95,10 +89,44 @@ export default class RasterLayer extends CanvasTileLayer {
               });
             }
           });
+        } else {
+          //TODO: Show loading tile image
         }
         promises.push(cache_result);
       }
       Promise.all(promises).then(function() {
+        ctx.putImageData(imgData, 0, 0);
+        ctx.drawImage(canvas, 0, 0); 
+        self.leafletElement.tileDrawn(canvas);
+      });
+
+      var proms = [];
+      for (var g = 0; g < filtGeos.length; g++) {
+        //first, get the rev to compare
+        
+        //If new data, update.
+        //TODO: consider writing a signal that calls an update function
+        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+        cache_result.then(function(result) {
+          if (result) {
+            _.each(result.data, function(val) {
+              var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
+              var pt = self.props.map.project(latlng);
+              pt.x = Math.floor(pt.x - tilePoint.x*256);
+              pt.y = Math.floor(pt.y - tilePoint.y*256);
+              if (bounds.contains(latlng)) {
+                var color = self.colorForvalue(val.value);
+                pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
+                pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
+                pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
+                pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
+              }
+            });
+          }
+        });
+        proms.push(cache_result);
+      }
+      Promise.all(proms).then(function() {
         ctx.putImageData(imgData, 0, 0);
         ctx.drawImage(canvas, 0, 0); 
         self.leafletElement.tileDrawn(canvas);

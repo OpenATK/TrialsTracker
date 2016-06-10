@@ -18,6 +18,10 @@ export var changeSortMode = [
   setSortMode
 ];
 
+export var handleNoteClick = [
+  selectNote,
+];
+
 export var removeNote = [
   unselectIfSelected, checkTags, deleteNote, 
 ];
@@ -26,15 +30,11 @@ export var textInputChanged = [
   setTextInputValue
 ];
 
-export var selectNote = [
- // unselectNote, selectNewNote, updateTagsList,
-];
-
-export var clickedShowHideButton = [
+export var changeShowHideState = [
 ];
 
 export var addNewNote = [
-  unselectNote, createNewNote
+  unselectNote, createNote, selectNote, setDrawMode
 ];
 
 export var changeShowHideState = [
@@ -53,8 +53,8 @@ export var handleRequestResponse = [
   storeRev,
 ];
 
-function initPouch({}) {
-  this._db = new PouchDB('yield-data');
+function setDrawMode({input, state}) {
+  state.set(['home', 'view', 'drawMode'], input.drawMode); 
 };
 
 function getAccessToken({input, state, output}) {
@@ -69,38 +69,18 @@ function getAccessToken({input, state, output}) {
     output.success({token:accessToken});
   });
 };
-
 getAccessToken.outputs = ['success', 'error'];
 getAccessToken.async = true;
 
 function storeRev({input, state}) {
-  state.set([ 'home', 'yield_hashes', input.geohash], input.rev);
+  //TODO: figure out why geohash is undefined sometimes in the recievedRequestResponse signal in RasterLayer/index.js
+  if (input.geohash) {
+    state.set(['home', 'yield_revs', input.geohash], input.rev);
+  }
 };
 
 function storeData({input, state}) {
-/*
-  if (!input.error) { 
-    var img = input.context.getImageData(0,0,256,256);
-    var data = img.data;
 
-    for (var j = 0; j < img.height; j++) {
-      for (var i = 0; i < img.width; i++) {
-        //TODO: Compute Color
-//        var color = getColor;
-        data[((j*256+i)*4)]   = 0; // red
-        data[((j*256+i)*4)+1] = 0; // green
-        data[((j*256+i)*4)+2] = 0; // blue
-        data[((j*256+i)*4)+3] = 128; // alpha
-      }
-    } 
-    input.context.putImageData(img, 0, 0);
-    input.context.drawImage(input.context.canvas, 0, 0); 
-  }
-  var doc = {data: input.data, imageData: data};
-  //TODO: after I get data in oada, get the geohash-7 as the ID
-  var docId = input.data.geohash7;
-  this._db.put(doc, docId);
-*/
 };
 
 function storeToken({input, state}) {
@@ -124,23 +104,23 @@ function setSortMode ({input, state}) {
 };
 
 function unselectNote ({input, state}) {
-  
-  };
+  state.set(['home', 'model', 'selected_note'], {});
+};
 
-function selectNewNote ({input, state}) {
-  if (state.get(['home', 'model', 'selected_note']) == input.newSelectedNote) {
-  } else {
+function selectNote ({input, state}) {
+  //check that the selected note isn't already selected
+  if (state.get(['home', 'model', 'selected_note']) !== input.note) {
+    // set the status of the currently selected note to "unselected"
     if (!_.isEmpty(state.get(['home', 'model', 'selected_note']))) {
       state.set(['home', 'model', 'notes', state.get(['home', 'model', 'selected_note']), 'selected'], false);
     }
-    state.set(['home', 'model', 'selected_note'], {});
-
-    state.set(['home', 'model', 'selected_note'], input.newSelectedNote);
-    state.set(['home', 'model', 'notes', input.newSelectedNote, 'selected'], true);
-
+    state.set(['home', 'model', 'selected_note'], input.note);
+    state.set(['home', 'model', 'notes', input.note, 'selected'], true);
+/*
+   // loop through each tag of each note, 
     _.each(state.get(['home', 'model', 'notes']), function(note) {
       _.each(note.tags, function(tag) {
-        if (!_.includes(state.get(['home','model', 'tags']),tag)) {
+        if (!_.includes(state.get(['home','model', 'tags']), tag)) {
           state.set(['home', 'model', 'tags', tag], {
             text: tag,
             references: 1,
@@ -151,6 +131,7 @@ function selectNewNote ({input, state}) {
         }
       });
     });
+*/
   }
 };
 
@@ -192,23 +173,25 @@ function updateTagsList({state}) {
   });
 };
 
-function createNewNote({state}) {
+function createNote({state, output}) {
   var newNote = {
+    id: uuid.v4(),
     text: '',
     tags: [],
     fields: [],
-    geojson: { "type":"Polygon",
-      "coordinates": [
-        []
-      ]
-     },
-     geojson_visible: 'Show',
+    geometry: [],
+//    geojson: { "type":"Polygon",
+//      "coordinates": [
+//        []
+//      ]
+//     },
+     geometry_visible: 'Show',
      color: getColor(),
      completions: [],
      selected: true,
-     id: uuid.v4(),
   };
   state.set(['home', 'model', 'notes', newNote.id], newNote);
+  output({note: newNote.id});
 };
 
 function getColor() {

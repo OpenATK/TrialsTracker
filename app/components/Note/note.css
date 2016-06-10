@@ -31,6 +31,12 @@
   right: 0;
   margin: 2px;
 }
+.done-drawing-button {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 2px;
+}
 .note-remove-button {
   position: absolute;
   bottom: 0;

@@ -1,129 +1,149 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
+import geolib from 'geolib';
+import gh from 'ngeohash';
+import { Promise } from 'bluebird';
+import PouchDB from 'pouchdb';
 
 var mouse_up_flag = false;
 var mouse_down_flag = false;
 
-export var dropPoint = [
- dropPointFunc 
+export var handleMouseDown = [
+ dropPoint 
 ];
 
 export var mouseMoveOnmap = [
-	mapMouseMove
+  mapMouseMove
 ];
 
 export var mouseUpOnmap = [
-	mapMouseUp
+  mapMouseUp
 ];
 
 export var ToggleMap = [
-	dragMapToggle
+  dragMapToggle
+];
+
+export var mouseDown = [
+  
 ];
 
 export var drawOnMap = [
-	drawOnMapp
 ];
 
-function dropPointFunc ({input, state}) {
-	if(state.get(['home', 'view', 'drawMode']) === true){
-		//console.log('mapMouseDown drop a point');
-		//console.log(input);
-		//console.log(state.get());
-	
-		mouse_up_flag = false;
-		var vertex = [input.vertex_value.lng, input.vertex_value.lat];
-		var currentSelectedNoteId = input.select_note;
-		//console.log(vertex);
-		//console.log(currentSelectedNoteId);
-		
-		_.each(state.get(['home', 'model', 'notes']), function(note) {
-			//console.log('note.id and selectedNote');
-			//console.log(note.id);	
-			if(note.id === currentSelectedNoteId){
-				//console.log(note.id);
-				//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']));
-				//console.log(vertex);
-				//console.log('before push');
+export var drawComplete = [
+  setDrawMode, computeBoundingBox, computeStats
+];
 
-			//state.select(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']).push(vertex);
-				state.push(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0'], vertex);
-				//console.log('after push');
-				//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates']));
-			}
-		});
-	
-		mouse_down_flag = true;
-	}
+function computeStats({input, state}) {
+  //Get the geohashes that fall inside the bounding box to subset the
+  //data points to evaluate.
+  new Promise( function () {
+    var db = new PouchDB('yield-data');
+    var bbox = input.bbox;
+    var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
+    var vertices = state.get(['home', 'model', 'notes', input.id, 'geometry']);
+    var sum;
+    var count;
+    for (var g = 0; g < geohashes.length; g++) {
+      db.get(geohashes[g])
+      .then(function(geohashData) {
+        _.each(geohashData.jsonData.data, function(pt) {
+          var point = {
+            latitude: pt.location.lat,
+            longitude: pt.location.lon
+          };
+          if (geolib.isPointInside(point, vertices)) {
+            sum = sum + pt.value;
+            count++;
+          }
+        });
+      }).catch(function(err) {
+        console.log(err);
+      });
+    }
+    return {mean: sum/count, count: count};
+  }).then( function(result) {
+  state.set(['home', 'model', 'notes', input.id, 'mean'], result.mean);
+  state.set(['home', 'model', 'notes', input.id, 'count'], result.count);
+  console.log(result);
+  });
+};
+
+
+function computeBoundingBox({input, state, output}) {
+  var vertices = state.get(['home', 'model', 'notes', input.id, 'geometry']);
+  var north = vertices[0].latitude;
+  var south = vertices[0].latitude;
+  var east = vertices[0].longitude;
+  var west = vertices[0].longitude;
+  for (var i = 0; i < vertices.length; i++) {
+    if (vertices[i].latitude > north) north = vertices[i].latitude;
+    if (vertices[i].latitude > south) south = vertices[i].latitude;
+    if (vertices[i].longitude > east) east = vertices[i].longitude;
+    if (vertices[i].longitude < west) west = vertices[i].longitude;
+  }
+  var bbox = {
+    north: north,
+    south: south,
+    east: east,
+    west: west,
+  };
+  state.get(['home', 'model', 'notes', input.id, 'bbox'], bbox);
+  output({bbox: bbox});
+};
+
+function setDrawMode({input, state}) {
+  state.set(['home', 'view', 'drawMode'], input.drawMode); 
+};
+
+function dropPoint ({input, state}) {
+  if(state.get(['home', 'view', 'drawMode']) == true){
+    mouse_up_flag = false;
+    var vertex = {latitude: input.pt.lat, longitude: input.pt.lng};
+    var currentSelectedNoteId = input.select_note;
+    _.each(state.get(['home', 'model', 'notes']), function(note) {
+      if (note.id === currentSelectedNoteId) {
+        state.push(['home', 'model', 'notes', note.id, 'geometry'], vertex);
+      }
+    });
+    mouse_down_flag = true;
+  }
 };
 
 function mapMouseMove ({input, state}) {
-	//console.log('mapMouseMove signal');
-	if(state.get(['home', 'view', 'drawMode']) === true){
-		//console.log(input);
-		//console.log('mouse_down_flag is');
-		//console.log(mouse_down_flag);
-		//console.log('mouse_up_flag is');
-		//console.log(mouse_up_flag);
-	
-		var vertex = [input.vertex_value.lng, input.vertex_value.lat];
-		var currentSelectedNoteId = input.selected_note;
-		//console.log(vertex);
-		//console.log(currentSelectedNoteId);
+  if(state.get(['home', 'view', 'drawMode']) === true){
+    var vertex = [input.vertex_value.lng, input.vertex_value.lat];
+    var currentSelectedNoteId = input.selected_note;
 
-		if(mouse_up_flag === true){
-			mouse_down_flag = false;
-		}
-	
-		if(mouse_down_flag === true){
-			_.each(state.get(['home', 'model', 'notes']), function(note) {
-				if(note.id === currentSelectedNoteId){
-					//console.log(note.id);
-					//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']));
-					//console.log(vertex);
-					//console.log('before update new position');
-				
-					var coor_array = state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']);
-					var coor_arr_length = coor_array.length;
-					//console.log(coor_array);
-					//console.log(coor_arr_length);
+    if (mouse_up_flag === true) {
+      mouse_down_flag = false;
+    }
+  
+    if (mouse_down_flag === true) {
+      _.each(state.get(['home', 'model', 'notes']), function(note) {
+        if(note.id === currentSelectedNoteId){
+        
+          var coor_array = state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']);
+          var coor_arr_length = coor_array.length;
 
-					state.set(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0', (coor_arr_length-1)], vertex);
-
-					//console.log('after update');
-					//console.log(state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates']));
-				}
-			});
-		}
-	}
+          state.set(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0', (coor_arr_length-1)], vertex);
+        }
+      });
+    }
+  }
 };
 
 function mapMouseUp ({input, state}) {
-	if(state.get(['home', 'view', 'drawMode']) === true){
-		//console.log('mouse up!');
-		mouse_up_flag = true;
-	}
+  if(state.get(['home', 'view', 'drawMode']) === true){
+    mouse_up_flag = true;
+  }
 };
 
 
 function dragMapToggle ({state}) {
-	//console.log('dragMapToggle');
-	//console.log(state.get(['home', 'view', 'drag']));
-	if (state.get(['home', 'view', 'drag'])) {
-		state.set(['home', 'view', 'drag'], false);
-	} else {
-		state.set(['home', 'view', 'drag'], true);
-	}
-	
-	//console.log(state.get(['home', 'view', 'drag']));
-}
-
-function drawOnMapp ({state}) {
-	//console.log('draw on map function called');
-	//console.log(state.get(['home', 'view', 'drawMode']));
-	if(state.get(['home', 'view', 'drawMode']) === false){
-		state.set(['home', 'view', 'drawMode'], true);
-	}else{
-		state.set(['home', 'view', 'drawMode'], false);
-	}
-	//console.log(state.get(['home', 'view', 'drawMode']));
-}
-
+  if (state.get(['home', 'view', 'drag'])) {
+    state.set(['home', 'view', 'drag'], false);
+  } else {
+    state.set(['home', 'view', 'drag'], true);
+  }
+};
