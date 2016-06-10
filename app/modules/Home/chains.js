@@ -6,12 +6,16 @@ import _ from 'lodash';
 import md5 from 'md5';
 import PouchDB from 'pouchdb';
 import oadaIdClient from 'oada-id-client';
+var agent = require('superagent-promise')(require('superagent'), Promise);
 
 export var initialize = [
   getAccessToken, {
-    success: [storeToken],
+    success: [storeToken, [getAvailableGeohashes, {
+      success: [storeAvailableGeohashes],
+      error: [],
+    }]],
     error: []
-  },
+  }, 
 ];
 
 export var changeSortMode = [
@@ -52,6 +56,21 @@ export var getYieldData = [
 export var handleRequestResponse = [
   storeRev,
 ];
+
+function storeAvailableGeohashes({input, state}) {
+  state.set(['home', 'model', 'availableGeohashes'], input.gh)
+};
+
+function getAvailableGeohashes({state,output}) {
+  var token = state.get(['home', 'token']).access_token;
+  return agent('GET', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7')
+    .set('Authorization', 'Bearer '+ token)
+    .end()
+    .then(function(response) {
+      var gh = Object.keys(response.body).filter((key) => key[0] !== '_'); 
+      output.success({gh});
+   });
+}
 
 function setDrawMode({input, state}) {
   state.set(['home', 'view', 'drawMode'], input.drawMode); 

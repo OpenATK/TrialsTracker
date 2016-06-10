@@ -9,6 +9,7 @@ import PouchDB from 'pouchdb';
 import bair from './Bair100.js';
 import { Promise } from 'bluebird';
 import cache from './cache.js';
+var agent = require('superagent-promise')(require('superagent'), Promise);
 
 function blendColors(c1, c2, percent) {
   let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
@@ -26,6 +27,7 @@ function blendColors(c1, c2, percent) {
     selectedMap: [ 'home', 'model', 'selected_map' ],
     token: [ 'home', 'token' ],
     yieldRevs: [ 'home', 'yield_revs' ],
+    availableGeohashes: ['home', 'model', 'availableGeohashes'],
   };
 })
 
@@ -58,22 +60,57 @@ export default class RasterLayer extends CanvasTileLayer {
     var bounds = L.latLngBounds(sw, ne);
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
 
-    var filtGeos = [];
-    for (var g = 0; g < geohashes.length; g++) {
-      if (bair[geohashes[g]]) {
-        filtGeos.push(geohashes[g]); 
-      }
-    }
-    
     //TODO: presence of a token should change state, cause a rerender
     if (this.props.token.access_token) {
       var promises = [];
-      for (var g = 0; g < filtGeos.length; g++) {
-        const cache_result = cache.tryGet(filtGeos[g]);
-        if (cache_result.isFulfilled()) {
+      for (var g = 0; g < geohashes.length; g++) {
+        if (this.props.availableGeohashes.indexOf(geohashes[g]) >= 0) {
+          //const cache_result = cache.tryGet(filtGeos[g]);
+          const cache_result = cache.tryGet(geohashes[g]);
+          if (cache_result.isFulfilled()) {
+            cache_result.then(function(result) {
+              if (result) {
+//                signals.recievedRequestResponse({geohash: filtGeos[g], rev:result._rev});
+                signals.recievedRequestResponse({geohash: geohashes[g], rev:result._rev});
+                _.each(result.data, function(val) {
+                   var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
+                  var pt = self.props.map.project(latlng);
+                  pt.x = Math.floor(pt.x - tilePoint.x*256);
+                  pt.y = Math.floor(pt.y - tilePoint.y*256);
+                  if (bounds.contains(latlng)) {
+                    var color = self.colorForvalue(val.value);
+                    pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
+                    pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
+                    pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
+                    pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
+                  }
+                });
+              }
+            });
+          } else {
+          //TODO: Show loading tile image
+          }
+          promises.push(cache_result);
+        }
+        Promise.all(promises).then(function() {
+          ctx.putImageData(imgData, 0, 0);
+          ctx.drawImage(canvas, 0, 0); 
+          self.leafletElement.tileDrawn(canvas);
+        });
+      }
+
+      var proms = [];
+//      for (var g = 0; g < filtGeos.length; g++) {
+      for (var g = 0; g < geohashes.length; g++) {
+        if (this.props.availableGeohashes.indexOf(geohashes[g]) >= 0) {
+        //first, get the rev to compare
+        
+        //If new data, update.
+        //TODO: consider writing a signal that calls an update function
+//        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+          const cache_result = cache.get(geohashes[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
           cache_result.then(function(result) {
             if (result) {
-              signals.recievedRequestResponse({geohash: filtGeos[g], rev:result._rev});
               _.each(result.data, function(val) {
                 var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
                 var pt = self.props.map.project(latlng);
@@ -89,48 +126,14 @@ export default class RasterLayer extends CanvasTileLayer {
               });
             }
           });
-        } else {
-          //TODO: Show loading tile image
+          proms.push(cache_result);
         }
-        promises.push(cache_result);
-      }
-      Promise.all(promises).then(function() {
-        ctx.putImageData(imgData, 0, 0);
-        ctx.drawImage(canvas, 0, 0); 
-        self.leafletElement.tileDrawn(canvas);
-      });
-
-      var proms = [];
-      for (var g = 0; g < filtGeos.length; g++) {
-        //first, get the rev to compare
-        
-        //If new data, update.
-        //TODO: consider writing a signal that calls an update function
-        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
-        cache_result.then(function(result) {
-          if (result) {
-            _.each(result.data, function(val) {
-              var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
-              var pt = self.props.map.project(latlng);
-              pt.x = Math.floor(pt.x - tilePoint.x*256);
-              pt.y = Math.floor(pt.y - tilePoint.y*256);
-              if (bounds.contains(latlng)) {
-                var color = self.colorForvalue(val.value);
-                pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
-                pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
-                pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
-                pixelData[((pt.y*256+pt.x)*4)+3] = 128; // alpha
-              }
-            });
-          }
+        Promise.all(proms).then(function() {
+          ctx.putImageData(imgData, 0, 0);
+          ctx.drawImage(canvas, 0, 0); 
+          self.leafletElement.tileDrawn(canvas);
         });
-        proms.push(cache_result);
       }
-      Promise.all(proms).then(function() {
-        ctx.putImageData(imgData, 0, 0);
-        ctx.drawImage(canvas, 0, 0); 
-        self.leafletElement.tileDrawn(canvas);
-      });
     }
   }
     
@@ -150,7 +153,7 @@ export default class RasterLayer extends CanvasTileLayer {
 //    for (let i = 0; i < numlevels-1; i++) {
 //      let bottom = levels[i];
       let bottom = {
-        value: 560,
+        value: 0,
         color: {
           r: 255,
           g: 0,
@@ -160,7 +163,7 @@ export default class RasterLayer extends CanvasTileLayer {
       }
 //      let top = levels[i+1];
       let top = {
-        value: 22325,
+        value: 400,
         color: {
           r: 0,
           g: 255,
