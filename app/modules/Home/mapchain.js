@@ -42,8 +42,8 @@ function computeStats({input, state}) {
     var bbox = input.bbox;
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
     var vertices = state.get(['home', 'model', 'notes', input.id, 'geometry']);
-    var sum;
-    var count;
+    var sum = 0;
+    var count = 0;
     for (var g = 0; g < geohashes.length; g++) {
       db.get(geohashes[g])
       .then(function(geohashData) {
@@ -53,6 +53,8 @@ function computeStats({input, state}) {
             longitude: pt.location.lon
           };
           if (geolib.isPointInside(point, vertices)) {
+            console.log('found one');
+            console.log(pt.value);
             sum = sum + pt.value;
             count++;
           }
@@ -64,8 +66,8 @@ function computeStats({input, state}) {
     return {mean: sum/count, count: count};
   }).then( function(result) {
   state.set(['home', 'model', 'notes', input.id, 'mean'], result.mean);
+  console.log(sum/count, count);
   state.set(['home', 'model', 'notes', input.id, 'count'], result.count);
-  console.log(result);
   });
 };
 
