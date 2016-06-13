@@ -38,6 +38,7 @@
     "cerebral-view-react": "^0.11.6",
     "file-loader": "^0.8.5",
     "font-awesome": "^4.6.3",
+    "geojson-area": "^0.2.1",
     "geolib": "^2.0.21",
     "leaflet": "^0.7.7",
     "lodash": "^4.5.1",

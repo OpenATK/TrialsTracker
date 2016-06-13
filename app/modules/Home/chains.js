@@ -7,11 +7,10 @@ import geolib from 'geolib';
 import md5 from 'md5';
 import PouchDB from 'pouchdb';
 import oadaIdClient from 'oada-id-client';
-//import L from 'leaflet';
-import GeometryUtil from 'leaflet-geometryutil';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var myTimer;
 var geohashesUrl = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
+import gjArea from 'geojson-area';
 
 
 export var initialize = [
@@ -98,12 +97,17 @@ function computeBoundingBox(vertices, id) {
 };
 
 function computeArea(vertices) {
-  console.log(GeometryUtil);
   var latlngs = [];
   for (var i = 0; i < vertices.length; i++) {
-    latlngs.push(L.latLng(vertices.latitude, vertices.longitude));
+    latlngs.push([vertices[i].longitude, vertices[i].latitude]);
   }
-  return GeometryUtil.geodesicArea(latlngs);
+  latlngs.push([vertices[0].longitude, vertices[0].latitude]);
+  var geojson = { 
+    "type": "Polygon",
+    "coordinates": [latlngs],
+  };
+  // calculate area and convert to acres
+  return gjArea.geometry(geojson)/4046.86; 
 };
 
 function prepNoteStats({state}) {
@@ -116,7 +120,11 @@ function prepNoteStats({state}) {
     var bbox = computeBoundingBox(note.geometry);
     state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
+    console.log(id);
     var vertices = state.get(['home', 'model', 'notes', id, 'geometry']);
+    var area = computeArea(vertices).toFixed(2);
+    console.log(area);
+    state.set(['home', 'model', 'notes', id, 'area'], area); 
     var sum = 0;
     var count = 0;
     var promises = [];
@@ -129,7 +137,7 @@ function prepNoteStats({state}) {
             longitude: pt.location.lon
           };
           if (geolib.isPointInside(point, vertices)) {
-            sum = sum + parseFloat(pt.value);
+            sum += parseFloat(pt.value);
             count++;
             return true;
           }

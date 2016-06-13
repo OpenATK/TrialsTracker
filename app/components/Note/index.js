@@ -84,6 +84,7 @@ class Note extends React.Component {
 
   
         <hr/>
+        {'Area: ' + this.props.note.area + ' acres'}
         <br/>
         {'Yield: ' + this.props.note.mean + ' bu/ac'}
         <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}>Delete Note</button>

@@ -16,11 +16,9 @@ var tempCache = {};
 exports.csvToOadaYield = function() {
   rr('.', function(err,files) {
     for (var i = 0; i < files.length; i++) {
-//    for (var i = 0; i < 15; i++) {
       if ((files[i]).substr(-3) == 'csv') {
         console.log('Processing ' + files[i]);
         var dataArray = csvjson.toObject(files[i]).output;
-//        var dataArray = csvjson.toObject('./2015/Zon/Zon80/zon_zon80_2015_harvest.csv').output;
         this.processData(dataArray, files[i]);
       }
     }
