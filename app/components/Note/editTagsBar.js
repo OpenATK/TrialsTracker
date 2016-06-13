@@ -20,11 +20,11 @@ class EditTagsBar extends React.Component {
     const signals = this.props.signals.home;
     var tags = [];
     var self = this;
+//        <button key={uuid.v4()} className={styles['remove-tag-button']} onClick={() => signals.removeTagButtonClicked({})}>X</button>
     _.each(this.props.tags, function(tag) {
       tags.push(<div key={uuid.v4()} className={styles["tag"]}>
-                  <button key={uuid.v4()} className={styles['remove-tag-button']} onClick={() => signals.removeTagButtonClicked({})}>X</button>
-                  {tag}
-                </div>);
+        {tag}
+        </div>);
     });
 
     return (

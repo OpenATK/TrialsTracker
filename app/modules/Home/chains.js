@@ -3,13 +3,19 @@ import gh from 'ngeohash';
 import request from 'superagent';
 import bair from './Bair100.js';
 import _ from 'lodash';
+import geolib from 'geolib';
 import md5 from 'md5';
 import PouchDB from 'pouchdb';
 import oadaIdClient from 'oada-id-client';
+//import L from 'leaflet';
+import GeometryUtil from 'leaflet-geometryutil';
 var agent = require('superagent-promise')(require('superagent'), Promise);
+var myTimer;
+var geohashesUrl = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
+
 
 export var initialize = [
-  getAccessToken, {
+  createDb, prepNoteStats, getAccessToken, {
     success: [storeToken, [getAvailableGeohashes, {
       success: [storeAvailableGeohashes],
       error: [],
@@ -53,9 +59,185 @@ export var getYieldData = [
   getData, 
 ];
 
-export var handleRequestResponse = [
-  storeRev,
+export var makeLiveDataRequest = [
+  sendNewData, {
+    success: [setNewData, requestAvailableGeohashes, {
+      success: [checkRevs],
+      error: [],
+    }],
+    error: [],
+  },
 ];
+
+export var startStopLiveData = [
+  startStopTimer,
+];
+
+export var handleTileGeohash = [
+  storeGeohash, 
+];
+  
+function computeBoundingBox(vertices, id) {
+  var north = vertices[0].latitude;
+  var south = vertices[0].latitude;
+  var east = vertices[0].longitude;
+  var west = vertices[0].longitude;
+  for (var i = 0; i < vertices.length; i++) {
+    if (vertices[i].latitude > north) north = vertices[i].latitude;
+    if (vertices[i].latitude > south) south = vertices[i].latitude;
+    if (vertices[i].longitude > east) east = vertices[i].longitude;
+    if (vertices[i].longitude < west) west = vertices[i].longitude;
+  }
+  var bbox = {
+    north: north,
+    south: south,
+    east: east,
+    west: west,
+  };
+  return bbox;
+};
+
+function computeArea(vertices) {
+  console.log(GeometryUtil);
+  var latlngs = [];
+  for (var i = 0; i < vertices.length; i++) {
+    latlngs.push(L.latLng(vertices.latitude, vertices.longitude));
+  }
+  return GeometryUtil.geodesicArea(latlngs);
+};
+
+function prepNoteStats({state}) {
+//Get the geohashes that fall inside the bounding box to subset the
+//data points to evaluate. Create an array of promises to return the
+//data from the db, calculate the average and count, then save to state.
+  var db = new PouchDB('yield-data');
+  var notes = state.get(['home', 'model', 'notes']);
+  _.each(notes, function(note, id) {
+    var bbox = computeBoundingBox(note.geometry);
+    state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
+    var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
+    var vertices = state.get(['home', 'model', 'notes', id, 'geometry']);
+    var sum = 0;
+    var count = 0;
+    var promises = [];
+    for (var g = 0; g < geohashes.length; g++) {
+      var promise = db.get(geohashes[g])
+      .then(function(geohashData) {
+        _.each(geohashData.jsonData.data, function(pt) {
+          var point = {
+            latitude: pt.location.lat,
+            longitude: pt.location.lon
+          };
+          if (geolib.isPointInside(point, vertices)) {
+            sum = sum + parseFloat(pt.value);
+            count++;
+            return true;
+          }
+        });
+      }).catch(function(err) {
+        console.log(err);
+      });
+      promises.push(promise);
+    }
+    return Promise.all(promises).then(function() {
+    }).then(function(result) {
+      state.set(['home', 'model', 'notes', id, 'mean'], (sum/count).toFixed(2));
+      state.set(['home', 'model', 'notes', id, 'count'], count);
+    });
+  });
+};
+
+function createDb({}) {
+
+};
+
+function setNewData({input, state}) {
+  console.log('setting new data value');
+  state.set(['home', 'dummy_value'], input.value+1);
+};
+
+function sendNewData({state, output}) {
+  var token = state.get(['home', 'token']).access_token;
+  console.log('sending new data');
+  var value = state.get(['home', 'dummy_value']);
+  return agent('PUT', geohashesUrl+'dp68rsz/data/bd82151e-462c-4631-9b18-8024a8aa2d5f/')
+    .set('Authorization', 'Bearer '+ token)
+    .send({value: value+1})
+    .end()
+    .then(function(response) {
+      output.success({value});
+   });
+};
+sendNewData.outputs = ['success', 'error'];
+sendNewData.async = true;
+
+
+function storeGeohash({input, state}) {
+  state.set(['home', 'model', 'current_geohashes', input.geohash], input.rev); 
+};
+
+function startStopTimer({input, state}) {
+  if (state.get(['home', 'live_data'])) {
+    state.set(['home', 'live_data'], 'false');
+  } else {
+    state.set(['home', 'live_data'], 'true');
+  }
+};
+
+function requestAvailableGeohashes ({state, output}) {
+  console.log('requesting newest geohash revs');
+  var token = state.get(['home', 'token']).access_token;
+  return agent('GET', geohashesUrl)
+    .set('Authorization', 'Bearer '+ token)
+    .end()
+    .then(function(response) {
+      // Get the revs
+      var revs = {};
+      console.log(response.body);
+      _.each(response.body, function(geohash, key) {
+        if (geohash._rev) {
+          revs[key] = geohash._rev;
+        }
+      });
+      output.success({revs});
+   });
+};
+
+requestAvailableGeohashes.outputs = ['success', 'error'];
+requestAvailableGeohashes.async = true;
+
+function checkRevs ({input, state}) {
+  var db = new PouchDB('yield-data');
+  var token = state.get(['home', 'token']).access_token;
+  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  console.log(currentGeohashes.dp68rsz);
+  var geohashesToCheck = { dp68rsz: currentGeohashes.dp68rsz}; //hard code geohashes here
+//TODO: Enable the next line eventually. current_geohashes should likely
+//      contain the set of geohashes on screen at all times. It could also
+//      be a user-specified area -> geohashes to monitor.
+//  var geohashesToCheck = state.get(['home', 'view', 'current_geohashes']);
+//  var availableGeohashes = state.get(['home', 'model', 'availableGeohashes']);
+  _.each(geohashesToCheck, function(rev, key) {
+    console.log(rev);
+    console.log(key);
+    console.log(input.revs[key]);
+    if (input.revs[key] !== rev) {
+      console.log('updating!');
+      return agent('GET', geohashesUrl+key)
+        .set('Authorization', 'Bearer '+ token)
+        .end()
+        .then(function(response) {
+          console.log('setting state');
+          state.set(['home', 'model', 'current_geohashes', key], response.body._rev);
+          db.put({jsonData: response.body}, key).catch(function(err) {
+            if (err.status !== 409) {
+              throw err;
+            }
+          });
+        });   
+    }
+  });
+};
 
 function storeAvailableGeohashes({input, state}) {
   state.set(['home', 'model', 'availableGeohashes'], input.gh)
@@ -70,7 +252,7 @@ function getAvailableGeohashes({state,output}) {
       var gh = Object.keys(response.body).filter((key) => key[0] !== '_'); 
       output.success({gh});
    });
-}
+};
 
 function setDrawMode({input, state}) {
   state.set(['home', 'view', 'drawMode'], input.drawMode); 
@@ -90,13 +272,6 @@ function getAccessToken({input, state, output}) {
 };
 getAccessToken.outputs = ['success', 'error'];
 getAccessToken.async = true;
-
-function storeRev({input, state}) {
-  //TODO: figure out why geohash is undefined sometimes in the recievedRequestResponse signal in RasterLayer/index.js
-  if (input.geohash) {
-    state.set(['home', 'yield_revs', input.geohash], input.rev);
-  }
-};
 
 function storeData({input, state}) {
 

@@ -25,9 +25,9 @@ function blendColors(c1, c2, percent) {
 @Cerebral((props) => {
   return {
     selectedMap: [ 'home', 'model', 'selected_map' ],
-    token: [ 'home', 'token' ],
-    yieldRevs: [ 'home', 'yield_revs' ],
     availableGeohashes: ['home', 'model', 'availableGeohashes'],
+    currentGeohashes: ['home', 'model', 'current_geohashes'],
+    liveData: ['home', 'live_data'],
   };
 })
 
@@ -36,13 +36,16 @@ export default class RasterLayer extends CanvasTileLayer {
   componentWillMount() {
     super.componentWillMount();
     this.leafletElement.drawTile = this.drawTile.bind(this);
+    this.currentGeohashes = this.props.currentGeohashes;
   }
 
   componentWillUnmount() {
-    this.canvas.remove();
+    console.log('unmounting');
+    console.log(this);
   }
 
   drawTile(canvas, tilePoint, zoom) {
+    console.log('rndering tilepoint ' + tilePoint);
     var db = new PouchDB('yield-data');
     var self = this;
     const signals = this.props.signals.home;
@@ -50,8 +53,6 @@ export default class RasterLayer extends CanvasTileLayer {
     var imgData = ctx.createImageData(256, 256);
     var pixelData = imgData.data;
 
-//Optionally, a cached tile may be requested here and loaded immediately! Then asynctasks move forward
- 
     //Compute the geohash tiles needed for this image tile
     var tileSwPt = new L.Point(tilePoint.x*256, (tilePoint.y*256)+256);
     var tileNePt = new L.Point((tilePoint.x*256)+256, tilePoint.y*256);
@@ -61,17 +62,16 @@ export default class RasterLayer extends CanvasTileLayer {
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
 
     //TODO: presence of a token should change state, cause a rerender
-    if (this.props.token.access_token) {
+    if (this.props.token) {
       var promises = [];
       for (var g = 0; g < geohashes.length; g++) {
         if (this.props.availableGeohashes.indexOf(geohashes[g]) >= 0) {
-          //const cache_result = cache.tryGet(filtGeos[g]);
+//        if (this.props.availableGeohashes[geohashes[g]]) {
           const cache_result = cache.tryGet(geohashes[g]);
           if (cache_result.isFulfilled()) {
             cache_result.then(function(result) {
               if (result) {
-//                signals.recievedRequestResponse({geohash: filtGeos[g], rev:result._rev});
-                signals.recievedRequestResponse({geohash: geohashes[g], rev:result._rev});
+                signals.gotTileGeohash({geohash:result.context['geohash-7'], rev: result._rev});
                 _.each(result.data, function(val) {
                    var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
                   var pt = self.props.map.project(latlng);
@@ -100,24 +100,20 @@ export default class RasterLayer extends CanvasTileLayer {
       }
 
       var proms = [];
-//      for (var g = 0; g < filtGeos.length; g++) {
       for (var g = 0; g < geohashes.length; g++) {
+//        if (this.props.availableGeohashes[geohashes[g]]) {
         if (this.props.availableGeohashes.indexOf(geohashes[g]) >= 0) {
-        //first, get the rev to compare
-        
-        //If new data, update.
-        //TODO: consider writing a signal that calls an update function
-//        const cache_result = cache.get(filtGeos[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
-          const cache_result = cache.get(geohashes[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', this.props.token.access_token);
+          const cache_result = cache.get(geohashes[g], 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/', self.props.token, self.props.currentGeohashes[geohashes[g]]);
           cache_result.then(function(result) {
             if (result) {
+              signals.gotTileGeohash({geohash:result.context['geohash-7'], rev: result._rev});
               _.each(result.data, function(val) {
                 var latlng = L.latLng(val.location.lat, val.location.lon, zoom);
                 var pt = self.props.map.project(latlng);
                 pt.x = Math.floor(pt.x - tilePoint.x*256);
                 pt.y = Math.floor(pt.y - tilePoint.y*256);
                 if (bounds.contains(latlng)) {
-                  var color = self.colorForvalue(val.value);
+                  var color = self.colorForvalue(val.value, result.stats.max, result.stats.min);
                   pixelData[((pt.y*256+pt.x)*4)]   = color.r; // red
                   pixelData[((pt.y*256+pt.x)*4)+1] = color.g; // green
                   pixelData[((pt.y*256+pt.x)*4)+2] = color.b; // blue
@@ -137,7 +133,7 @@ export default class RasterLayer extends CanvasTileLayer {
     }
   }
     
-  colorForvalue(val) {
+  colorForvalue(val, max, min) {
 
 //    if (val == raster.nodataval) {
 //      return {r: 0, g: 0, b: 0, a: 0 };
@@ -163,7 +159,7 @@ export default class RasterLayer extends CanvasTileLayer {
       }
 //      let top = levels[i+1];
       let top = {
-        value: 400,
+        value: 500,
         color: {
           r: 0,
           g: 255,
@@ -181,6 +177,13 @@ export default class RasterLayer extends CanvasTileLayer {
   }
 
   render() {
+    const signals = this.props.signals.home;
+    console.log('RASTERLAYER RERENDER');
+
+    if (this.props.liveData) {
+      this.leafletElement.redraw();
+      setTimeout(signals.liveDataRequested({}), 3000);
+    }
     return super.render();
   }
 }

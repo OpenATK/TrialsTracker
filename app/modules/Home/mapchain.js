@@ -90,7 +90,7 @@ function computeBoundingBox({input, state, output}) {
     east: east,
     west: west,
   };
-  state.get(['home', 'model', 'notes', input.id, 'bbox'], bbox);
+  state.set(['home', 'model', 'notes', input.id, 'bbox'], bbox);
   output({bbox: bbox});
 };
 

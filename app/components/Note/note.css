@@ -48,6 +48,7 @@
   resize: none;
   border: none;
   outline: none;
+  font-size: 16px;
 }
 .tag {
   position: relative;

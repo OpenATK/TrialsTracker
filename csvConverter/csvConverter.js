@@ -8,22 +8,23 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'TjBuEIdmKeeSAd_iVbnM4rgjufeh_IMXRAEqhVy8';
+var token = 'bMcHlgNNzgNEx4xB_F10Y0lfQSU6Ec1Wkc0pDVrr';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
-
+var tempCache = {};
 
 exports.csvToOadaYield = function() {
   rr('.', function(err,files) {
-//    for (var i = 0; i < files.length; i++) {
-    for (var i = 0; i < 1; i++) {
-     // if ((files[i]).substr(-3) == 'csv') {
-      console.log('Processing ' + files[i]);
-//        var dataArray = csvjson.toObject(files[i]).output;
-        var dataArray = csvjson.toObject('2015/Calloway/Church17/calloway_church17_2015_harvest.csv').output;
-        this.processData(dataArray);
-    //  }
+    for (var i = 0; i < files.length; i++) {
+//    for (var i = 0; i < 15; i++) {
+      if ((files[i]).substr(-3) == 'csv') {
+        console.log('Processing ' + files[i]);
+        var dataArray = csvjson.toObject(files[i]).output;
+//        var dataArray = csvjson.toObject('./2015/Zon/Zon80/zon_zon80_2015_harvest.csv').output;
+        this.processData(dataArray, files[i]);
+      }
     }
+    this.pushData();
   });
 };
 
@@ -39,19 +40,16 @@ recomputeStats = function(curStats, additionalStats) {
   return curStats;
 }
 
-processData = function(csvJson) {
-  tempCache = {};
+processData = function(csvJson, filename) {
 
-  // Loop through each row, create a geohash if necessary
   var geohash;
   for (var i = 0; i < csvJson.length; i++) {
-    // Find the geohash its in, open it up (create if necessary) and append to data
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
+    var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
+    if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
+    if (!val) console.log(csvJson[i], val);
     //If the geohash exists, append to it and recompute stats, else create it.
     if (tempCache[geohash]) {
-
-      var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
-      if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
       additionalStats = {
         n: 1,
         sum: val,
@@ -60,20 +58,8 @@ processData = function(csvJson) {
         max: val,
 //        std: 0,
       };
-      console.log(additionalStats);
+//      console.log(additionalStats);
       tempCache[geohash].stats = recomputeStats(tempCache[geohash].stats, additionalStats);
-
-      // add a data point
-      tempCache[geohash].data[uuid.v4()] = {
-        location: {
-          lat: csvJson[i].Latitude,
-          lon: csvJson[i].Longitude,
-          alt: csvJson[i]['Elevation(ft)'],
-        },
-        value: csvJson[i]['Estimated Volume (Wet)(bu/ac)'], 
-        time: csvJson[i]['Date / Time'],
-      };
-
     } else {
       tempCache[geohash] = {
 
@@ -93,10 +79,10 @@ processData = function(csvJson) {
 
         stats: {
           n: 1,
-          sum: +csvJson[i]['Estimated Volume (Wet)(bu/ac)'],
-          mean: +csvJson[i]['Estimated Volume (Wet)(bu/ac)'],
-          min: +csvJson[i]['Estimated Volume (Wet)(bu/ac)'],
-          max: +csvJson[i]['Estimated Volume (Wet)(bu/ac)'],
+          sum: val,
+          mean: val,
+          min: val,
+          max: val,
 //          std: 0,
         },
    
@@ -108,54 +94,71 @@ processData = function(csvJson) {
         },    
   
         data: {},
-
-      };
-      tempCache[geohash].data[uuid.v4()] = {
-        location: {
-          lat: csvJson[i].Latitude,
-          lon: csvJson[i].Longitude,
-          alt: csvJson[i]['Elevation(ft)'],
-        },
-        value: +csvJson[i]['Estimated Volume (Wet)(bu/ac)'],
-        time: csvJson[i]['Date / Time'],
       };
     }
-
+    // Add the data point
+    tempCache[geohash].data[uuid.v4()] = {
+      location: {
+        lat: csvJson[i].Latitude,
+        lon: csvJson[i].Longitude,
+        alt: csvJson[i]['Elevation(ft)'],
+      },
+      value: val,
+      time: csvJson[i]['Date / Time'],
+    };
   }
+}
+
+pushData = function() {
   var self = this;
-
-  Promise.each(Object.keys(tempCache), function(key) {
-   var geohash = tempCache[key];
-    //If the geohash is on the server, append and update; else create  
+  var cacheKeys = Object.keys(tempCache);
+  var k = 0;
+  console.log(cacheKeys.length);
+  console.log(cacheKeys.length*5.55 + ' acres');
+  Promise.each(cacheKeys, function(key) {
+    var geohash = tempCache[key];
+    console.log(key, k++);
+    if (!geohash) { 
+      console.log(key);
+      return false;
+    }
+// Attempt to get the geohash.
     return agent('GET', url+key)
-     .set('Authorization', 'Bearer '+ token)
-     .end()
-     .then(function onResult(response) {
-       console.log(response.text);
-       var newStats = self.recomputeStats(response.stats, geohash.stats);
-       // Put the updated stats and the additional data points
-       return agent('PUT', url+key+'/stats/')
-         .set('Authorization', 'Bearer '+ token)
-         .send(newStats)
-         .end();
-     })
-    .catch((e) => e.response && e.response.res.statusCode === 404, function() {
-      var tmp = _.omit(geohash, 'data');
-console.log(tmp);
-      return agent('POST', 'https://localhost:3000/resources/')
-        .set('Authorization', 'Bearer '+ token)
-        .send(tmp)
-        .end()
-        .then(function(response) {
-          var resId = response.headers.location.replace(/^\/resources\//, '');
-
-          return agent('PUT', url + key)
-            .set('Authorization', 'Bearer ' + token)
-            .send({_id: resId, _rev: '0-0'})
-            .end();
-        });
-     })
+      .set('Authorization', 'Bearer '+ token)
+      .end()
+// Success: update the stats 
+      .then(function onResult(response) {
+//        console.log('Updating existing geohash');
+//        console.log(response.body);
+        var newStats = self.recomputeStats(response.body.stats, geohash.stats);
+        return agent('PUT', url+key+'/stats/')
+          .set('Authorization', 'Bearer '+ token)
+          .send(newStats)
+          .end();
+      })
+// Failure: Post the geohash resource omitting the data
+      .catch((e) => e.response && e.response.res.statusCode === 404, function() {
+        var tmp = _.omit(geohash, 'data');
+//        console.log('POSTING new geohash:');
+//        console.log(tmp);
+//        console.log(geohash);
+        return agent('POST', 'https://localhost:3000/resources/')
+          .set('Authorization', 'Bearer '+ token)
+          .send(tmp)
+          .end()
+//Now, add a link in /resources
+          .then(function(response) {
+            var resId = response.headers.location.replace(/^\/resources\//, '');
+            return agent('PUT', url + key)
+              .set('Authorization', 'Bearer ' + token)
+              .send({_id: resId, _rev: '0-0'})
+              .end();
+          });
+      })
+// Now add the data regardless
     .then(function() {
+//      console.log('PUTTING the data');
+//      console.log(geohash);
       return agent('PUT', url+key+'/data/')
         .set('Authorization', 'Bearer '+ token)
         .send(geohash.data)
@@ -164,7 +167,8 @@ console.log(tmp);
   })
   .catch(function (e) {
     console.log('Bad error');
+    console.log(filename);
     console.log(e);
-throw e;
+    throw e;
   });
 }

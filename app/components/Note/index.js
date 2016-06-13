@@ -4,6 +4,7 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
+import Color from 'color'; 
 
 @Cerebral((props) => {
   return {
@@ -24,6 +25,17 @@ class Note extends React.Component {
     showHide: PropTypes.string,
   };
 
+  generateTextColor(color) {
+    var hsvColor = Color(color).hsv();
+    console.log(hsvColor);
+    hsvColor.v *= 0.8;
+    console.log(hsvColor);
+    hsvColor = Color(hsvColor);
+    console.log(hsvColor);
+    console.log(hsvColor.hexString());
+    return Color(hsvColor).hexString();
+  };
+
   render() {
     var tags = [];
     var self = this;
@@ -35,10 +47,20 @@ class Note extends React.Component {
 //      }
     });
     const signals = this.props.signals.home;
+/*
+        <button 
+          type="button" 
+          className={styles['note-show-hide-button']} 
+          onClick={() => signals.showHideButtonClicked({id: this.props.id})}
+          >{this.props.geometryVisible ? 'Hide' : 'Show'}
+        </button>
+*/ 
+    var textColor = this.generateTextColor(this.props.note.color);
     return (
       <div 
         key={uuid.v4()}
         style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
+        color={textColor}
         className={styles[this.props.selected ? 'selected-note' : 'note']} 
         onClick={() => signals.noteClicked({note:this.props.id})}
       >
@@ -55,23 +77,15 @@ class Note extends React.Component {
           style={{backgroundColor:this.props.note.color}} 
           value={this.props.text} 
           minRows={1} 
+          color={textColor}
           className={styles['note-text-input']} 
           onChange={(e) => signals.noteTextChanged.sync({value: e.target.value, noteId:this.props.id})}
         ></TextAreaAutoSize>
 
-        <button 
-          type="button" 
-          className={styles['note-show-hide-button']} 
-          onClick={() => signals.showHideButtonClicked({id: this.props.id})}
-          >{this.props.geometryVisible ? 'Hide' : 'Show'}
-        </button>
-   
+  
         <hr/>
-        {'Area: ' + this.props.note.area}
         <br/>
-        {'Mean Estimated Volume (Wet): ' + this.props.note.mean + ' bu/ac'}
-        <br/>
-        {'Data Points: ' + this.props.note.count}
+        {'Yield: ' + this.props.note.mean + ' bu/ac'}
         <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}>Delete Note</button>
         <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']} >Edit Tags</button>
         <EditTagsBar id={this.props.id} color={this.props.note.color}/>

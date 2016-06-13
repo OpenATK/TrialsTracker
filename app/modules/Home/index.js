@@ -9,9 +9,11 @@ import { addNewNote } from './chains';
 import { removeNote } from './chains';
 import { getYieldData } from './chains';
 import { handleAuth } from './chains';
-import { handleRequestResponse } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
+import { startStopLiveData } from './chains';
+import { handleTileGeohash } from './chains';
+import { makeLiveDataRequest } from './chains';
 
 import { drawComplete } from './mapchain';
 import { handleMouseDown } from './mapchain';
@@ -34,6 +36,18 @@ export default (options = {}) => {
         ...initialize
       ],
 
+      gotTileGeohash: [
+        ...handleTileGeohash,
+      ],
+   
+      startStopLiveDataButtonClicked: [
+        ...startStopLiveData,
+     ],
+
+     liveDataRequested: [
+       ...makeLiveDataRequest,
+     ],
+
       mapDoubleClicked: [
         ...handleMouseDown, drawComplete,
       ],
@@ -42,10 +56,6 @@ export default (options = {}) => {
         ...drawComplete,
       ],
     
-      recievedRequestResponse: [
-        ...handleRequestResponse,
-      ],
-
       recievedAccessToken: [
         ...handleAuth,
       ],

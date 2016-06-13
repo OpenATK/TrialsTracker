@@ -18,11 +18,16 @@ var tileIndex;
     selectedNote: ['home', 'model', 'selected_note'],
     dragMode: ['home', 'view', 'dragMode'],
     drawMode: ['home', 'view', 'drawMode'],
-    yield: ['home', 'yield' ],
+    liveData: ['home', 'live_data'],
+    token: ['home', 'token'],
   };
 })
 
 class _Map extends React.Component {
+
+  componentWillMount() {
+    this.timer;
+  }
 
   render() {
     const signals = this.props.signals.home;
@@ -80,10 +85,9 @@ class _Map extends React.Component {
           onLeafletMousedown={ (e) => signals.mouseDownOnMap({pt: e.latlng, select_note: this.props.selectedNote, noteSelected:this.props.id}) } 
           onLeafletMouseMove={ (e) => signals.mouseMoveOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
           onLeafletMouseUp={ (e) => signals.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
-          doubleClickZoom={false}
-          onLeafletdblclick={ (e) => 
-            signals.mapDoubleClicked({pt: e.latlng, drawMode: false})
-          }
+//          onLeafletdblclick={ (e) => 
+//            signals.mapDoubleClicked({pt: e.latlng, drawMode: false})
+//          }
           dragging={this.props.dragMode} 
           center={position} 
           ref='map'
@@ -97,8 +101,15 @@ class _Map extends React.Component {
           <RasterLayer 
             url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
             async={true}
+            token={this.props.token.access_token}
           />
 
+          <button 
+            type="button" 
+            id='start-stop-live-data-button'  
+            onClick={(e) => signals.startStopLiveDataButtonClicked({})}
+            >{this.props.liveData ? 'Stop' : 'Start' }
+          </button>
           {markerList}
           {polygonList}
 

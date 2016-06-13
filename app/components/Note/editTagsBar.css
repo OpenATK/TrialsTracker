@@ -1,7 +1,4 @@
 .editTagsBar {
-  border-style:solid;
-  border-width:2px;
-  border-color:black;
 ;
 }
 .input {
@@ -12,12 +9,12 @@
 .tag {
   position: relative;
   background-color: white;
-  border-radius: 2px;
+  border-radius: 5px;
   border: 2px solid black;
   color: #638421;
   display: inline-block;
   font-family: sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   margin: 2px;
   padding: 4px;

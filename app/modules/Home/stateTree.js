@@ -1,14 +1,19 @@
 import uuid from 'uuid';
 
 var tree = {
+ 
+  dummy_value: 27,
   
   yield_revs: {},
 
   user: {},
   
   token: {},
+  
+  live_data: false,
 
   model: {
+    current_geohashes: {},
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
     tags: initial_tags(),

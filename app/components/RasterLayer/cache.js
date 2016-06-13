@@ -11,6 +11,7 @@ var global_cache = {};
 
 module.exports = {
   get: function(geohash, url, token, rev) {
+// Get the data and compare the revs; If new, update. Else, return
     return Promise.try(function() {
       var db = new PouchDB('yield-data');
       return agent('GET', url+geohash)
@@ -18,19 +19,18 @@ module.exports = {
       .end()
       .then(function onResult(response) {
         // Now, save the response in the database
-        var res = JSON.parse(response.text); 
+        var res = response.body; 
         if (res._rev === rev) {
           return false;
         } else {
-          //TODO: limit global cache to a particular size
-          //TODO: fire signal to recompute stats!
-          global_cache[geohash] = response;
+//TODO: limit global cache to a particular size
+          global_cache[geohash] = res;
           var doc = {jsonData: res};
           var docId = geohash;
-          //TODO: Fix soon-to-be deprecated db.put.
-          // escape the _type key
-          // give the geohash as a secondary key and map
-          // the primary and secondary keys using pouchdb query
+//TODO: Fix soon-to-be deprecated db.put.
+// -escape the _type key
+// -give the geohash as a secondary key and map
+//  the primary and secondary keys using pouchdb query
           db.put(doc, docId).catch(function(err) {
             if (err.status !== 409) {
               throw err;
@@ -49,17 +49,15 @@ module.exports = {
   tryGet: function(geohash) {
     return Promise.try(function() {
       var db = new PouchDB('yield-data');
-      // 1. Attempt to retrieve from global cache in memory
+// 1. Attempt to retrieve from global cache in memory
       if (global_cache[geohash]) 
         return global_cache[geohash];
-      // 2. Attempt to retrieve from Pouch cache (not in memory)
-//      console.log('not in global cache');
+// 2. Attempt to retrieve from Pouch cache (not in memory)
       return db.get(geohash)
       .then(function(doc) {
-        // TODO: limit global cache to a particular size
+// TODO: limit global cache to a particular size
         global_cache[geohash] = response;
         return doc.jsonData.data;
-      // 3. Attempt to retrieve from the server
       }).catch(function(err) {
       });
     });

@@ -25,3 +25,10 @@
 	z-index: 3;
 }
 
+:global #start-stop-live-data-button {
+	position: absolute;
+	right: 40px;
+	top: 20px;
+	z-index: 3;
+}
+
