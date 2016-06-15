@@ -150,7 +150,7 @@ export default class RasterLayer extends CanvasTileLayer {
 //    for (let i = 0; i < numlevels-1; i++) {
 //      let bottom = levels[i];
       let bottom = {
-        value: 560,
+        value: 0,
         color: {
           r: 255,
           g: 0,
@@ -160,7 +160,7 @@ export default class RasterLayer extends CanvasTileLayer {
       }
 //      let top = levels[i+1];
       let top = {
-        value: 22325,
+        value: 500,
         color: {
           r: 0,
           g: 255,
