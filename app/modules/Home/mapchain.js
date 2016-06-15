@@ -35,18 +35,17 @@ export var drawComplete = [
 ];
 
 function computeStats({input, state}) {
-//Get the geohashes that fall inside the bounding box to subset the
-//data points to evaluate. Create an array of promises to return the
-//data from the db, calculate the average and count, then save to state.
+  //Get the geohashes that fall inside the bounding box to subset the
+  //data points to evaluate.
+  new Promise( function () {
     var db = new PouchDB('yield-data');
     var bbox = input.bbox;
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
     var vertices = state.get(['home', 'model', 'notes', input.id, 'geometry']);
     var sum = 0;
     var count = 0;
-    var promises = [];
     for (var g = 0; g < geohashes.length; g++) {
-      var promise = db.get(geohashes[g])
+      db.get(geohashes[g])
       .then(function(geohashData) {
         _.each(geohashData.jsonData.data, function(pt) {
           var point = {
@@ -54,20 +53,21 @@ function computeStats({input, state}) {
             longitude: pt.location.lon
           };
           if (geolib.isPointInside(point, vertices)) {
-            sum = sum + parseFloat(pt.value);
+            console.log('found one');
+            console.log(pt.value);
+            sum = sum + pt.value;
             count++;
-            return true;
           }
         });
       }).catch(function(err) {
         console.log(err);
       });
-      promises.push(promise);
     }
-    return Promise.all(promises).then(function() {
-  }).then(function(result) {
-    state.set(['home', 'model', 'notes', input.id, 'mean'], (sum/count).toFixed(2));
-    state.set(['home', 'model', 'notes', input.id, 'count'], count);
+    return {mean: sum/count, count: count};
+  }).then( function(result) {
+  state.set(['home', 'model', 'notes', input.id, 'mean'], result.mean);
+  console.log(sum/count, count);
+  state.set(['home', 'model', 'notes', input.id, 'count'], result.count);
   });
 };
 
