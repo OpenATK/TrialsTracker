@@ -8,7 +8,7 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'bMcHlgNNzgNEx4xB_F10Y0lfQSU6Ec1Wkc0pDVrr';
+var token = 'OTzuoYRU64_9QzfE-h2_FkKkkx8DTFHHhOWCBCYE';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -110,9 +110,9 @@ processData = function(csvJson, filename) {
 pushData = function() {
   var self = this;
   var cacheKeys = Object.keys(tempCache);
-  var k = 0;
+  var k = 1;
   console.log(cacheKeys.length);
-  console.log(cacheKeys.length*5.55 + ' acres');
+  console.log(cacheKeys.length*5.55 + ' acres in geohashes @ 5.5 acres per');
   Promise.each(cacheKeys, function(key) {
     var geohash = tempCache[key];
     console.log(key, k++);

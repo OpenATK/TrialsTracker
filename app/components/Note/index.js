@@ -27,12 +27,8 @@ class Note extends React.Component {
 
   generateTextColor(color) {
     var hsvColor = Color(color).hsv();
-    console.log(hsvColor);
     hsvColor.v *= 0.8;
-    console.log(hsvColor);
     hsvColor = Color(hsvColor);
-    console.log(hsvColor);
-    console.log(hsvColor.hexString());
     return Color(hsvColor).hexString();
   };
 

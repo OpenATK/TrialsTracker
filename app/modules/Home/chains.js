@@ -1,7 +1,6 @@
 import uuid from 'uuid';
 import gh from 'ngeohash';
 import request from 'superagent';
-import bair from './Bair100.js';
 import _ from 'lodash';
 import geolib from 'geolib';
 import md5 from 'md5';
@@ -15,12 +14,13 @@ import gjArea from 'geojson-area';
 
 export var initialize = [
   createDb, prepNoteStats, getAccessToken, {
-    success: [storeToken, [getAvailableGeohashes, {
-      success: [storeAvailableGeohashes],
-      error: [],
-    }]],
-    error: []
-  }, 
+    success: [storeToken], 
+    error: [],
+  },
+  requestAvailableGeohashes, {
+    success: [storeAvailableGeohashes],
+    error: [],
+  },
 ];
 
 export var changeSortMode = [
@@ -75,8 +75,18 @@ export var startStopLiveData = [
 export var handleTileGeohash = [
   storeGeohash, 
 ];
-  
-function computeBoundingBox(vertices, id) {
+
+export var updateCurrentGeohashes = [
+  storeNewGeohashes,
+];
+
+function storeNewGeohashes({input, state}) {
+  Object.keys(input.geohashes).forEach((key) => {
+    state.set(['home', 'model', 'current_geohashes', key], input.geohashes[key]);
+  });
+};
+
+function computePolygonBoundingBox(vertices, id) {
   var north = vertices[0].latitude;
   var south = vertices[0].latitude;
   var east = vertices[0].longitude;
@@ -117,13 +127,11 @@ function prepNoteStats({state}) {
   var db = new PouchDB('yield-data');
   var notes = state.get(['home', 'model', 'notes']);
   _.each(notes, function(note, id) {
-    var bbox = computeBoundingBox(note.geometry);
+    var bbox = computePolygonBoundingBox(note.geometry);
     state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, 7);
-    console.log(id);
     var vertices = state.get(['home', 'model', 'notes', id, 'geometry']);
     var area = computeArea(vertices).toFixed(2);
-    console.log(area);
     state.set(['home', 'model', 'notes', id, 'area'], area); 
     var sum = 0;
     var count = 0;
@@ -181,7 +189,13 @@ sendNewData.async = true;
 
 
 function storeGeohash({input, state}) {
-  state.set(['home', 'model', 'current_geohashes', input.geohash], input.rev); 
+  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  console.log(currentGeohashes);
+  console.log(input.rev, currentGeohashes[input.geohash]);
+  if (input.rev !== currentGeohashes[input.geohash]) {
+    console.log('updating current geohashes');
+    state.set(['home', 'model', 'current_geohashes', input.geohash], input.rev); 
+  }
 };
 
 function startStopTimer({input, state}) {
@@ -199,18 +213,9 @@ function requestAvailableGeohashes ({state, output}) {
     .set('Authorization', 'Bearer '+ token)
     .end()
     .then(function(response) {
-      // Get the revs
-      var revs = {};
-      console.log(response.body);
-      _.each(response.body, function(geohash, key) {
-        if (geohash._rev) {
-          revs[key] = geohash._rev;
-        }
-      });
-      output.success({revs});
+      output.success({gh: response.body});
    });
 };
-
 requestAvailableGeohashes.outputs = ['success', 'error'];
 requestAvailableGeohashes.async = true;
 
@@ -248,9 +253,11 @@ function checkRevs ({input, state}) {
 };
 
 function storeAvailableGeohashes({input, state}) {
-  state.set(['home', 'model', 'availableGeohashes'], input.gh)
+  console.log('storing available geohashes');
+  state.set(['home', 'model', 'available_geohashes'], input.gh)
+  
 };
-
+/*
 function getAvailableGeohashes({state,output}) {
   var token = state.get(['home', 'token']).access_token;
   return agent('GET', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7')
@@ -262,6 +269,9 @@ function getAvailableGeohashes({state,output}) {
    });
 };
 
+getAvailableGeohashes.outputs = ['success', 'error'];
+getAvailableGeohashes.async = true;
+*/
 function setDrawMode({input, state}) {
   state.set(['home', 'view', 'drawMode'], input.drawMode); 
 };

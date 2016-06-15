@@ -20,7 +20,7 @@ module.exports = {
       .then(function onResult(response) {
         // Now, save the response in the database
         var res = response.body; 
-        if (res._rev === rev) {
+        if (res._rev == rev) {
           return false;
         } else {
 //TODO: limit global cache to a particular size
@@ -39,8 +39,8 @@ module.exports = {
           return res;
         }
       }, function onError(err) {
-//        console.log(err);
-          return false;
+        console.log(err);
+        return false;
       });
     });
   },

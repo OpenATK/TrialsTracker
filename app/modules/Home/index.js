@@ -14,6 +14,7 @@ import { handleNoteClick } from './chains';
 import { startStopLiveData } from './chains';
 import { handleTileGeohash } from './chains';
 import { makeLiveDataRequest } from './chains';
+import { updateCurrentGeohashes } from './chains';
 
 import { drawComplete } from './mapchain';
 import { handleMouseDown } from './mapchain';
@@ -34,6 +35,10 @@ export default (options = {}) => {
 
       init: [
         ...initialize
+      ],
+
+      recievedUpdatedGeohashes: [
+        ...updateCurrentGeohashes,
       ],
 
       gotTileGeohash: [

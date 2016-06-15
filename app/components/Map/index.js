@@ -101,7 +101,6 @@ class _Map extends React.Component {
           <RasterLayer 
             url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
             async={true}
-            token={this.props.token.access_token}
           />
 
           <button 

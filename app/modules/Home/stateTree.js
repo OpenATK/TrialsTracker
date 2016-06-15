@@ -13,6 +13,8 @@ var tree = {
   live_data: false,
 
   model: {
+    geohashes_cached: {},
+    geohashes_on_screen: {},
     current_geohashes: {},
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
