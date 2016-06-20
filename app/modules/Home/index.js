@@ -14,7 +14,9 @@ import { handleNoteClick } from './chains';
 import { startStopLiveData } from './chains';
 import { handleTileGeohash } from './chains';
 import { makeLiveDataRequest } from './chains';
-import { updateCurrentGeohashes } from './chains';
+import { updateGeohashes } from './chains';
+import { addGeohashes } from './chains';
+import { removeGeohashes } from './chains';
 
 import { drawComplete } from './mapchain';
 import { handleMouseDown } from './mapchain';
@@ -36,9 +38,9 @@ export default (options = {}) => {
       init: [
         ...initialize
       ],
-
+ 
       recievedUpdatedGeohashes: [
-        ...updateCurrentGeohashes,
+        ...updateGeohashes,
       ],
 
       gotTileGeohash: [
@@ -53,6 +55,14 @@ export default (options = {}) => {
        ...makeLiveDataRequest,
      ],
 
+     tileUnloaded: [
+       ...removeGeohashes,
+     ],
+
+      newTileDrawn: [
+        ...addGeohashes,
+      ],
+
       mapDoubleClicked: [
         ...handleMouseDown, drawComplete,
       ],
@@ -63,10 +73,6 @@ export default (options = {}) => {
     
       recievedAccessToken: [
         ...handleAuth,
-      ],
-
-      mapMoved: [
-        ...getYieldData
       ],
 
       sortingTabClicked: [

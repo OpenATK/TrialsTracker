@@ -54,10 +54,6 @@ export var handleAuth = [
   storeToken,
 ];
 
-export var getYieldData = [
-  getData, 
-];
-
 export var makeLiveDataRequest = [
   sendNewData, {
     success: [setNewData, requestAvailableGeohashes, {
@@ -76,13 +72,37 @@ export var handleTileGeohash = [
   storeGeohash, 
 ];
 
-export var updateCurrentGeohashes = [
+export var removeGeohashes = [
+  unregisterGeohashes,
+];
+
+export var addGeohashes = [
+  registerGeohashes,
+];
+
+export var updateGeohashes = [
   storeNewGeohashes,
 ];
 
+function registerGeohashes({input, state}) {
+  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+  input.geohashes.forEach((geohash) => {
+    if (availableGeohashes[geohash]) {
+      state.set(['home', 'model', 'current_geohashes', geohash], availableGeohashes[geohash]._rev);
+    }
+  });
+};
+
+function unregisterGeohashes({input, state}) {
+  input.geohashesToRemove.forEach((geohash) => {
+    state.unset(['home', 'model', 'current_geohashes', geohash]);
+  });
+};
+
 function storeNewGeohashes({input, state}) {
-  Object.keys(input.geohashes).forEach((key) => {
-    state.set(['home', 'model', 'current_geohashes', key], input.geohashes[key]);
+  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+  input.geohashes.forEach((geohash) => {
+    state.set(['home', 'model', 'current_geohashes', geohash], availableGeohashes[geohash]._rev);
   });
 };
 
@@ -291,15 +311,8 @@ function getAccessToken({input, state, output}) {
 getAccessToken.outputs = ['success', 'error'];
 getAccessToken.async = true;
 
-function storeData({input, state}) {
-
-};
-
 function storeToken({input, state}) {
   state.set(['home', 'token'], input.token);
-};
-
-function getData ({input, state}) {
 };
 
 function changeShowHide ({input, state}) {

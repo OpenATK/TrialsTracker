@@ -52,13 +52,19 @@ export default class RasterLayer extends CanvasTileLayer {
   }
 
   tileUnload(tile, url) {
-    var geohashes = [];
-    //TODO: register/unregister current geohashes
+    console.log('unloading');
+    var geohashesToRemove = [];
     Object.keys(this.canvas).forEach((geohash) => {
       this.canvas[geohash] = this.canvas[geohash].filter((cvs) => {
         return cvs.canvas !== tile;
       })
+      if (this.canvas[geohash].length == 0) {
+        geohashesToRemove.push(geohash);
+      }
     });
+    if (this.props.availableGeohashes) {
+      this.props.signals.home.tileUnloaded({geohashesToRemove});
+    }
   }
 
 //Compute the geohash tiles needed for this image tile and save the canvas references
@@ -69,10 +75,12 @@ export default class RasterLayer extends CanvasTileLayer {
     var ne = this.props.map.unproject(tileNePt, zoom);
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, 7);
     for (var g = 0; g < geohashes.length; g++) {
-    //  if (this.props.availableGeohashes[geohashes[g]]) {
       this.canvas[geohashes[g]] = []
       this.canvas[geohashes[g]].push({canvas, tilePoint});
     //  }
+    }
+    if (this.props.availableGeohashes) {
+      this.props.signals.home.newTileDrawn({geohashes});
     }
   }
 
@@ -192,18 +200,23 @@ export default class RasterLayer extends CanvasTileLayer {
     if (this.props.availableGeohashes) {
       console.log('render');
       var promises = [];
-      var geohashes = [];
-      Object.keys(this.canvas).forEach((geohash) => {
+      var geohashes = Object.keys(this.canvas);
+      geohashes.filter((geohash) => {
         if (this.props.availableGeohashes[geohash]) {
           if (this.props.currentGeohashes[geohash] !== this.props.availableGeohashes[geohash]._rev) {
-            geohashes[geohash] = this.props.availableGeohashes[geohash]._rev;
-            this.canvas[geohash].forEach((cvs) =>
-            promises.push(this.renderTile(cvs.canvas, geohash, cvs.tilePoint)))
+            return true;
           }
         }
+        return false;
+      });
+      geohashes.forEach((geohash) => {
+        this.canvas[geohash].forEach((cvs) => {
+          promises.push(this.renderTile(cvs.canvas, geohash, cvs.tilePoint))
+        });
       });
       Promise.all(promises)
       .then(function() {
+        // take the filtered geohash list and up
         signals.recievedUpdatedGeohashes({geohashes});
       });
       return super.render();

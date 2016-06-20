@@ -31,7 +31,8 @@ module.exports = {
 // -escape the _type key
 // -give the geohash as a secondary key and map
 //  the primary and secondary keys using pouchdb query
-          db.put(doc, docId).catch(function(err) {
+          //db.put(doc, docId).catch(function(err) {
+          db.put({doc:res, _id: geohash}).catch(function(err) {
             if (err.status !== 409) {
               throw err;
             }
@@ -57,7 +58,7 @@ module.exports = {
       .then(function(doc) {
 // TODO: limit global cache to a particular size
         global_cache[geohash] = response;
-        return doc.jsonData.data;
+        return doc.doc.data;
       }).catch(function(err) {
       });
     });
