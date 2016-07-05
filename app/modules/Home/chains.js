@@ -6,14 +6,14 @@ import geolib from 'geolib';
 import md5 from 'md5';
 import PouchDB from 'pouchdb';
 import oadaIdClient from 'oada-id-client';
+import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
-var myTimer;
 var geohashesUrl = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
 import gjArea from 'geojson-area';
 
 
 export var initialize = [
-  createDb, prepNoteStats, getAccessToken, {
+  createDb, getAccessToken, {
     success: [storeToken], 
     error: [],
   },
@@ -21,6 +21,7 @@ export var initialize = [
     success: [storeAvailableGeohashes],
     error: [],
   },
+  prepNoteStats,
 ];
 
 export var changeSortMode = [
@@ -84,25 +85,66 @@ export var updateGeohashes = [
   storeNewGeohashes,
 ];
 
-function registerGeohashes({input, state}) {
-  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+export var markGeohashDrawn = [
+  markDrawn,
+];
+
+function markDrawn({input, state}) {
   input.geohashes.forEach((geohash) => {
-    if (availableGeohashes[geohash]) {
-      state.set(['home', 'model', 'current_geohashes', geohash], availableGeohashes[geohash]._rev);
-    }
+    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], true);
   });
 };
 
+function filterCurrentGeohashes({state}) {
+  var i = 0;
+  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  var geohashes = Object.keys(currentGeohashes);
+// The geohashes on screen are filtered here so only those with available data are added.
+  geohashes.forEach((geohash) => {
+    if (!availableGeohashes[geohash]) {
+      i++;
+      state.unset(['home', 'model', 'current_geohashes', geohash]);
+    }
+  });
+  console.log('unset ' + i +' geohashes');
+};
+
+function registerGeohashes({input, state}) {
+  console.log('registering geohashes');
+  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+// This case occurs before a token is available.  Just save all geohashes and
+// filter them later with filterCurrentGeohashes when the list of available
+// geohashes becomes known.
+  if (Object.keys(availableGeohashes).length === 0) {
+    input.geohashes.forEach((geohash) => {
+      state.set(['home', 'model', 'current_geohashes', geohash], {drawn: false});
+    });
+
+// If the available geohashes are known, save each geohash's _rev
+  } else {
+    input.geohashes.forEach((geohash) => {
+      state.set(['home', 'model', 'current_geohashes', geohash], { 
+        _rev: availableGeohashes[geohash]._rev,
+        drawn: false,
+      });
+    });
+  }
+};
+
 function unregisterGeohashes({input, state}) {
+ // console.log('unregistering geohashes (actually setting drawn to false)');
   input.geohashesToRemove.forEach((geohash) => {
-    state.unset(['home', 'model', 'current_geohashes', geohash]);
+    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], false);
   });
 };
 
 function storeNewGeohashes({input, state}) {
+  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
   var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
   input.geohashes.forEach((geohash) => {
-    state.set(['home', 'model', 'current_geohashes', geohash], availableGeohashes[geohash]._rev);
+    state.set(['home', 'model', 'current_geohashes', geohash, '_rev'], availableGeohashes[geohash]._rev);
+//    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], false);
   });
 };
 
@@ -141,6 +183,7 @@ function computeArea(vertices) {
 };
 
 function prepNoteStats({state}) {
+/*
 //Get the geohashes that fall inside the bounding box to subset the
 //data points to evaluate. Create an array of promises to return the
 //data from the db, calculate the average and count, then save to state.
@@ -181,10 +224,11 @@ function prepNoteStats({state}) {
       state.set(['home', 'model', 'notes', id, 'count'], count);
     });
   });
+*/
 };
 
 function createDb({}) {
-
+  var db = new PouchDB('yield-data');
 };
 
 function setNewData({input, state}) {
@@ -229,12 +273,22 @@ function startStopTimer({input, state}) {
 function requestAvailableGeohashes ({state, output}) {
   console.log('requesting newest geohash revs');
   var token = state.get(['home', 'token']).access_token;
-  return agent('GET', geohashesUrl)
+  var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-';
+  var geohashes = {};
+  Promise.map([2,3,4,5,6,7], (level) => {
+    return agent('GET', url+level+'/')
     .set('Authorization', 'Bearer '+ token)
     .end()
-    .then(function(response) {
-      output.success({gh: response.body});
-   });
+    .then(function(res) {
+      Object.keys(res.body).forEach(function(key) {
+        if (key.charAt(0) !== "_") {
+          geohashes[key] = res.body[key];
+        }
+      });
+    });
+  }).then(() => {
+    output.success({geohashes});
+  });
 };
 requestAvailableGeohashes.outputs = ['success', 'error'];
 requestAvailableGeohashes.async = true;
@@ -274,24 +328,9 @@ function checkRevs ({input, state}) {
 
 function storeAvailableGeohashes({input, state}) {
   console.log('storing available geohashes');
-  state.set(['home', 'model', 'available_geohashes'], input.gh)
-  
-};
-/*
-function getAvailableGeohashes({state,output}) {
-  var token = state.get(['home', 'token']).access_token;
-  return agent('GET', 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7')
-    .set('Authorization', 'Bearer '+ token)
-    .end()
-    .then(function(response) {
-      var gh = Object.keys(response.body).filter((key) => key[0] !== '_'); 
-      output.success({gh});
-   });
+  state.set(['home', 'model', 'available_geohashes'], input.geohashes)
 };
 
-getAvailableGeohashes.outputs = ['success', 'error'];
-getAvailableGeohashes.async = true;
-*/
 function setDrawMode({input, state}) {
   state.set(['home', 'view', 'drawMode'], input.drawMode); 
 };
@@ -312,6 +351,7 @@ getAccessToken.outputs = ['success', 'error'];
 getAccessToken.async = true;
 
 function storeToken({input, state}) {
+  console.log('token stored');
   state.set(['home', 'token'], input.token);
 };
 

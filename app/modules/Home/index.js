@@ -17,6 +17,7 @@ import { makeLiveDataRequest } from './chains';
 import { updateGeohashes } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
+import { markGeohashDrawn } from './chains';
 
 import { drawComplete } from './mapchain';
 import { handleMouseDown } from './mapchain';
@@ -37,6 +38,10 @@ export default (options = {}) => {
 
       init: [
         ...initialize
+      ],
+
+      geohashDrawn: [
+        ...markGeohashDrawn,
       ],
  
       recievedUpdatedGeohashes: [

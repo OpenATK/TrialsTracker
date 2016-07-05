@@ -8,7 +8,7 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'OTzuoYRU64_9QzfE-h2_FkKkkx8DTFHHhOWCBCYE';
+var token = 'HVXdG8m5B8dO3OmV6DwjgWs1fMPYCs-CsThy_N36';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -22,13 +22,13 @@ exports.csvToOadaYield = function() {
         this.processData(dataArray, files[i]);
       }
     }
-    this.pushData();
+    this.createAggregates([2, 3, 4, 5, 6, 7]);
+//    this.pushData();
   });
 };
 
 recomputeStats = function(curStats, additionalStats) {
-  //http://math.stackexchange.com/questions/102978/incremental-computation-of-standard-deviation
-  //stats.std = (((stats.n - 2)/(stats.n - 1))*stats.std) + Math.pow(((stats.sum+newValue)/(stats.n+1))-(stats.mean), 2)*(1/stats.n);
+  curStats.sum_of_squares = curStats.sum_of_squares + additionalStats.sum_of_squares;
   curStats.n = curStats.n + additionalStats.n;
   curStats.sum = curStats.sum + additionalStats.sum;
   curStats.mean = curStats.sum/curStats.n;
@@ -54,7 +54,7 @@ processData = function(csvJson, filename) {
         mean: val,
         min: val,
         max: val,
-//        std: 0,
+        sum_of_squares: Math.pow(val,2),
       };
 //      console.log(additionalStats);
       tempCache[geohash].stats = recomputeStats(tempCache[geohash].stats, additionalStats);
@@ -81,7 +81,7 @@ processData = function(csvJson, filename) {
           mean: val,
           min: val,
           max: val,
-//          std: 0,
+          sum_of_squares: Math.pow(val,2),
         },
    
         template: {
@@ -107,15 +107,77 @@ processData = function(csvJson, filename) {
   }
 }
 
+createAggregates = function(levels) {
+  var i = 1;
+  Object.keys(tempCache).forEach((geohash) => {
+    console.log(geohash, i++);
+    Object.keys(tempCache[geohash].data).forEach((key) => {
+      levels.forEach((level) => {
+        var pt = tempCache[geohash].data[key];
+        var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
+        var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
+        tempCache[bucketGh] = tempCache[bucketGh] || {};
+        tempCache[bucketGh].aggregates = tempCache[bucketGh].aggregates || {};
+        additionalStats = {
+          n: 1,
+          sum: pt.value,
+          mean: pt.value,
+          min: pt.value,
+          max: pt.value,
+          sum_of_squares: Math.pow(pt.value,2),
+        };
+        var loc = gh.decode(aggregateGh);
+        tempCache[bucketGh].aggregates[aggregateGh] = tempCache[bucketGh].aggregates[aggregateGh] || {
+          location: {
+            lat: loc.latitude,
+            lon: loc.longitude,
+          },
+          stats: {
+            n: 1,
+            sum: pt.value,
+            mean: pt.value,
+            min: pt.value,
+            max: pt.value,
+            sum_of_squares: Math.pow(pt.value,2),
+          },
+        };
+        tempCache[bucketGh].aggregates[aggregateGh].stats = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats, additionalStats);
+        tempCache[bucketGh].aggregates[aggregateGh].value = tempCache[bucketGh].aggregates[aggregateGh].stats.mean;
+      });
+    });
+  });
+  this.pushAggregates();
+}
+
+pushAggregates = function() {
+  var baseUrl = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-';
+  var aggregateKeys = Object.keys(tempCache);
+  var k = 1;
+// Post each geohash resource
+  Promise.each(aggregateKeys, function(key) {
+    console.log(key, k++);
+    return agent('POST', 'https://localhost:3000/resources/')
+    .set('Authorization', 'Bearer '+ token)
+    .send(tempCache[key])
+    .end()
+// Then, add a link in /resources
+    .then(function(response) {
+      var resId = response.headers.location.replace(/^\/resources\//, '');
+      return agent('PUT', baseUrl + key.length+'/'+key)
+      .set('Authorization', 'Bearer ' + token)
+      .send({_id: resId, _rev: '0-0'})
+      .end();
+    });
+  })
+}
+
 pushData = function() {
   var self = this;
   var cacheKeys = Object.keys(tempCache);
   var k = 1;
-  console.log(cacheKeys.length);
-  console.log(cacheKeys.length*5.55 + ' acres in geohashes @ 5.5 acres per');
   Promise.each(cacheKeys, function(key) {
-    var geohash = tempCache[key];
     console.log(key, k++);
+    var geohash = tempCache[key];
     if (!geohash) { 
       console.log(key);
       return false;
@@ -137,9 +199,6 @@ pushData = function() {
 // Failure: Post the geohash resource omitting the data
       .catch((e) => e.response && e.response.res.statusCode === 404, function() {
         var tmp = _.omit(geohash, 'data');
-//        console.log('POSTING new geohash:');
-//        console.log(tmp);
-//        console.log(geohash);
         return agent('POST', 'https://localhost:3000/resources/')
           .set('Authorization', 'Bearer '+ token)
           .send(tmp)
@@ -152,11 +211,10 @@ pushData = function() {
               .send({_id: resId, _rev: '0-0'})
               .end();
           });
+
       })
 // Now add the data regardless
     .then(function() {
-//      console.log('PUTTING the data');
-//      console.log(geohash);
       return agent('PUT', url+key+'/data/')
         .set('Authorization', 'Bearer '+ token)
         .send(geohash.data)

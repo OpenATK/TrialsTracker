@@ -10,35 +10,22 @@ var agent = require('superagent-promise')(require('superagent'), Promise);
 var global_cache = {};
 
 module.exports = {
-  get: function(geohash, url, token, rev) {
 // Get the data and compare the revs; If new, update. Else, return
+  get: function(geohash, token, rev) {
+    var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-'+geohash.length+'/';
     return Promise.try(function() {
       var db = new PouchDB('yield-data');
       return agent('GET', url+geohash)
       .set('Authorization', 'Bearer '+ token)
       .end()
       .then(function onResult(response) {
-        // Now, save the response in the database
-        var res = response.body; 
-        if (res._rev == rev) {
-          return false;
-        } else {
-//TODO: limit global cache to a particular size
-          global_cache[geohash] = res;
-          var doc = {jsonData: res};
-          var docId = geohash;
-//TODO: Fix soon-to-be deprecated db.put.
-// -escape the _type key
-// -give the geohash as a secondary key and map
-//  the primary and secondary keys using pouchdb query
-          //db.put(doc, docId).catch(function(err) {
-          db.put({doc:res, _id: geohash}).catch(function(err) {
-            if (err.status !== 409) {
-              throw err;
-            }
-          });
-          return res;
-        }
+        global_cache[geohash] = response.body;
+        db.put({doc:response.body, _id: geohash, _rev: response.body._rev}).catch(function(err) {
+          if (err.status !== 409) {
+            throw err;
+          }
+        });
+        return response.body;
       }, function onError(err) {
         console.log(err);
         return false;
@@ -56,10 +43,10 @@ module.exports = {
 // 2. Attempt to retrieve from Pouch cache (not in memory)
       return db.get(geohash)
       .then(function(doc) {
-// TODO: limit global cache to a particular size
-        global_cache[geohash] = response;
-        return doc.doc.data;
+        global_cache[geohash] = doc.doc;
+        return doc.doc;
       }).catch(function(err) {
+//        console.log(err);
       });
     });
   }
