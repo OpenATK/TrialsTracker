@@ -9,6 +9,7 @@ import PouchDB from 'pouchdb';
 import { Promise } from 'bluebird';
 import cache from './cache.js';
 var agent = require('superagent-promise')(require('superagent'), Promise);
+import uuid from 'uuid';
 
 function blendColors(c1, c2, percent) {
   let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
@@ -108,6 +109,7 @@ export default class RasterLayer extends CanvasTileLayer {
         };
         this.canvas[geohashes[g]].canvases.push({canvas, tilePoint});
         this.canvas[geohashes[g]].drawn = false;
+//        this.leafletElement.tileDrawn(canvas);
 
         // If already on list, prevent unecessary state change
 //        if (this.props.currentGeohashes[geohashes[g]]) {
@@ -117,7 +119,7 @@ export default class RasterLayer extends CanvasTileLayer {
       }
 
       //if (this.props.geohashGridlines) this.drawGeohashGrid(canvas, tilePoint, zoom, gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision+2));
-      if (this.props.geohashGridlines) this.drawGeohashGrid(canvas, tilePoint, zoom, geohashes);
+//      if (this.props.geohashGridlines) this.drawGeohashGrid(canvas, tilePoint, zoom, geohashes);
       if (this.props.tileGridlines) this.drawTileGrid(canvas, tilePoint, zoom);
 
       if (Object.keys(geohashes).length > 0) {
@@ -162,26 +164,6 @@ export default class RasterLayer extends CanvasTileLayer {
     ctx.drawImage(canvas, 0, 0); 
     this.leafletElement.tileDrawn(canvas);
   }
-
-
-  renderTile(canvas, geohash, tilePoint) {
-    console.log('renderTile');
-    var self = this;
-
-    return new Promise(function() {
-//Attempt to get data from memory/pouch
-      if (self.props.token) {
-        const cache_result = cache.tryGet(geohash);
-        if (cache_result.isFulfilled()) {
-          cache_result.then(function(result) {
-            if (result) {
-              console.log('Geohash in cache. Drawing...');
-//              self.renderImageData(canvas, result.aggregates, tilePoint);
-              if (self.props.map.getZoom() >= 15) {
-                self.renderImageData(canvas, result.data, tilePoint);
-              } else {
-                self.renderImageData(canvas, result.aggregates, tilePoint);
-              }
 /*
               if (self.props.availableGeohashes[geohash]._rev !== result._rev) {
                 console.log(self.props.availableGeohashes[geohash]);
@@ -202,26 +184,22 @@ export default class RasterLayer extends CanvasTileLayer {
 //                  }
 //                });     
 //              }
-            }
-          });
-        } else {
-          const cache_result = cache.get(geohash, self.props.token, self.props.currentGeohashes[geohash]);
-          cache_result.then(function(result) {
-            if (result) {
-              console.log('Got geohash data from the server. Drawing...');
-              //self.renderImageData(canvas, result.aggregates, tilePoint);
-              if (self.props.map.getZoom() >= 15) {
-                self.renderImageData(canvas, result.data, tilePoint);
-              } else {
-                self.renderImageData(canvas, result.aggregates, tilePoint);
-              }
-            }
-          });
-        }
-      }
-    });
-  }
+ 
 
+  renderTile(canvas, geohash, tilePoint, rand) {
+ //   console.log('renderTile '+ rand);
+    var self = this;
+    if (self.props.token) {
+      return Promise.try(function() {
+        return cache.get(geohash, self.props.token, self.props.currentGeohashes[geohash])
+        .then(function(data) {
+          console.log(data);
+          self.renderImageData(canvas, data.aggregates, tilePoint);
+        });
+      });
+    }
+  }
+   
   renderImageData(canvas, data, tilePoint) {
     var zoom = this.props.map.getZoom();
     var db = new PouchDB('yield-data');
@@ -250,7 +228,7 @@ export default class RasterLayer extends CanvasTileLayer {
       }
       ctx.putImageData(imgData, 0, 0);
       ctx.drawImage(canvas, 0, 0); 
-//      self.leafletElement.tileDrawn(canvas);
+      self.leafletElement.tileDrawn(canvas);
     });
   }
 
@@ -340,8 +318,9 @@ export default class RasterLayer extends CanvasTileLayer {
   }
 
   render() {
-    console.log('render');
-    console.log(this.props.map.getZoom());
+    var rand = uuid.v4();
+//    console.log('render '+ rand);
+ //   console.log(this.props.map.getZoom());
     var self = this;
     const signals = this.props.signals.home;
 /*
@@ -353,21 +332,22 @@ export default class RasterLayer extends CanvasTileLayer {
     if (Object.keys(this.props.availableGeohashes).length > 0) {
       this.updateCanvas();
       var geohashes = Object.keys(this.canvas);
-
+//      console.log(geohashes);
       Promise.map(geohashes, function(geohash) {
         if (!self.canvas[geohash].drawn) {
           self.canvas[geohash].drawn = true;
-          //self.canvas[geohash].canvases.forEach((cvs) => {
           return Promise.map(self.canvas[geohash].canvases, function(cvs) {
-            return self.renderTile(cvs.canvas, geohash, cvs.tilePoint);
-          });
+            return self.renderTile(cvs.canvas, geohash, cvs.tilePoint, rand);
+          }).then(function() {
+            console.log(geohash, rand);
+          }); 
         }
       }).then(function() {
-        console.log('done');
+//        console.log('done ' + rand);
         signals.geohashDrawn({geohashes});
       });
     }
-    console.log('returning super');
+//    console.log('returning super '+rand);
     return super.render();
   }
 }

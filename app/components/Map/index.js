@@ -101,7 +101,7 @@ class _Map extends React.Component {
           <RasterLayer 
             url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
             async={true}
-            geohashGridlines={true}
+            geohashGridlines={false}
             tileGridlines={true}
           />
 
