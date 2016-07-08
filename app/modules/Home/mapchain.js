@@ -34,6 +34,16 @@ export var drawComplete = [
   setDrawMode, computeBoundingBox, computeStats
 ];
 
+function longestCommonPrefix(strings) {
+  var A = strings.concat().sort(), 
+  a1= A[0], 
+  a2= A[A.length-1], 
+  L= a1.length, 
+  i= 0;
+  while(i < L && a1.charAt(i) === a2.charAt(i)) i++;
+  return a1.substring(0, i);
+}
+
 function computeStats({input, state}) {
 //Get the geohashes that fall inside the bounding box to subset the
 //data points to evaluate. Create an array of promises to return the

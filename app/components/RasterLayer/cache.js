@@ -35,7 +35,7 @@ module.exports = {
 */
 
   // Get cached data to load a tile with some content immediately
-  get: function(geohash, token, rev) {
+  get: function(geohash, token, rev, db) {
 //    return Promise.try(function() {
      /* 
       if (global_cache[geohash]) {
@@ -43,21 +43,20 @@ module.exports = {
         return global_cache[geohash];
       }
 */
-      var db = new PouchDB('yield-data');
       return db.get(geohash).then(function(result) {
-        console.log('Geohash data in cache. Drawing...');
-        console.log(result);
+      //  console.log('Geohash data in cache. Drawing...');
+      //  console.log(result);
         return result.doc;
       }).catch(function(err) {
 //        console.log(err);
-        console.log('getting from server');
+//        console.log('getting from server');
         var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-'+geohash.length+'/';
         return agent('GET', url+geohash)
         .set('Authorization', 'Bearer '+ token)
         .end()
         .then(function onResult(response) {
-          console.log('Got geohash data from the server. Drawing...');
-          console.log(response);
+//          console.log('Got geohash data from the server. Drawing...');
+//          console.log(response);
 //          global_cache[geohash] = response.body;
           db.put({
             doc:response.body, 
@@ -72,7 +71,7 @@ module.exports = {
           });
           return response.body;
         }, function onError(err) {
-          console.log('errored');
+//          console.log('errored');
           //console.log('on error');
         });
       });

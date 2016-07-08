@@ -134,7 +134,7 @@ function filterCurrentGeohashes({state}) {
 };
 
 function registerGeohashes({input, state}) {
-  console.log('registering geohashes');
+//  console.log('registering geohashes');
   var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
 // This case occurs before a token is available.  Just save all geohashes and
 // filter them later with filterCurrentGeohashes when the list of available
@@ -392,6 +392,7 @@ function setSortMode ({input, state}) {
 };
 
 function unselectNote ({input, state}) {
+  console.log('unselecting note');
   state.set(['home', 'model', 'selected_note'], {});
 };
 
