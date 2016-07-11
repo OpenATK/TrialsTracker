@@ -37,12 +37,14 @@
   bottom: 0;
   left: 0;
   margin: 2px;
+  color: #00FF00;
 }
 .delete-note-button {
   position: absolute;
   bottom: 0;
   right: 0;
   margin: 2px;
+  color: #FF0000;
 }
 .note-text-input {
   width: 99%;
