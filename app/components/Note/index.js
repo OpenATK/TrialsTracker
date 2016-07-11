@@ -57,6 +57,14 @@ class Note extends React.Component {
       <FontAwesome 
         className='done-drawing-button'
         name='check'
+        style={{
+          color:'#00FF00',
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          margin: '2px',
+        }}
+        onClick={() => signals.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
       /> : null;
 
     var showHideButton = (this.props.showHide) ? 
@@ -68,9 +76,16 @@ class Note extends React.Component {
     var deleteNoteButton = (this.props.selected) ? 
       <FontAwesome 
         name='times'
-        size='3x'
+        size='2x'
         className='delete-note-button'
-        onClick={() => signals.noteClicked({note:this.props.id})}
+        style={{
+          color:'#FF0000',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          margin: '2px',
+        }}
+        onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}
       /> : null;
 
     var yieldString = this.props.note.mean ? 'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null;

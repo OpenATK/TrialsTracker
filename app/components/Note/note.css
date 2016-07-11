@@ -53,6 +53,11 @@
   outline: none;
   font-size: 16px;
 }
+hr {
+  height: 2px;
+  border: 0;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
 .tag {
   position: relative;
   background-color: #cde69c;

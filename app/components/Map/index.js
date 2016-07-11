@@ -82,7 +82,8 @@ class _Map extends React.Component {
 //          onLeafletdblclick={ (e) => 
 //            signals.mapDoubleClicked({pt: e.latlng, drawMode: false})
 //          }
-          dragging={this.props.dragMode} 
+//          dragging={this.props.dragMode} 
+          dragging={true}
           center={position} 
           ref='map'
           zoom={17}>
