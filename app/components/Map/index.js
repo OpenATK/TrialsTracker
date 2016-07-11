@@ -16,7 +16,6 @@ var tileIndex;
   return{
     notes: ['home', 'model', 'notes'],
     selectedNote: ['home', 'model', 'selected_note'],
-    dragMode: ['home', 'view', 'dragMode'],
     drawMode: ['home', 'view', 'drawMode'],
     liveData: ['home', 'live_data'],
     token: ['home', 'token'],
@@ -34,48 +33,43 @@ class _Map extends React.Component {
     var self = this;
     var position = [40.8512578, -86.138977];
     var polygonList = [];
-    _.each(this.props.notes, function(note) {
-      var vertices = [];
-      for (var i = 0; i < note.geometry.length; i++) {
-        vertices.push([note.geometry[i].longitude, note.geometry[i].latitude]);
-      }
-      var geojson = {
-        "type": "Feature",
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [vertices]
-        }
-      }
-      polygonList.push(<GeoJSON 
-        data={geojson} 
-//        color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color } 
-        color={note.color} 
-        dragging={true} 
-        key={uuid.v4()}
-      />);
-    });
-
-    if (this.props.drawMode) {
-      var markerList = [];
-      var note = this.props.notes[this.props.selectedNote];
-      for (var i = 0; i < note.geometry.length; i++) {
-        var geojson = {
-          "type": "Feature",
-          "geometry": {
-            "type": "Point",
-            "coordinates": [note.geometry[i].longitude, note.geometry[i].latitude],
-          }
-        }  
-        markerList.push(<GeoJSON 
-          key={uuid.v4()} 
+    Object.keys(this.props.notes).forEach(function(key) {
+      var note = self.props.notes[key];
+      if (note.geometry.coordinates[0].length > 0) {
+        var geojson = note.geometry;
+        polygonList.push(<GeoJSON 
           data={geojson} 
-//          color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color }
-          color={note.color}
+//          color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color } 
+          color={note.color} 
+          dragging={true} 
           key={uuid.v4()}
         />);
       }
-    }
+    });
 
+    var markerList = [];
+    if (this.props.drawMode) {
+      var note = this.props.notes[this.props.selectedNote];
+      if (note.geometry.coordinates[0].length > 0) {
+        var markerList = [];
+        for (var i = 0; i < note.geometry.coordinates[0].length; i++) {
+          var geojson = {
+            "type": "Feature",
+            "geometry": {
+              "type": "Point",
+              "coordinates": note.geometry.coordinates[0][i],
+            }
+          };
+          markerList.push(<GeoJSON 
+            key={uuid.v4()} 
+            data={geojson} 
+//            color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color }
+            color={note.color}
+            key={uuid.v4()}
+          />);
+        }
+      }
+    }
     var drag_flag = this.props.dragMode;
 //        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMapp()}>Lock Map</button>
 //        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>
@@ -93,6 +87,10 @@ class _Map extends React.Component {
           ref='map'
           zoom={17}>
 
+          <div className={styles[(this.props.drawMode) ? 'drawing-popup' : 'hidden']}>
+            Tap the map to mark an area
+          </div>
+
           <TileLayer
             url="http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png"
             attribution='Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency'
@@ -102,7 +100,7 @@ class _Map extends React.Component {
             url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
             async={true}
             geohashGridlines={false}
-            tileGridlines={true}
+            tileGridlines={false}
           />
 
           <button 

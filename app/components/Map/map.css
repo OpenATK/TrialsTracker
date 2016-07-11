@@ -31,4 +31,15 @@
 	top: 20px;
 	z-index: 3;
 }
-
+.hidden {
+  display:none;
+}
+.drawing-popup {
+  position:absolute;
+  background-color:rgba(0,0,255,0.45);
+  top: 0px;
+  width: 100%;
+  z-index: 3;
+  text-align: center;
+  font-size: large;
+}

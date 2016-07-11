@@ -2,13 +2,15 @@
   position: relative;
   border-style: solid;
   border-width: 2px;
-  border-radius: 10px;
-  background-color: white;
+  border-radius: 2px;
   width: initial;
   height: initial;
   margin: 7px;
   padding: 5px;
-  box-shadow: 3px 3px 3px black;
+}
+.custom-class {
+  width:25px;
+  height:25px;
 }
 .hidden {
   display: none;
@@ -17,8 +19,7 @@
   position: relative;
   border-style: solid;
   border-width: 3px;
-  border-radius: 10px;
-  background-color: white;
+  border-radius: 2px;
   width: initial;
   height: initial;
   margin: 7px;
@@ -37,7 +38,7 @@
   left: 0;
   margin: 2px;
 }
-.note-remove-button {
+.delete-note-button {
   position: absolute;
   bottom: 0;
   right: 0;

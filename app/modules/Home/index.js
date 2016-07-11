@@ -19,13 +19,13 @@ import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
 import { markGeohashDrawn } from './chains';
 
-import { drawComplete } from './mapchain';
-import { handleMouseDown } from './mapchain';
-import { mouseMoveOnmap } from './mapchain';
-import { mouseUpOnmap } from './mapchain';
-import { ToggleMap } from './mapchain';
-import { drawOnMap } from './mapchain';
-import { handleDoneDrawing } from './mapchain';
+import { drawComplete } from './map-chains';
+import { handleMouseDown } from './map-chains';
+import { mouseMoveOnmap } from './map-chains';
+import { mouseUpOnmap } from './map-chains';
+import { ToggleMap } from './map-chains';
+import { drawOnMap } from './map-chains';
+import { handleDoneDrawing } from './map-chains';
 
 export default (options = {}) => {
   

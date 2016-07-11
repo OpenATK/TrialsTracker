@@ -191,7 +191,7 @@ export default class RasterLayer extends CanvasTileLayer {
     if (this.props.token) {
       var self = this;
       return Promise.try(function() {
-        return cache.get(geohash, self.props.token, self.props.currentGeohashes[geohash], db)
+        return cache.get(geohash, self.props.token, db)
         .then(function(data) {
           self.renderImageData(canvas, data.aggregates, tilePoint);
         });
@@ -330,7 +330,7 @@ export default class RasterLayer extends CanvasTileLayer {
 
   render() {
     var rand = uuid.v4();
-    console.log('render '+ rand);
+//    console.log('render '+ rand);
     var self = this;
     const signals = this.props.signals.home;
 /*

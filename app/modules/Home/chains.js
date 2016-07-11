@@ -89,29 +89,6 @@ export var markGeohashDrawn = [
   markDrawn,
 ];
 
-function findMatchingStrings({input, state}) {
-/*
-  var strings = [];
-  input.points.forEach((pt) => {
-    strings.push(gh.encode(pt.lat, pt.lon));
-  }
-  var firstString = strings[0];
-  var substr = '';
-  for (var i = 0; i < firstString.length; i++) {
-    console.log(i);
-    substr = substring(0, i);
-    console.log(substr);
-    strings.forEach((str) => {
-      console.log(str);
-      if (!str.indexOf(substr) > 0) {
-        break;
-      }
-    });
-  }
-  substr
-*/
-}
-
 function markDrawn({input, state}) {
   input.geohashes.forEach((geohash) => {
     state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], true);
@@ -469,16 +446,15 @@ function createNote({state, output}) {
     text: '',
     tags: [],
     fields: [],
-    geometry: [],
-//    geojson: { "type":"Polygon",
-//      "coordinates": [
-//        []
-//      ]
-//     },
-     geometry_visible: 'Show',
-     color: getColor(),
-     completions: [],
-     selected: true,
+//    geometry: [],
+    geometry: { 
+      "type":"Polygon",
+      "coordinates": [[]],
+    },
+    geometry_visible: 'Show',
+    color: getColor(),
+    completions: [],
+    selected: true,
   };
   state.set(['home', 'model', 'notes', newNote.id], newNote);
   output({note: newNote.id});
