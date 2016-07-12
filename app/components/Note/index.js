@@ -17,6 +17,7 @@ import FontAwesome from 'react-fontawesome';
     selected: ['home', 'model', 'notes', props.id, 'selected'],
     drawMode: ['home', 'view', 'drawMode'],
     geometryVisible: ['home', 'model', 'notes', props.id, 'geometry_visible'],
+    areaw: ['home', 'model', 'notes', props.id, 'area'],
   };
 })
 
@@ -57,6 +58,7 @@ class Note extends React.Component {
       <FontAwesome 
         className='done-drawing-button'
         name='check'
+        size='2x'
         style={{
           color:'#00FF00',
           position: 'absolute',
@@ -64,7 +66,7 @@ class Note extends React.Component {
           right: 0,
           margin: '2px',
         }}
-        onClick={() => signals.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
+        onClick={() => signals.doneDrawingButtonClicked({drawMode:false, ids:[this.props.id]})}
       /> : null;
 
     var showHideButton = (this.props.showHide) ? 

@@ -60,8 +60,6 @@ function longestCommonPrefix(strings) {
   while(i < L && a1.charAt(i) === a2.charAt(i)) i++;
   return a1.substring(0, i);
 }
-//TODO: This checks 4 corners of a geohash to determine whether
-//its inside the polygon geometry.  This isn't true for concave polygons.
 function recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes) {
   console.log('AAAA - recursive stats', geohash, geohash.length);
   return Promise.try(function() {
@@ -101,7 +99,9 @@ function recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohas
       [ghBox[3], ghBox[2]],
       [ghBox[3], ghBox[0]],
       [ghBox[1], ghBox[0]],
+      [ghBox[1], ghBox[2]],
     ];
+   console.log(polygon);
 //Test for intersection; If so, get finer geohash
     for (var i = 0; i < polygon.length-1; i++) {
       for (var j = 0; j < polyIn.length-1; j++) {
@@ -134,6 +134,7 @@ function recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohas
       }
     }
 // No intersection. Test if completely inside. If so, use the stats.
+    console.log('no intersection');
     var pt = {"type":"Point","coordinates": polyIn[0]};
     if (gju.pointInPolygon(pt, polygon)) {
       console.log('getting geohash');
@@ -168,73 +169,79 @@ function computeStats({input, state}) {
 //data points to evaluate. Create an array of promises to return the
 //data from the db, calculate the average and count, then save to state.
   var db = new PouchDB('yield-data');
-  var bbox = input.bbox;
-  var nw = L.latLng(bbox.north, bbox.west),
-      ne = L.latLng(bbox.north, bbox.east),
-      se = L.latLng(bbox.south, bbox.east),
-      sw = L.latLng(bbox.south, bbox.west);
-  var strings = [gh.encode(bbox.north, bbox.west, 9),
-    gh.encode(bbox.north, bbox.east, 9),
-    gh.encode(bbox.south, bbox.east, 9),
-    gh.encode(bbox.south, bbox.west, 9)];
-  var commonString = longestCommonPrefix(strings);
-  var polygon = state.get(['home', 'model', 'notes', input.id, 'geometry']);
-  var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, commonString.length+1);
-  var stats = {
- //   area_sum: 0,
- //   bushels_sum: 0,
-    sum: 0,
-    count: 0,
-  };
-  var token = state.get(['home', 'token']).access_token;
-  console.log(geohashes);
-  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
-  Promise.map(geohashes, function(geohash) {
-    return recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes)
-    .then(function(newStats) {
-      console.log('GGGG - .then on computeStats recurs promise', geohash, geohash.length);
-      console.log(newStats);
+//  for (var i = 0; i < input.bboxes.length; i++) {
+  Promise.map(input.bboxes, function(bbox, i) {
+//    var bbox = input.bboxes[i];
+    var id = input.ids[i];
+    var nw = L.latLng(bbox.north, bbox.west),
+        ne = L.latLng(bbox.north, bbox.east),
+        se = L.latLng(bbox.south, bbox.east),
+        sw = L.latLng(bbox.south, bbox.west);
+    var strings = [gh.encode(bbox.north, bbox.west, 9),
+      gh.encode(bbox.north, bbox.east, 9),
+      gh.encode(bbox.south, bbox.east, 9),
+      gh.encode(bbox.south, bbox.west, 9)];
+    var commonString = longestCommonPrefix(strings);
+    var polygon = state.get(['home', 'model', 'notes', id, 'geometry']);
+    var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, commonString.length+1);
+    var stats = {
+ //     area_sum: 0,
+ //     bushels_sum: 0,
+      sum: 0,
+      count: 0,
+    };
+    var token = state.get(['home', 'token']).access_token;
+    console.log(geohashes);
+    var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+    return Promise.map(geohashes, function(geohash) {
+      return recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes)
+      .then(function(newStats) {
+        console.log('GGGG - .then on computeStats recurs promise', geohash, geohash.length);
+        console.log(newStats);
 /*
-      stats.area_sum += newStats.area_sum;
-      stats.bushels_sum += newStats.bushels_sum;
-      stats.count += newStats.count;
+        stats.area_sum += newStats.area_sum;
+        stats.bushels_sum += newStats.bushels_sum;
+        stats.count += newStats.count;
 */
-      stats.sum += newStats.sum;
-      stats.count += newStats.count;
-      return stats;
+        stats.sum += newStats.sum;
+        stats.count += newStats.count;
+        return stats;
+      });
+    }).then(function() {
+      console.log('FFFF - The End.  .then on computeStats promise.map');
+      console.log(stats);
+//      state.set(['home', 'model', 'notes', id, 'area_sum'], stats.area_sum);
+//      state.set(['home', 'model', 'notes', id, 'bushels_sum'], stats.bushels_sum);
+      state.set(['home', 'model', 'notes', id, 'sum'], stats.sum);
+      state.set(['home', 'model', 'notes', id, 'count'], stats.count);
+      state.set(['home', 'model', 'notes', id, 'mean'], stats.sum/stats.count);
     });
-  }).then(function() {
-    console.log('FFFF - The End.  .then on computeStats promise.map');
-    console.log(stats);
-//    state.set(['home', 'model', 'notes', input.id, 'area_sum'], stats.area_sum);
-//    state.set(['home', 'model', 'notes', input.id, 'bushels_sum'], stats.bushels_sum);
-    state.set(['home', 'model', 'notes', input.id, 'sum'], stats.sum);
-    state.set(['home', 'model', 'notes', input.id, 'count'], stats.count);
-    state.set(['home', 'model', 'notes', input.id, 'mean'], stats.sum/stats.count);
   });
 };
 
-
 function computeBoundingBox({input, state, output}) {
-  var coords = state.get(['home', 'model', 'notes', input.id, 'geometry', 'coordinates', 0]);
-  var north = coords[0][1];
-  var south = coords[0][1];
-  var east = coords[0][0];
-  var west = coords[0][0];
-  for (var i = 0; i < coords.length; i++) {
-    if (coords[i][1] > north) north = coords[i][1];
-    if (coords[i][1] > south) south = coords[i][1];
-    if (coords[i][0] > east) east = coords[i][0];
-    if (coords[i][0] < west) west = coords[i][0];
+  var bboxes = [];
+  for (var i = 0; i < input.ids.length; i++) {
+    var id = input.ids[i];
+    var coords = state.get(['home', 'model', 'notes', id, 'geometry', 'coordinates', 0]);
+    console.log(JSON.stringify(state.get(['home', 'model', 'notes', id, 'geometry'])));
+    var north = coords[0][1];
+    var south = coords[0][1];
+    var east = coords[0][0];
+    var west = coords[0][0];
+    for (var j = 0; j < coords.length; j++) {
+      if (coords[j][1] > north) north = coords[j][1];
+      if (coords[j][1] < south) south = coords[j][1];
+      if (coords[j][0] > east) east = coords[j][0];
+      if (coords[j][0] < west) west = coords[j][0];
+    }
+    var bbox = {north, south, east, west};
+    state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
+    console.log(bbox);
+    bboxes.push(bbox);
+    console.log(bboxes);
   }
-  var bbox = {
-    north: north,
-    south: south,
-    east: east,
-    west: west,
-  };
-  state.set(['home', 'model', 'notes', input.id, 'bbox'], bbox);
-  output({bbox: bbox});
+  output({bboxes});
 };
 
 function setDrawMode({input, state}) {
@@ -292,3 +299,6 @@ function dragMapToggle ({state}) {
     state.set(['home', 'view', 'drag'], true);
   }
 };
+
+
+

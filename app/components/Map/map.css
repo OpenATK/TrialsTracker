@@ -1,7 +1,7 @@
 :global #map-panel {
   position:absolute;
   right:0px;
-  width:65vw;
+  width:70vw;
   height:100vh;
 }
 
@@ -30,6 +30,7 @@
 	right: 40px;
 	top: 20px;
 	z-index: 3;
+        display: none;
 }
 .hidden {
   display:none;
