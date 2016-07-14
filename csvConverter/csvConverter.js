@@ -8,7 +8,7 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'HVXdG8m5B8dO3OmV6DwjgWs1fMPYCs-CsThy_N36';
+var token = 'COlSV8LDosMVX4c_Gsj2oYzW1iZ7IEBlIyFYvUah';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -22,7 +22,7 @@ exports.csvToOadaYield = function() {
         this.processData(dataArray, files[i]);
       }
     }
-    this.createAggregates([2, 3, 4, 5, 6, 7]);
+    this.createAggregates([2, 3, 4, 5, 6]);
 //    this.pushData();
   });
 };
@@ -44,21 +44,15 @@ processData = function(csvJson, filename) {
   for (var i = 0; i < csvJson.length; i++) {
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
     var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
+    var cropType = csvJson[i]['Product - Name'];
+    cropType = cropType.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+
     if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
     if (!val) console.log(csvJson[i], val);
-    //If the geohash exists, append to it and recompute stats, else create it.
-    if (tempCache[geohash]) {
-      additionalStats = {
-        n: 1,
-        sum: val,
-        mean: val,
-        min: val,
-        max: val,
-        sum_of_squares: Math.pow(val,2),
-      };
-//      console.log(additionalStats);
-      tempCache[geohash].stats = recomputeStats(tempCache[geohash].stats, additionalStats);
-    } else {
+
+    //If the geohash doesn't exist, create it;
+    if (!tempCache[geohash]) {
+
       tempCache[geohash] = {
 
        /* _id: uuid.v4(),
@@ -76,33 +70,69 @@ processData = function(csvJson, filename) {
         },
 
         stats: {
-          n: 1,
-          sum: val,
-          mean: val,
-          min: val,
-          max: val,
-          sum_of_squares: Math.pow(val,2),
+          n: 0,
         },
-   
+         
         template: {
-          '1': {
-            sensor: { id: 'Tractor or sensor reference here?'},
+          Corn: {
+            units: 'bu/ac',
+          },
+          Soybeans: {
+            units: 'bu/ac',
+          },
+          Wheat: {
             units: 'bu/ac',
           },
         },    
   
         data: {},
       };
+      tempCache[geohash].stats[cropType] = {
+        n: 1,
+        sum: val,
+        mean: val,
+        min: val,
+        max: val,
+        sum_of_squares: Math.pow(val,2),
+      };
+// If the geohash exists, but a new crop is encountered, begin storing stats for the new crop type
+    } else if(!tempCache[geohash].stats[cropType]) {
+
+      tempCache[geohash].stats[cropType] = {
+        n: 1,
+        sum: val,
+        mean: val,
+        min: val,
+        max: val,
+        sum_of_squares: Math.pow(val,2),
+      };
+
+// Else, both the geohash and the crop type exist. Append to it and recompute stats, else create it.
+    } else {
+
+      additionalStats = {
+        n: 1,
+        sum: val,
+        mean: val,
+        min: val,
+        max: val,
+        sum_of_squares: Math.pow(val,2),
+      };
+
+      tempCache[geohash].stats[cropType] = recomputeStats(tempCache[geohash].stats[cropType], additionalStats);
     }
     // Add the data point
+    
+    tempCache[geohash].stats.n++;
     tempCache[geohash].data[uuid.v4()] = {
+      crop_type: cropType,
       location: {
         lat: csvJson[i].Latitude,
         lon: csvJson[i].Longitude,
         alt: csvJson[i]['Elevation(ft)'],
       },
       value: val,
-      time: csvJson[i]['Date / Time'],
+//      time: csvJson[i]['Date / Time'],
     };
   }
 }
@@ -114,10 +144,10 @@ createAggregates = function(levels) {
     Object.keys(tempCache[geohash].data).forEach((key) => {
       levels.forEach((level) => {
         var pt = tempCache[geohash].data[key];
+        var cropType = pt.crop_type;
         var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
         var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
-        tempCache[bucketGh] = tempCache[bucketGh] || {};
-        tempCache[bucketGh].aggregates = tempCache[bucketGh].aggregates || {};
+
         additionalStats = {
           n: 1,
           sum: pt.value,
@@ -126,23 +156,24 @@ createAggregates = function(levels) {
           max: pt.value,
           sum_of_squares: Math.pow(pt.value,2),
         };
-        var loc = gh.decode(aggregateGh);
+
+        // Create the bucket if it doesn't exist.
+        tempCache[bucketGh] = tempCache[bucketGh] || {};
+        // Create the aggregate key if it doesn't exist.
+        tempCache[bucketGh].aggregates = tempCache[bucketGh].aggregates || {};
+        // Create the aggregate geohash key if it doesn't exist (containing a stats object). 
         tempCache[bucketGh].aggregates[aggregateGh] = tempCache[bucketGh].aggregates[aggregateGh] || {
-          location: {
-            lat: loc.latitude,
-            lon: loc.longitude,
-          },
-          stats: {
-            n: 1,
-            sum: pt.value,
-            mean: pt.value,
-            min: pt.value,
-            max: pt.value,
-            sum_of_squares: Math.pow(pt.value,2),
-          },
+          stats: {}
         };
-        tempCache[bucketGh].aggregates[aggregateGh].stats = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats, additionalStats);
-        tempCache[bucketGh].aggregates[aggregateGh].value = tempCache[bucketGh].aggregates[aggregateGh].stats.mean;
+        // Create the cropType key if it doesn't exist;
+        tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] || {};
+        tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats[cropType], additionalStats);
+        // Also store overall stats of all data points contained at the bucket geohash level;
+        tempCache[bucketGh].aggregates.stats = tempCache[bucketGh].aggregates.stats || {};
+        tempCache[bucketGh].aggregates.stats = recomputeStats(tempCache[bucketGh].aggregates.stats, additionalStats);
+        // Also store overall stats of all data points contained at the bucket geohash level, broken down into keyed crop types.
+        tempCache[bucketGh].aggregates.stats[cropType] = tempCache[bucketGh].aggregates.stats[cropType] || {};
+        tempCache[bucketGh].aggregates.stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats[cropType], additionalStats);
       });
     });
   });

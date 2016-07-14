@@ -37,6 +37,86 @@ var tree = {
     map: {$isLoading: true},
     dragMode: true,
     drawing: false,
+    legends: {
+      Corn: [{
+        value: 75,
+        color: {
+          r: 255,
+          g: 0,
+          b: 0, 
+          a: 255,
+        },
+      },{
+        value: ((225-75)/2)+75,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      },{ 
+        value: 225,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+
+      Soybeans: [{ 
+        value: 20,
+        color: { 
+          r: 255,
+          g: 0,
+          b: 0,
+          a: 255,
+        },
+      },{
+        value: ((90-20)/2)+20,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        }, 
+      },{
+        value: 90,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+      Wheat: [{ 
+        value: 20,
+        color: { 
+          r: 255,
+          g: 0,
+          b: 0,
+          a: 255,
+        },
+      },{
+        value: ((80-20)/2)+20,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        }, 
+      },{
+        value: 80,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+
+
+    },
   }
 }; 
 
@@ -77,7 +157,7 @@ function initial_notes() {
       mean: 189.26,
     };
     if (i === 2) {
-      var col = '#939f86';
+      var col = '#cce6ff';
       var text = 'low area';
       note = {
         text: 'rootworm damage',

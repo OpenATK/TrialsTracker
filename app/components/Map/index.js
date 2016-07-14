@@ -9,6 +9,7 @@ import gh from 'ngeohash';
 import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
 import RasterLayer from '../RasterLayer';
+import Legend from '../Legend';
 
 var tileIndex;
 
@@ -19,6 +20,7 @@ var tileIndex;
     drawMode: ['home', 'view', 'drawMode'],
     liveData: ['home', 'live_data'],
     token: ['home', 'token'],
+    legends: ['home', 'view', 'legends'],
   };
 })
 
@@ -38,8 +40,8 @@ class _Map extends React.Component {
       if (note.geometry.coordinates[0].length > 0) {
         var geojson = note.geometry;
         polygonList.push(<GeoJSON 
+          className={styles['note-polygon']}
           data={geojson} 
-//          color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color } 
           color={note.color} 
           dragging={true} 
           key={uuid.v4()}
@@ -70,6 +72,15 @@ class _Map extends React.Component {
         }
       }
     }
+
+    var legends = [];
+    if (self.props.token) {
+      legends.push(<Legend 
+        position={'bottomright'} 
+        key={uuid.v4()}
+       />);
+    }
+
     var drag_flag = this.props.dragMode;
 //        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMapp()}>Lock Map</button>
 //        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>
@@ -100,8 +111,8 @@ class _Map extends React.Component {
           <RasterLayer 
             url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
             async={true}
-            geohashGridlines={true}
-            tileGridlines={true}
+            geohashGridlines={false}
+            tileGridlines={false}
           />
 
           <button 
@@ -112,6 +123,7 @@ class _Map extends React.Component {
           </button>
           {markerList}
           {polygonList}
+          {legends}
 
         </Map> 
       </div>
