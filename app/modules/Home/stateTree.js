@@ -1,14 +1,20 @@
 import uuid from 'uuid';
 
 var tree = {
+ 
+  dummy_value: 27,
   
   yield_revs: {},
 
   user: {},
   
   token: {},
+  
+  live_data: false,
 
   model: {
+    available_geohashes: {},
+    current_geohashes: {},
     selected_note: {},
     notes: initial_notes(), //initial_notes(),
     tags: initial_tags(),
@@ -31,6 +37,86 @@ var tree = {
     map: {$isLoading: true},
     dragMode: true,
     drawing: false,
+    legends: {
+      Corn: [{
+        value: 130,
+        color: {
+          r: 255,
+          g: 0,
+          b: 0, 
+          a: 255,
+        },
+      },{
+        value: ((225-130)/2)+130,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      },{ 
+        value: 225,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+
+      Soybeans: [{ 
+        value: 30,
+        color: { 
+          r: 255,
+          g: 0,
+          b: 0,
+          a: 255,
+        },
+      },{
+        value: ((65-30)/2)+30,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        }, 
+      },{
+        value: 65,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+      Wheat: [{ 
+        value: 40,
+        color: { 
+          r: 255,
+          g: 0,
+          b: 0,
+          a: 255,
+        },
+      },{
+        value: ((80-40)/2)+40,
+        color: {
+          r: 255,
+          g: 255,
+          b: 0,
+          a: 255,
+        }, 
+      },{
+        value: 80,
+        color: {
+          r: 0,
+          g: 255,
+          b: 0,
+          a: 255,
+        },
+      }],
+
+
+    },
   }
 }; 
 
@@ -49,35 +135,55 @@ function initial_notes() {
   for (var i = 1; i<3;i++) {
     var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
     var note = {
-      text: 'applied lower rate here',
-      tags: ['herbicide'],
+      text: 'n-serve test',
+      tags: [],//['application', 
       fields: ['Bair100'],
-      geometry: [{latitude: 40.858384, longitude: -86.138859},{latitude: 40.851257, longitude: -86.138790}, {latitude: 40.851244, longitude: -86.139479}, {latitude: 40.858316, longitude: -86.139746}],
-//      geojson:         
-//        {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-//        {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-88.0964,40.5603],[-87.7733,40.5603],[-87.6966,40.5603],[-87.6966,40.4343],[-87.6966,40.2152],[-87.9211,40.2152],[-88.0909,40.2152],[-88.0909,40.3686],[-88.0964,40.4781]]]]}}
-//      ]},
+      area: 17.34,
+//      geometry: [{latitude: 40.858384, longitude: -86.138859},{latitude: 40.851257, longitude: -86.138790}, {latitude: 40.851244, longitude: -86.139479}, {latitude: 40.858316, longitude: -86.139746}],
+      geometry: {"type":"Polygon","coordinates":[[
+        [-86.14511646330357,40.85140222836006],
+        [-86.14514864981174,40.85454280724172],
+        [-86.142852678895,40.85460772719846],
+        [-86.14272393286228,40.85136165143138],
+        [-86.14511646330357,40.85140222836006],
+      ]]},
 
       geojson_visible: 'Show',
       tags_modal_visibility: false,
       geometry_visible: true,
-      color: col,
+      color: '#99e7c1',
       completions: [],
       selected: false,
+      mean: 155.26,
     };
     if (i === 2) {
-      var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
+      var col = '#cce6ff';
       var text = 'low area';
       note = {
-        text: 'drown out; replanted 6/3/2015',
+        text: 'rootworm damage',
         tags: ['low area'],
-        fields: ['Smith40'],
-        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
-//        geojson:         
-//          {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-//          {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-86.0964,40.5603],[-85.7733,40.5603],[-85.6966,40.5603],[-85.6966,40.4343],[-85.6966,40.2152],[-85.9211,40.2152],[-86.0909,40.2152],[-86.0909,40.3686],[-86.0964,40.4781]]]]}}
-//        ]},
-         
+        area: 1.38,
+        mean: 135.78,
+        fields: ['Bair100'],
+//        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
+        geometry: {"type":"Polygon","coordinates":[[
+          [-86.13909758627415,40.85276559871832],
+          [-86.1392692476511,40.85284675083119],
+          [-86.1393765360117,40.85322816443017],
+          [-86.13941945135593,40.85365015138538],
+          [-86.13936580717564,40.85405590553835],
+          [-86.1391619592905,40.85416140121109],
+          [-86.13901175558567,40.854104595869714],
+          [-86.13894738256931,40.85400721517121],
+          [-86.13895811140536,40.85374753260873],
+          [-86.13895811140536,40.85356088513822],
+          [-86.13895811140536,40.85338235228311],
+          [-86.13891519606113,40.85319570378382],
+          [-86.13880790770054,40.853009054758715],
+          [-86.13882936537266,40.85286298124183],
+          [-86.13889373838902,40.85275748350158]
+        ]]},
+
         geojson_visible: 'Show',
         tags_modal_visibility: false,
         geometry_visible: true,

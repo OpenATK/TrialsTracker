@@ -1,14 +1,15 @@
 .note-list {
   position: absolute;
   left: 0;
-  width: 35vw;
+  width: 30vw;
   height: 100vh;
-  background-color: LightGray;
+  background-color: #FFFFFF;
   border-radius: 2px;
+  font-family: sans-serif;
 }
 .notes-container {
   position: relative;
-  height: 75%;
+  height: 88%;
   overflow: scroll;
 }
 .add-note-button {

@@ -9,17 +9,23 @@ import { addNewNote } from './chains';
 import { removeNote } from './chains';
 import { getYieldData } from './chains';
 import { handleAuth } from './chains';
-import { handleRequestResponse } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
+import { startStopLiveData } from './chains';
+import { handleTileGeohash } from './chains';
+import { makeLiveDataRequest } from './chains';
+import { updateGeohashes } from './chains';
+import { addGeohashes } from './chains';
+import { removeGeohashes } from './chains';
+import { markGeohashDrawn } from './chains';
 
-import { drawComplete } from './mapchain';
-import { handleMouseDown } from './mapchain';
-import { mouseMoveOnmap } from './mapchain';
-import { mouseUpOnmap } from './mapchain';
-import { ToggleMap } from './mapchain';
-import { drawOnMap } from './mapchain';
-import { handleDoneDrawing } from './mapchain';
+import { drawComplete } from './map-chains';
+import { handleMouseDown } from './map-chains';
+import { mouseMoveOnmap } from './map-chains';
+import { mouseUpOnmap } from './map-chains';
+import { ToggleMap } from './map-chains';
+import { drawOnMap } from './map-chains';
+import { handleDoneDrawing } from './map-chains';
 
 export default (options = {}) => {
   
@@ -34,6 +40,34 @@ export default (options = {}) => {
         ...initialize
       ],
 
+      geohashDrawn: [
+        ...markGeohashDrawn,
+      ],
+ 
+      recievedUpdatedGeohashes: [
+        ...updateGeohashes,
+      ],
+
+      gotTileGeohash: [
+        ...handleTileGeohash,
+      ],
+   
+      startStopLiveDataButtonClicked: [
+        ...startStopLiveData,
+     ],
+
+     liveDataRequested: [
+       ...makeLiveDataRequest,
+     ],
+
+     tileUnloaded: [
+       ...removeGeohashes,
+     ],
+
+      newTileDrawn: [
+        ...addGeohashes,
+      ],
+
       mapDoubleClicked: [
         ...handleMouseDown, drawComplete,
       ],
@@ -42,16 +76,8 @@ export default (options = {}) => {
         ...drawComplete,
       ],
     
-      recievedRequestResponse: [
-        ...handleRequestResponse,
-      ],
-
       recievedAccessToken: [
         ...handleAuth,
-      ],
-
-      mapMoved: [
-        ...getYieldData
       ],
 
       sortingTabClicked: [

@@ -4,6 +4,9 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
+import fastyles from './font-awesome.min.css';
+import Color from 'color'; 
+import FontAwesome from 'react-fontawesome';
 
 @Cerebral((props) => {
   return {
@@ -14,6 +17,7 @@ import styles from './note.css';
     selected: ['home', 'model', 'notes', props.id, 'selected'],
     drawMode: ['home', 'view', 'drawMode'],
     geometryVisible: ['home', 'model', 'notes', props.id, 'geometry_visible'],
+    areaw: ['home', 'model', 'notes', props.id, 'area'],
   };
 })
 
@@ -22,6 +26,13 @@ class Note extends React.Component {
   static propTypes = {
     text: PropTypes.string,
     showHide: PropTypes.string,
+  };
+
+  generateTextColor(color) {
+    var hsvColor = Color(color).hsv();
+    hsvColor.v *= 0.8;
+    hsvColor = Color(hsvColor);
+    return Color(hsvColor).hexString();
   };
 
   render() {
@@ -35,44 +46,79 @@ class Note extends React.Component {
 //      }
     });
     const signals = this.props.signals.home;
-    return (
-      <div 
-        key={uuid.v4()}
-        style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
-        className={styles[this.props.selected ? 'selected-note' : 'note']} 
-        onClick={() => signals.noteClicked({note:this.props.id})}
-      >
-     
-        <button
-          type="button" 
-          className={styles[this.props.drawMode ? 'done-drawing-button' : 'hidden']}
-          onClick={() => signals.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
-          >{'Done Drawing'}
-        </button>
-
-        <TextAreaAutoSize 
-          key={uuid.v4()} 
-          style={{backgroundColor:this.props.note.color}} 
-          value={this.props.text} 
-          minRows={1} 
-          className={styles['note-text-input']} 
-          onChange={(e) => signals.noteTextChanged.sync({value: e.target.value, noteId:this.props.id})}
-        ></TextAreaAutoSize>
-
+/*
         <button 
           type="button" 
           className={styles['note-show-hide-button']} 
           onClick={() => signals.showHideButtonClicked({id: this.props.id})}
           >{this.props.geometryVisible ? 'Hide' : 'Show'}
         </button>
-   
+*/ 
+    var doneDrawingButton = (this.props.selected && this.props.drawMode) ? 
+      <FontAwesome 
+        className='done-drawing-button'
+        name='check'
+        size='2x'
+        style={{
+          color:'#00FF00',
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          margin: '2px',
+        }}
+        onClick={() => signals.doneDrawingButtonClicked({drawMode:false, ids:[this.props.id]})}
+      /> : null;
+
+    var showHideButton = (this.props.showHide) ? 
+      <FontAwesome 
+        className='show-hide-button'
+        name='check'
+      /> : null;
+
+    var deleteNoteButton = (this.props.selected) ? 
+      <FontAwesome 
+        name='times'
+        size='2x'
+        className='delete-note-button'
+        style={{
+          color:'#FF0000',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          margin: '2px',
+        }}
+        onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}
+      /> : null;
+
+    var yieldString = this.props.note.mean ? 'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null;
+    var areaString = this.props.note.area ? 'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null;
+    var textColor = this.generateTextColor(this.props.note.color);
+    return (
+      <div 
+        key={uuid.v4()}
+        style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
+        color={textColor}
+        className={styles[this.props.selected ? 'selected-note' : 'note']} 
+        onClick={() => signals.noteClicked({note:this.props.id})}
+      >
+
+      {deleteNoteButton}
+      {doneDrawingButton}
+
+        <TextAreaAutoSize 
+          key={uuid.v4()} 
+          style={{backgroundColor:this.props.note.color}} 
+          value={this.props.text} 
+          minRows={1} 
+          color={textColor}
+          className={styles['note-text-input']} 
+          onChange={(e) => signals.noteTextChanged.sync({value: e.target.value, noteId:this.props.id})}
+        ></TextAreaAutoSize>
+  
         <hr/>
-        {'Area: ' + this.props.note.area}
+        {areaString}
         <br/>
-        {'Mean Yield: ' + this.props.note.mean}
-        <br/>
-        {'Data Points: ' + this.props.note.count}
-        <button type="button" className={styles[this.props.selected ? 'note-remove-button' : 'hidden']} onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}>Delete Note</button>
+        {yieldString}
         <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']} >Edit Tags</button>
         <EditTagsBar id={this.props.id} color={this.props.note.color}/>
       </div>
