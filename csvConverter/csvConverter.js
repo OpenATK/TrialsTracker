@@ -8,7 +8,7 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'COlSV8LDosMVX4c_Gsj2oYzW1iZ7IEBlIyFYvUah';
+var token = 'wVuDefpmJtcvisZX41-4e1cehtEWtt7Zh7cHpYGy';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -22,12 +22,21 @@ exports.csvToOadaYield = function() {
         this.processData(dataArray, files[i]);
       }
     }
-    this.createAggregates([2, 3, 4, 5, 6]);
+    this.createAggregates([2, 3, 4, 5, 6, 7]);
 //    this.pushData();
   });
 };
 
 recomputeStats = function(curStats, additionalStats) {
+  if (isNaN(curStats.sum_of_squares)) {
+    curStats.sum_of_squares = additionalStats.sum_of_squares;
+    curStats.n = additionalStats.n;
+    curStats.sum = additionalStats.sum;
+    curStats.mean = curStats.sum/curStats.n;
+    curStats.min = additionalStats.min;
+    curStats.max = additionalStats.max;
+    return curStats;
+  }
   curStats.sum_of_squares = curStats.sum_of_squares + additionalStats.sum_of_squares;
   curStats.n = curStats.n + additionalStats.n;
   curStats.sum = curStats.sum + additionalStats.sum;
@@ -68,11 +77,8 @@ processData = function(csvJson, filename) {
         context: {
           'geohash-7': geohash,
         },
+//TODO: populate these dynamically. If a crop type is encountered it, add it as a template present in this dataset
 
-        stats: {
-          n: 0,
-        },
-         
         template: {
           Corn: {
             units: 'bu/ac',
@@ -85,8 +91,10 @@ processData = function(csvJson, filename) {
           },
         },    
   
-        data: {},
+        data: { },
       };
+    }
+/*
       tempCache[geohash].stats[cropType] = {
         n: 1,
         sum: val,
@@ -121,9 +129,8 @@ processData = function(csvJson, filename) {
 
       tempCache[geohash].stats[cropType] = recomputeStats(tempCache[geohash].stats[cropType], additionalStats);
     }
+*/
     // Add the data point
-    
-    tempCache[geohash].stats.n++;
     tempCache[geohash].data[uuid.v4()] = {
       crop_type: cropType,
       location: {
@@ -147,7 +154,7 @@ createAggregates = function(levels) {
         var cropType = pt.crop_type;
         var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
         var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
-
+        var loc = gh.decode(aggregateGh);
         additionalStats = {
           n: 1,
           sum: pt.value,
@@ -156,24 +163,52 @@ createAggregates = function(levels) {
           max: pt.value,
           sum_of_squares: Math.pow(pt.value,2),
         };
-
         // Create the bucket if it doesn't exist.
         tempCache[bucketGh] = tempCache[bucketGh] || {};
         // Create the aggregate key if it doesn't exist.
         tempCache[bucketGh].aggregates = tempCache[bucketGh].aggregates || {};
         // Create the aggregate geohash key if it doesn't exist (containing a stats object). 
         tempCache[bucketGh].aggregates[aggregateGh] = tempCache[bucketGh].aggregates[aggregateGh] || {
-          stats: {}
+          stats:{},
+          location: {
+            lat: loc.latitude,
+            lon: loc.longitude,
+           }, 
         };
-        // Create the cropType key if it doesn't exist;
+        // Create the cropType key if it doesn't exist and recompute stats.
         tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] || {};
         tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats[cropType], additionalStats);
-        // Also store overall stats of all data points contained at the bucket geohash level;
-        tempCache[bucketGh].aggregates.stats = tempCache[bucketGh].aggregates.stats || {};
-        tempCache[bucketGh].aggregates.stats = recomputeStats(tempCache[bucketGh].aggregates.stats, additionalStats);
-        // Also store overall stats of all data points contained at the bucket geohash level, broken down into keyed crop types.
-        tempCache[bucketGh].aggregates.stats[cropType] = tempCache[bucketGh].aggregates.stats[cropType] || {};
-        tempCache[bucketGh].aggregates.stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats[cropType], additionalStats);
+        // Create a stats object at the bucket level and recompute stats.
+        tempCache[bucketGh].stats = tempCache[bucketGh].stats || {};
+        tempCache[bucketGh].stats[cropType] = tempCache[bucketGh].stats[cropType] || {};
+        tempCache[bucketGh].stats[cropType] = recomputeStats(tempCache[bucketGh].stats[cropType], additionalStats);
+
+// Also store overall stats of all data points contained at the bucket geohash level, broken down into keyed crop types.
+//        tempCache[bucketGh].aggregates.stats[cropType] = tempCache[bucketGh].aggregates.stats[cropType] || {};
+//        tempCache[bucketGh].aggregates.stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates.stats[cropType], additionalStats);
+// Also store overall stats of all data points contained at the bucket geohash level;
+//        tempCache[bucketGh].stats = recomputeStats(tempCache[bucketGh].aggregates.stats, additionalStats);
+      });
+    });
+  });
+  Object.keys(tempCache).forEach((geohash) => {
+    var bucketGh = geohash;
+    Object.keys(tempCache[geohash].aggregates).forEach((key) => {
+      var aggregateGh = key;
+      tempCache[bucketGh].aggregates_stats = tempCache[bucketGh].aggregates_stats || {};
+      tempCache[bucketGh].aggregates_stats.num_aggregates = tempCache[bucketGh].aggregates_stats.num_aggregates || 0;
+      tempCache[bucketGh].aggregates_stats.num_aggregates++;
+      Object.keys(tempCache[geohash].aggregates[key].stats).forEach((cropType) => {
+        tempCache[bucketGh].aggregates_stats.sum_n = tempCache[bucketGh].aggregates_stats.sum_n + tempCache[bucketGh].aggregates[key].stats[cropType].n || tempCache[bucketGh].aggregates[key].stats[cropType].n;
+        tempCache[bucketGh].aggregates_stats.min_n = tempCache[bucketGh].aggregates_stats.min_n || tempCache[bucketGh].aggregates[key].stats[cropType].n;
+        tempCache[bucketGh].aggregates_stats.max_n = tempCache[bucketGh].aggregates_stats.max_n || tempCache[bucketGh].aggregates[key].stats[cropType].n;
+        if (tempCache[bucketGh].aggregates[key].stats[cropType].n > tempCache[bucketGh].aggregates_stats.max_n) {
+          tempCache[bucketGh].aggregates_stats.max_n = tempCache[bucketGh].aggregates[key].stats[cropType].n;
+        }
+        if (tempCache[bucketGh].aggregates[key].stats[cropType].n < tempCache[bucketGh].aggregates_stats.min_n) {
+          tempCache[bucketGh].aggregates_stats.min_n = tempCache[bucketGh].aggregates[key].stats[cropType].n;
+        }
+        tempCache[bucketGh].aggregates_stats.mean_n = (tempCache[bucketGh].aggregates_stats.sum_n)/(tempCache[bucketGh].aggregates_stats.num_aggregates);
       });
     });
   });

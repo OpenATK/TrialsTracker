@@ -19,7 +19,7 @@ var tileIndex;
     selectedNote: ['home', 'model', 'selected_note'],
     drawMode: ['home', 'view', 'drawMode'],
     liveData: ['home', 'live_data'],
-    token: ['home', 'token'],
+    token: ['home', 'token', 'access_token'],
     legends: ['home', 'view', 'legends'],
   };
 })
@@ -72,15 +72,16 @@ class _Map extends React.Component {
         }
       }
     }
-
+    
     var legends = [];
     if (self.props.token) {
       legends.push(<Legend 
         position={'bottomright'} 
         key={uuid.v4()}
        />);
+    } else {
+      legends = null;
     }
-
     var drag_flag = this.props.dragMode;
 //        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMapp()}>Lock Map</button>
 //        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>

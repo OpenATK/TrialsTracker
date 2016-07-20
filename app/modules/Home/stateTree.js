@@ -39,7 +39,7 @@ var tree = {
     drawing: false,
     legends: {
       Corn: [{
-        value: 75,
+        value: 130,
         color: {
           r: 255,
           g: 0,
@@ -47,7 +47,7 @@ var tree = {
           a: 255,
         },
       },{
-        value: ((225-75)/2)+75,
+        value: ((225-130)/2)+130,
         color: {
           r: 255,
           g: 255,
@@ -65,7 +65,7 @@ var tree = {
       }],
 
       Soybeans: [{ 
-        value: 20,
+        value: 30,
         color: { 
           r: 255,
           g: 0,
@@ -73,7 +73,7 @@ var tree = {
           a: 255,
         },
       },{
-        value: ((90-20)/2)+20,
+        value: ((65-30)/2)+30,
         color: {
           r: 255,
           g: 255,
@@ -81,7 +81,7 @@ var tree = {
           a: 255,
         }, 
       },{
-        value: 90,
+        value: 65,
         color: {
           r: 0,
           g: 255,
@@ -90,7 +90,7 @@ var tree = {
         },
       }],
       Wheat: [{ 
-        value: 20,
+        value: 40,
         color: { 
           r: 255,
           g: 0,
@@ -98,7 +98,7 @@ var tree = {
           a: 255,
         },
       },{
-        value: ((80-20)/2)+20,
+        value: ((80-40)/2)+40,
         color: {
           r: 255,
           g: 255,
@@ -154,7 +154,7 @@ function initial_notes() {
       color: '#99e7c1',
       completions: [],
       selected: false,
-      mean: 189.26,
+      mean: 155.26,
     };
     if (i === 2) {
       var col = '#cce6ff';
