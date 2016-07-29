@@ -4,7 +4,7 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
-import fastyles from './font-awesome.min.css';
+import fastyles from '../css/font-awesome.min.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
 
@@ -15,7 +15,7 @@ import FontAwesome from 'react-fontawesome';
     text: ['home', 'model', 'notes', props.id, 'text'],
     tags: ['home', 'model', 'notes', props.id, 'tags'],
     selected: ['home', 'model', 'notes', props.id, 'selected'],
-    drawMode: ['home', 'view', 'drawMode'],
+    drawMode: ['home', 'view', 'draw_mode'],
     geometryVisible: ['home', 'model', 'notes', props.id, 'geometry_visible'],
     areaw: ['home', 'model', 'notes', props.id, 'area'],
   };
@@ -82,17 +82,44 @@ class Note extends React.Component {
         className='delete-note-button'
         style={{
           color:'#FF0000',
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          margin: '2px',
+          float: 'right',
         }}
         onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}
-      /> : null;
+      /> : 
+      <FontAwesome 
+        name='times'
+        size='2x'
+        className='delete-note-button'
+        style={{
+          color:'transparent',
+          float: 'right',
+        }}
+      />;
 
     var yieldString = this.props.note.mean ? 'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null;
     var areaString = this.props.note.area ? 'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null;
+    var noteInfo = 
+      <div
+        key={uuid.v4()}
+        className={styles['note-info']}>
+        {areaString}
+        <br/>
+        {yieldString}
+      </div>;
     var textColor = this.generateTextColor(this.props.note.color);
+    console.log(this.props.text);
+/*
+        <TextAreaAutoSize 
+          key={uuid.v4()} 
+          style={{backgroundColor:this.props.note.color}} 
+          value={this.props.text} 
+          placeholder='Type note description here'
+          minRows={1} 
+          className={styles['note-text-input']} 
+          onChange={(e) => signals.noteTextChanged({value: e.target.value, noteId:this.props.id}, {immediate: true})}
+//          autoFocus={this.props.selected ? 'autofocus' : null}
+        ></TextAreaAutoSize>
+*/
     return (
       <div 
         key={uuid.v4()}
@@ -101,26 +128,23 @@ class Note extends React.Component {
         className={styles[this.props.selected ? 'selected-note' : 'note']} 
         onClick={() => signals.noteClicked({note:this.props.id})}
       >
-
-      {deleteNoteButton}
-      {doneDrawingButton}
-
-        <TextAreaAutoSize 
-          key={uuid.v4()} 
-          style={{backgroundColor:this.props.note.color}} 
-          value={this.props.text} 
-          minRows={1} 
-          color={textColor}
+        <input
           className={styles['note-text-input']} 
-          onChange={(e) => signals.noteTextChanged.sync({value: e.target.value, noteId:this.props.id})}
-        ></TextAreaAutoSize>
-  
-        <hr/>
-        {areaString}
-        <br/>
-        {yieldString}
-        <button type="button" className={styles[this.props.selected ? 'note-edit-tags-button' : 'hidden']} >Edit Tags</button>
-        <EditTagsBar id={this.props.id} color={this.props.note.color}/>
+          placeholder='Type note description here'
+          key={uuid.v4()}
+          value={this.props.text}
+          style={{backgroundColor:this.props.note.color}} 
+          onChange={(e) => signals.noteTextChanged({value: e.target.value, noteId:this.props.id}, {immediate: true})}
+        />
+        {deleteNoteButton}
+        <hr noshade/>
+        {noteInfo}
+        {doneDrawingButton}
+        <EditTagsBar 
+          id={this.props.id} 
+          color={this.props.note.color}
+          selected={this.props.selected}
+        />
       </div>
     );
   }

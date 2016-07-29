@@ -11,6 +11,7 @@ import styles from './note-list.css';
     notes: ['home', 'model', 'notes'], 
     tags: ['home', 'model', 'tags'],
     sortMode: ['home', 'view', 'sort_mode'], 
+    drawMode: ['home', 'view', 'draw_mode'],
   };
 })
 
@@ -65,16 +66,29 @@ class NoteList extends React.Component {
     return notes_array;
   }
   
+  handleClick(evt) {
+    // call only for note-list element, not children note elements;
+    if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
+      this.props.signals.home.noteListClicked({});
+    }
+  }
+  
   render() {
     var notes_array = this.getNotes();
     const signals = this.props.signals.home;
 
     return (
-      <div className={styles['note-list']}>
+      <div 
+        className={styles['note-list']}>
         <SortingTabs />
-        <div className={styles['notes-container']}>{notes_array} </div>
+        <div 
+          className={styles['notes-container']}
+          onClick={(evt) => {this.handleClick(evt)}}>
+         {notes_array} 
+        </div>
         <button 
           type="button" 
+          disabled={this.props.drawMode}
           className={styles['add-note-button']} 
           onClick={() => {signals.addNoteButtonClicked({drawMode:true})}}>
           Add Note

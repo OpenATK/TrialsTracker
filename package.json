@@ -42,6 +42,7 @@
     "geojson-area": "^0.2.1",
     "geolib": "^2.0.21",
     "leaflet": "^0.7.7",
+    "leaflet-draw": "^0.3.0",
     "lodash": "^4.5.1",
     "md5": "^2.1.0",
     "ngeohash": "^0.6.0",

@@ -18,6 +18,8 @@ import { updateGeohashes } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
 import { markGeohashDrawn } from './chains';
+import { addTag } from './chains';
+import { handleNoteListClick } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -92,9 +94,10 @@ export default (options = {}) => {
         ...removeNote
       ],
  
-      noteTextChanged: [
-        ...textInputChanged
-      ],
+      noteTextChanged: {
+        chain: [...textInputChanged],
+        immediate: true
+      },
 
       mouseDownOnMap: [
         ...handleMouseDown
@@ -108,7 +111,7 @@ export default (options = {}) => {
         ...mouseUpOnmap
       ],
 
-      ToggleMapp: [
+      ToggleMap: [
         ...ToggleMap
       ],
 
@@ -120,9 +123,16 @@ export default (options = {}) => {
         ...changeShowHideState
       ],
 
-
       addNoteButtonClicked: [
         ...addNewNote,
+      ],
+
+      tagAdded: [
+        ...addTag, 
+      ],
+
+      noteListClicked: [
+        ...handleNoteListClick,
       ],
 
     })

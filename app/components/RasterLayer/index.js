@@ -11,6 +11,7 @@ import cache from './cache.js';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import uuid from 'uuid';
 var db = {};
+import ld from 'leaflet-draw';
 
 function blendColors(c1, c2, percent) {
   let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
@@ -44,7 +45,7 @@ export default class RasterLayer extends CanvasTileLayer {
     this.tileUnload = this.tileUnload.bind(this);
     this.validate = this.validate.bind(this);
     this.recursiveDrawOnCanvas = this.recursiveDrawOnCanvas.bind(this);
-    this.renderImageData = this.renderImageData.bind(this);
+    this.handleGeohashData = this.handleGeohashData.bind(this);
     this.drawTileGrid = this.drawTileGrid.bind(this);
     this.drawGeohashGrid = this.drawGeohashGrid.bind(this);
     this.leafletElement.on('tileunload', this.tileUnload);
@@ -90,11 +91,20 @@ export default class RasterLayer extends CanvasTileLayer {
       var sw = this.props.map.unproject(tileSwPt, zoom);
       var ne = this.props.map.unproject(tileNePt, zoom);
       var precision =  this.getGeohashLevel(zoom, sw, ne);
-      console.log('using geohash-'+precision);
       var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
-      if (this.props.geohashGridlines) this.drawGeohashGrid(canvas, tilePoint, zoom, geohashes, 'black', 1);
+      var geohashesGrids = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision+2);
+      if (this.props.geohashGridlines) this.drawGeohashGrid(canvas, tilePoint, zoom, geohashesGrids, 'black', 1);
       if (this.props.tileGridlines) this.drawTileGrid(canvas, tilePoint, zoom);
       for (var g = geohashes.length-1; g > -1; g--) {
+/*
+      var ghbbox = gh.decode_bbox(geohashes[g]);
+      var gse = L.latLng(ghbbox[0], ghbbox[3]);
+      var gsw = L.latLng(ghbbox[0], ghbbox[1]);
+      var gnw = L.latLng(ghbbox[2], ghbbox[1]);
+      var gne = L.latLng(ghbbox[2], ghbbox[3]);
+      var area = L.GeometryUtil.geodesicArea([gsw,gse,gne,gnw]);
+      console.log(geohashes[g] + ' area: '+area)
+*/
         //If the geohash isn't available, remove it from the list and continue.
         if (this.props.token && !this.props.availableGeohashes[geohashes[g]]) {
           geohashes.splice(g, 1);
@@ -109,13 +119,12 @@ export default class RasterLayer extends CanvasTileLayer {
         this.canvas[geohashes[g]].canvases.push({canvas, tilePoint});
         this.canvas[geohashes[g]].drawn = false;
 
-        // If already on list, prevent unecessary state change
+// If already on list, prevent unecessary state change
 //        if (this.props.currentGeohashes[geohashes[g]]) {
 //          console.log(geohashes[g] + ' removed here 2');
 //          geohashes.splice(g,1);
 //        }
       }
-
 
       if (Object.keys(geohashes).length > 0) {
         return this.props.signals.home.newTileDrawn({geohashes});
@@ -123,7 +132,6 @@ export default class RasterLayer extends CanvasTileLayer {
     });
   }
 
-//draw lines for the selected geohash grid level
   drawGeohashGrid(canvas, tilePoint, zoom, geohashes, color, width) {
     var ctx = canvas.getContext('2d');
     for (var g = 0; g < geohashes.length; g++) {
@@ -134,12 +142,6 @@ export default class RasterLayer extends CanvasTileLayer {
       var n = nw.y - tilePoint.y*256;
       var e = se.x - tilePoint.x*256;
       var s = se.y - tilePoint.y*256;
-/*
-      if (w < 0) w = 0;
-      if (n < 0) n = 0;
-      if (e > 255) e = 255;
-      if (s > 255) s = 255;
-*/
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -150,7 +152,6 @@ export default class RasterLayer extends CanvasTileLayer {
     }   
   }
 
-//draw lines for each tile  
   drawTileGrid(canvas, tilePoint, zoom) {
     var ctx = canvas.getContext('2d');
     ctx.lineWidth = "1";
@@ -161,7 +162,7 @@ export default class RasterLayer extends CanvasTileLayer {
     ctx.stroke();
     this.leafletElement.tileDrawn(canvas);
   }
-/*
+/*//This code handles checking for new revs on the server
               if (self.props.availableGeohashes[geohash]._rev !== result._rev) {
                 console.log(self.props.availableGeohashes[geohash]);
                 console.log(self.props.availableGeohashes[geohash]._rev, result._rev);
@@ -169,23 +170,15 @@ export default class RasterLayer extends CanvasTileLayer {
                 cache_result.then(function(result) {
                   if (result) {
                     console.log('New geohash data on the server. Redrawing...');
-                    self.renderImageData(canvas, result.aggregates, tilePoint);
+                    self.handleGeohashData(canvas, result.aggregates, tilePoint);
+                  }
+                });     
+              }
 */
-/*
-                    if (self.props.map.getZoom() >= 15) {
-                      self.renderImageData(canvas, result.data, tilePoint);
-                    } else {
-                      self.renderImageData(canvas, result.aggregates, tilePoint);
-                    }
-*/
-//                  }
-//                });     
-//              }
  
 
-  renderTile(canvas, geohash, tilePoint, rand, index) {
+  renderTile(canvas, geohash, tilePoint, index) {
     var zoom = this.props.map.getZoom();
-//    console.log('renderTile '+ rand);
     if (this.props.token) {
       var self = this;
       return Promise.try(function() {
@@ -205,30 +198,71 @@ export default class RasterLayer extends CanvasTileLayer {
             return null;
           }
           if (zoom >= 16) {
-            return self.renderImageData(canvas, data.data, tilePoint, geohash)
+            console.log('using geohash-'+geohash.length+ ' raw data');
+            return self.handleGeohashData(canvas, data.data, tilePoint, geohash)
           } else {
-            return self.renderImageData(canvas, data.aggregates, tilePoint, geohash)
+            console.log('using geohash-'+geohash.length+ ' aggregate');
+            return self.handleGeohashData(canvas, data.aggregates, tilePoint, geohash)
           }
         });
       });
     }
   }
 
+  handleGeohashData(canvas, data, tilePoint, geohash) {
+    var self = this;
+    var zoom = self.props.map.getZoom();
+    return Promise.try(function() {
+      var ctx = canvas.getContext('2d');
+      var imgData = ctx.getImageData(0, 0, 256, 256);
+      var tileSwPt = new L.Point(tilePoint.x*256, (tilePoint.y*256)+256);
+      var tileNePt = new L.Point((tilePoint.x*256)+256, tilePoint.y*256);
+      var sw = self.props.map.unproject(tileSwPt, zoom);
+      var ne = self.props.map.unproject(tileNePt, zoom);   
+      var bounds = L.latLngBounds(sw, ne);
+
+      if (zoom >= 16) {
+        return self.recursiveDrawOnCanvasRawData(imgData, tilePoint, bounds, data, 0, canvas, ctx);
+      } else {
+        return self.recursiveDrawOnCanvas(imgData, tilePoint, bounds, data, 0, canvas, ctx);
+      }
+    }).then(function() {
+      var bbox = gh.decode_bbox(geohash);
+      var geohashesGrids = gh.bboxes(bbox[0], bbox[1], bbox[2], bbox[3], geohash.length+2);
+      if (self.props.geohashGridlines) self.drawGeohashGrid(canvas, tilePoint, zoom, geohashesGrids, 'black', 1);
+      if (self.props.tileGridlines) self.drawTileGrid(canvas, tilePoint, zoom);
+    });
+  }
+
   getGeohashLevel(zoom, sw, ne) { 
-    if (zoom >= 14) return 7;
-    if (zoom <= 13 && zoom >= 11) return 6;
-    if (zoom <= 10 && zoom >= 8) return 5;
-    if (zoom <= 7 && zoom >= 6) return 4;
+    if (zoom >= 15) return 7;
+    if (zoom >= 12) return 6;
+    if (zoom >= 8) return 5;
+    if (zoom >= 6) return 4;
     if (zoom <= 5) return 3;
   }
 
-  getPixelWidth(zoom) { 
-    if (zoom >= 16) return 2;
-    if (zoom >= 14) return 7;
-    if (zoom <= 13 && zoom >= 11) return 6;
-    if (zoom <= 10 && zoom >= 8) return 5;
-    if (zoom <= 7 && zoom >= 6) return 4;
-    if (zoom <= 5) return 3;
+  getPixelWidth(zoom) {
+    switch(zoom) {
+      case 17: return 3;
+      case 16: return 2;
+      case 15: return 1;
+      case 14: return 1;
+      case 13: return 1;
+      case 12: return 1;
+      case 11: return 1;
+      case 10: return 0;
+      case 9: return 0;
+      case 8: return 0;
+      case 7: return 0;
+      case 6: return 0;
+      case 5: return 0;
+      case 4: return 0;
+      case 3: return 0;
+      case 2: return 0;
+      case 1: return 0;
+      case 0: return 0;
+    }
   }
 
   recursiveDrawOnCanvas(imageData, tilePoint, bounds, data, startIndex, canvas, context) {
@@ -249,12 +283,32 @@ export default class RasterLayer extends CanvasTileLayer {
           var latlng = L.latLng(val.location.lat, val.location.lon);
           if (bounds.contains(latlng)) {
             var levels = self.props.legends[cropTypes[j]];
+            var ghBounds = gh.decode_bbox(keys[i]); 
+            var nw = self.props.map.project(new L.latLng(ghBounds[2], ghBounds[1]), zoom);
+            var se = self.props.map.project(new L.latLng(ghBounds[0], ghBounds[3]), zoom);
+            var w = nw.x - tilePoint.x*256;
+            var n = nw.y - tilePoint.y*256;
+            var e = se.x - tilePoint.x*256;
+            var s = se.y - tilePoint.y*256;
+//Fill the entire geohash aggregate with the appropriate color
+            context.lineWidth = 0;
+            console.log(val);
+            var col = self.colorForvalue(val.stats[cropTypes[j]].mean, levels);
+            context.strokeStyle = 'rgb('+col.r+','+col.g+','+col.b+')';
+            context.fillStyle='rgb('+col.r+','+col.g+','+col.b+')';
+            context.beginPath();
+            context.rect(w + 0.5, n + 0.5, e - w - 0.5, s - n - 0.5);
+            context.closePath();
+            context.fill();
+            context.stroke();
+/*
             var pt = self.props.map.project(latlng);
             pt.x = Math.floor(pt.x - tilePoint.x*256);
             pt.y = Math.floor(pt.y - tilePoint.y*256);
             var color = self.colorForvalue(val.stats[cropTypes[j]].mean, levels);
-//            var pixWidth = self.getPixelWidth(zoom);
-            var pixWidth = 0;
+//            var pixWidth = 0;
+            var pixWidth = self.getPixelWidth(zoom);
+            console.log('zoom: '+zoom+' pixWidth: '+pixWidth);
             for (var m = 0-pixWidth; m < 1+pixWidth; m++) {
               for (var n = 0-pixWidth; n < 1+pixWidth; n++) {
                 pixelData[(((pt.y+n)*256+pt.x+m)*4)]   = color.r; // red
@@ -263,10 +317,13 @@ export default class RasterLayer extends CanvasTileLayer {
                 pixelData[(((pt.y+n)*256+pt.x+m)*4)+3] = 255; // alpha
               }
             }
+*/
           }
         }
       }
-      context.putImageData(imageData, 0, 0);
+
+//      context.putImageData(imageData, 0, 0);
+      console.log('drawing!');
       return self.leafletElement.tileDrawn(canvas);
     }).then(function() {
       if (stopIndex != keys.length) {
@@ -291,8 +348,8 @@ export default class RasterLayer extends CanvasTileLayer {
           pt.x = Math.floor(pt.x - tilePoint.x*256);
           pt.y = Math.floor(pt.y - tilePoint.y*256);
           var color = self.colorForvalue(val.value, levels);
-//          var pixWidth = self.computePixelWidth(zoom);
-          var pixWidth = 0;
+//          var pixWidth = 0;
+          var pixWidth = self.getPixelWidth(zoom);
           for (var m = 0-pixWidth; m < 1+pixWidth; m++) {
             for (var n = 0-pixWidth; n < 1+pixWidth; n++) {
               pixelData[(((pt.y+n)*256+pt.x+m)*4)]   = color.r; // red
@@ -312,31 +369,7 @@ export default class RasterLayer extends CanvasTileLayer {
     });
   }
 
-
-  renderImageData(canvas, data, tilePoint, geohash) {
-    var self = this;
-    var zoom = self.props.map.getZoom();
-    return Promise.try(function() {
-      var ctx = canvas.getContext('2d');
-      var imgData = ctx.getImageData(0, 0, 256, 256);
-      var tileSwPt = new L.Point(tilePoint.x*256, (tilePoint.y*256)+256);
-      var tileNePt = new L.Point((tilePoint.x*256)+256, tilePoint.y*256);
-      var sw = self.props.map.unproject(tileSwPt, zoom);
-      var ne = self.props.map.unproject(tileNePt, zoom);   
-      var bounds = L.latLngBounds(sw, ne);
-      if (zoom >= 16) {
-        console.log('raw data');
-        return self.recursiveDrawOnCanvasRawData(imgData, tilePoint, bounds, data, 0, canvas, ctx);
-      } else {
-        return self.recursiveDrawOnCanvas(imgData, tilePoint, bounds, data, 0, canvas, ctx);
-      }
-    }).then(function() {
-      if (self.props.geohashGridlines) self.drawGeohashGrid(canvas, tilePoint, zoom, [geohash], 'black', 1);
-      if (self.props.tileGridlines) self.drawTileGrid(canvas, tilePoint, zoom);
-    });
-  }
-
-  colorForvalue(val, levels) {
+    colorForvalue(val, levels) {
     if (val <= levels[0].value) {
       return levels[0].color;
     }
@@ -372,7 +405,6 @@ export default class RasterLayer extends CanvasTileLayer {
   }
 
   render() {
-    var rand = uuid.v4();
     var self = this;
     const signals = this.props.signals.home;
     console.log(this.props.map.getZoom());
@@ -391,16 +423,14 @@ export default class RasterLayer extends CanvasTileLayer {
          } else {
           self.canvas[geohash].drawn = true;
           return Promise.map(self.canvas[geohash].canvases, function(cvs, idx) {
-            return self.renderTile(cvs.canvas, geohash, cvs.tilePoint, rand, idx);
+            return self.renderTile(cvs.canvas, geohash, cvs.tilePoint, idx);
           }); 
         }
       }).then(function() {
       //  TODO check whether any geohashes were actually drawn
- //       console.log('outer loop finished ' + rand);
         signals.geohashDrawn({geohashes});
       });
     }
-//    console.log('returning super '+rand);
     return super.render();
   }
 }

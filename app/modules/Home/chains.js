@@ -26,6 +26,14 @@ export var initialize = [
   prepNoteStats, //computeBoundingBox, computeStats
 ];
 
+export var addTag = [
+  addTagToNote, addTagToAllTagsList,
+];
+
+export var handleNoteListClick = [
+  deselectNote,
+];
+
 export var changeSortMode = [
   setSortMode
 ];
@@ -35,7 +43,7 @@ export var handleNoteClick = [
 ];
 
 export var removeNote = [
-  unselectIfSelected, checkTags, deleteNote, 
+  deselectNote, checkTags, deleteNote, 
 ];
 
 export var textInputChanged = [
@@ -46,7 +54,7 @@ export var changeShowHideState = [
 ];
 
 export var addNewNote = [
-  unselectNote, createNote, selectNote, setDrawMode
+  deselectNote, createNote, selectNote, setDrawMode
 ];
 
 export var changeShowHideState = [
@@ -412,8 +420,6 @@ sendNewData.async = true;
 
 function storeGeohash({input, state}) {
   var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
-  console.log(currentGeohashes);
-  console.log(input.rev, currentGeohashes[input.geohash]);
   if (input.rev !== currentGeohashes[input.geohash]) {
     console.log('updating current geohashes');
     state.set(['home', 'model', 'current_geohashes', input.geohash], input.rev); 
@@ -490,7 +496,7 @@ function storeAvailableGeohashes({input, state}) {
 };
 
 function setDrawMode({input, state}) {
-  state.set(['home', 'view', 'drawMode'], input.drawMode); 
+  state.set(['home', 'view', 'draw_mode'], input.drawMode); 
 };
 
 function getAccessToken({input, state, output}) {
@@ -526,11 +532,6 @@ function setSortMode ({input, state}) {
   state.set(['home', 'view', 'sort_mode'], input.newSortMode);
 };
 
-function unselectNote ({input, state}) {
-  console.log('unselecting note');
-  state.set(['home', 'model', 'selected_note'], {});
-};
-
 function selectNote ({input, state}) {
   //check that the selected note isn't already selected
   if (state.get(['home', 'model', 'selected_note']) !== input.note) {
@@ -560,13 +561,16 @@ function selectNote ({input, state}) {
 };
 
 function setTextInputValue ({input, state}) {
-  state.set(['home', 'model', 'notes', input.noteId, 'text']);
+  console.log(input);
+  state.set(['home', 'model', 'notes', input.noteId, 'text'], input.value);
 };
- 
-function unselectIfSelected ({input, state}) {
-  if (input.id === state.get(['home', 'model', 'selected_note'])) {
-    state.set(['home', 'model', 'selected_note'], {});
+
+function deselectNote ({input, state}) {
+  var note = state.get(['home', 'model', 'selected_note']);
+  if (!_.isEmpty(note)) {
+    state.set(['home', 'model', 'notes', note, 'selected'], false);
   }
+  state.set(['home', 'model', 'selected_note'], {});
 };
 
 function checkTags ({input, state}) {
@@ -616,6 +620,31 @@ function createNote({state, output}) {
   };
   state.set(['home', 'model', 'notes', newNote.id], newNote);
   output({note: newNote.id});
+};
+
+function addTagToNote({input, state}) {
+  var note = state.get(['home', 'model', 'selected_note']);
+  console.log(state.get(['home', 'model', 'notes', note, 'tags']));
+  state.concat(['home', 'model', 'notes', note, 'tags'], input.text);
+/*
+  var tags = state.get(['home', 'model', 'notes', note, 'tags']);
+  console.log(Object.isExtensible(tags));
+  tags.push(input.text);
+  console.log(tags);
+  state.set(['home', 'model', 'notes', selected_note, 'tags'], tags);
+*/
+};
+
+function addTagToAllTagsList({input, state}) {
+  var allTags = state.get(['home', 'model', 'tags']);
+  if (!allTags[input.text]) {
+    state.set(['home', 'model', 'tags', input.text], { 
+      text: input.text,
+      references: 1
+    });
+  } else {
+    state.set(['home', 'model', 'tags', input.text, 'references'], allTags[input.text].references+1);
+  }
 };
 
 function getColor() {

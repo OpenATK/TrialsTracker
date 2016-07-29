@@ -2,8 +2,6 @@ import uuid from 'uuid';
 
 var tree = {
  
-  dummy_value: 27,
-  
   yield_revs: {},
 
   user: {},
@@ -16,15 +14,8 @@ var tree = {
     available_geohashes: {},
     current_geohashes: {},
     selected_note: {},
-    notes: initial_notes(), //initial_notes(),
+    notes: initial_notes(),
     tags: initial_tags(),
-    edit_tags: {
-      input_text:'',
-      visible: false,
-      note_id: {},
-      completions: [],
-      temp_tags: [],
-    },
     fields: {
       Smith40: {
         name: 'Smith40',

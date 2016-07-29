@@ -245,11 +245,11 @@ function computeBoundingBox({input, state, output}) {
 };
 
 function setDrawMode({input, state}) {
-  state.set(['home', 'view', 'drawMode'], input.drawMode); 
+  state.set(['home', 'view', 'draw_mode'], input.drawMode); 
 };
 
 function dropPoint ({input, state}) {
-  if(state.get(['home', 'view', 'drawMode']) == true){
+  if(state.get(['home', 'view', 'draw_mode']) == true){
     mouse_up_flag = false;
     var currentSelectedNoteId = input.select_note;
     _.each(state.get(['home', 'model', 'notes']), function(note) {
@@ -263,7 +263,7 @@ function dropPoint ({input, state}) {
 };
 
 function mapMouseMove ({input, state}) {
-  if(state.get(['home', 'view', 'drawMode']) === true){
+  if(state.get(['home', 'view', 'draw_mode']) === true){
     var vertex = [input.vertex_value.lng, input.vertex_value.lat];
     var currentSelectedNoteId = input.selected_note;
 
@@ -286,7 +286,7 @@ function mapMouseMove ({input, state}) {
 };
 
 function mapMouseUp ({input, state}) {
-  if(state.get(['home', 'view', 'drawMode']) === true){
+  if(state.get(['home', 'view', 'draw_mode']) === true){
     mouse_up_flag = true;
   }
 };

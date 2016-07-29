@@ -1,12 +1,19 @@
 .note {
-  position: relative;
-  border-style: solid;
-  border-width: 2px;
-  border-radius: 2px;
-  width: initial;
+  border-radius: 3px;
   height: initial;
-  margin: 7px;
-  padding: 5px;
+  margin: 5px;
+  padding-bottom: 3px;
+}
+.selected-note {
+  position: relative;
+  border-radius: 3px;
+  height: initial;
+  margin: 5px;
+  box-shadow: 5px 5px 5px black;
+  padding-bottom: 3px;
+}
+.note-info {
+  margin: 3px;
 }
 .custom-class {
   width:25px;
@@ -15,48 +22,43 @@
 .hidden {
   display: none;
 }
-.selected-note {
-  position: relative;
-  border-style: solid;
-  border-width: 3px;
-  border-radius: 2px;
-  width: initial;
-  height: initial;
-  margin: 7px;
-  padding: 5px;
-  box-shadow: 5px 5px 5px black;
-}
 .note-show-hide-button {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 0px;
+  right: 5px;
   margin: 2px;
 }
 .done-drawing-button {
   position: absolute;
-  bottom: 0;
-  left: 0;
+  bottom: 0px;
+  right: 5px;
   margin: 2px;
   color: #00FF00;
 }
 .delete-note-button {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  margin: 2px;
+  float: right;
   color: #FF0000;
+  margin: 2px;
 }
 .note-text-input {
-  width: 99%;
+  border-radius: 2px;
   resize: none;
   border: none;
   outline: none;
   font-size: 16px;
+  width: 85%;
+  margin-left: 3px;
+  margin-top: 3px;
 }
 hr {
-  height: 2px;
+  position: relative;
+  height: 1px;
+  color: #989898;
   border: 0;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+  background-color: #989898;
+  width: 100%;
+  margin-top: -2px;
+  margin-bottom: 3px;
 }
 .tag {
   position: relative;
@@ -70,20 +72,9 @@ hr {
   font-weight: 400;
   margin: 5px;
 }
-@media (min-width: 1000px) {
-  .note-edit-tags-button {
-    position: relative;
-    bottom: 0;
-    left: 0;
-    margin: 2px;
-  }
-}
-
-@media (max-width: 500px) {
-  .note-edit-tags-button {
-    position: relative;
-    bottom: 0;
-    left: 0;
-    margin: 2px;
-  }
+.edit-tags-button {
+  position: relative;
+  bottom: 0;
+  left: 0;
+  margin: 2px;
 }

@@ -8,7 +8,7 @@ var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'wVuDefpmJtcvisZX41-4e1cehtEWtt7Zh7cHpYGy';
+var token = 's-aJ24a4hunRitE0uAZyX3WyR4IJuR34HWmTHSz0';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -19,6 +19,8 @@ exports.csvToOadaYield = function() {
       if ((files[i]).substr(-3) == 'csv') {
         console.log('Processing ' + files[i]);
         var dataArray = csvjson.toObject(files[i]).output;
+        console.log(dataArray);
+        console.log(csvjson.toObject(files[i]));
         this.processData(dataArray, files[i]);
       }
     }
@@ -48,13 +50,13 @@ recomputeStats = function(curStats, additionalStats) {
 }
 
 processData = function(csvJson, filename) {
-
   var geohash;
   for (var i = 0; i < csvJson.length; i++) {
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
     var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
     var cropType = csvJson[i]['Product - Name'];
     cropType = cropType.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+    console.log('datapoint', i, cropType);
 
     if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
     if (!val) console.log(csvJson[i], val);
@@ -130,17 +132,22 @@ processData = function(csvJson, filename) {
       tempCache[geohash].stats[cropType] = recomputeStats(tempCache[geohash].stats[cropType], additionalStats);
     }
 */
+
     // Add the data point
-    tempCache[geohash].data[uuid.v4()] = {
+    var id = uuid.v4();
+    tempCache[geohash].data[id] = {
+      field: csvJson[i]['Field - Name'],
       crop_type: cropType,
       location: {
         lat: csvJson[i].Latitude,
         lon: csvJson[i].Longitude,
         alt: csvJson[i]['Elevation(ft)'],
       },
-      value: val,
+//      value: val,
+      area: (csvJson[i]['Speed(mph)']*5280/3600)*csvJson[i]['Swath Width(ft)']/43560.0,
 //      time: csvJson[i]['Date / Time'],
     };
+    tempCache[geohash].data[id].bushels = csvJson[i]['Estimated Volume (Wet)(bu/ac)']*tempCache[geohash].data[id].area;
   }
 }
 
@@ -152,6 +159,7 @@ createAggregates = function(levels) {
       levels.forEach((level) => {
         var pt = tempCache[geohash].data[key];
         var cropType = pt.crop_type;
+        console.log(cropType);
         var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
         var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
         var loc = gh.decode(aggregateGh);

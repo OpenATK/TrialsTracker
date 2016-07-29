@@ -17,7 +17,7 @@ var tileIndex;
   return{
     notes: ['home', 'model', 'notes'],
     selectedNote: ['home', 'model', 'selected_note'],
-    drawMode: ['home', 'view', 'drawMode'],
+    drawMode: ['home', 'view', 'draw_mode'],
     liveData: ['home', 'live_data'],
     token: ['home', 'token', 'access_token'],
     legends: ['home', 'view', 'legends'],
@@ -103,6 +103,7 @@ class _Map extends React.Component {
           <div className={styles[(this.props.drawMode) ? 'drawing-popup' : 'hidden']}>
             Tap the map to mark an area
           </div>
+
 
           <TileLayer
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
