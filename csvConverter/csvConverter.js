@@ -3,12 +3,13 @@ var csvjson = require('csvjson');
 var uuid = require('uuid');
 var gh = require('ngeohash');
 var rr = require('recursive-readdir');
+var fs = require('fs');
 var oadaIdClient = require('oada-id-client');
 var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 's-aJ24a4hunRitE0uAZyX3WyR4IJuR34HWmTHSz0';
+var token = 'TsHYJD2VvZAGwxxiKir5vdGyUet5U0D3pbgJWgar';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -18,14 +19,13 @@ exports.csvToOadaYield = function() {
     for (var i = 0; i < files.length; i++) {
       if ((files[i]).substr(-3) == 'csv') {
         console.log('Processing ' + files[i]);
-        var dataArray = csvjson.toObject(files[i]).output;
-        console.log(dataArray);
-        console.log(csvjson.toObject(files[i]));
-        this.processData(dataArray, files[i]);
+        var options = { delimiter : ','};
+        var data = fs.readFileSync(files[i], { encoding : 'utf8'});
+        var jsonCsvData = csvjson.toObject(data, options);
+        this.processData(jsonCsvData, files[i]);
       }
     }
     this.createAggregates([2, 3, 4, 5, 6, 7]);
-//    this.pushData();
   });
 };
 
@@ -56,7 +56,6 @@ processData = function(csvJson, filename) {
     var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
     var cropType = csvJson[i]['Product - Name'];
     cropType = cropType.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-    console.log('datapoint', i, cropType);
 
     if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
     if (!val) console.log(csvJson[i], val);
@@ -159,7 +158,6 @@ createAggregates = function(levels) {
       levels.forEach((level) => {
         var pt = tempCache[geohash].data[key];
         var cropType = pt.crop_type;
-        console.log(cropType);
         var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
         var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
         var loc = gh.decode(aggregateGh);
@@ -230,6 +228,8 @@ pushAggregates = function() {
 // Post each geohash resource
   Promise.each(aggregateKeys, function(key) {
     console.log(key, k++);
+    if (k < 746) return null;
+    console.log(tempCache[key]);
     return agent('POST', 'https://localhost:3000/resources/')
     .set('Authorization', 'Bearer '+ token)
     .send(tempCache[key])

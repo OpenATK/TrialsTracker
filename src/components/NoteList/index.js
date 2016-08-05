@@ -1,33 +1,37 @@
-import React, { PropTypes } from 'react';
-import { Decorator as Cerebral, Link } from 'cerebral-view-react';
+import React, { PropTypes } from 'react'
+import {connect} from 'cerebral-view-react'
 import SortingTabs from '../SortingTabs/';
-import Note from '../Note/';
-import _ from 'lodash';
-import uuid from 'uuid';
-import styles from './note-list.css';
+import Note from '../Note/'
+import _ from 'lodash'
+import uuid from 'uuid'
+import styles from './note-list.css'
 
-@Cerebral((props) => {
-  return {
-    notes: ['home', 'model', 'notes'], 
-    tags: ['home', 'model', 'tags'],
-    sortMode: ['home', 'view', 'sort_mode'], 
-    drawMode: ['home', 'view', 'draw_mode'],
-  };
-})
+export default connect({
+  notes: 'app.model.notes', 
+  tags: 'app.model.tags',
+  sortMode: 'app.view.sort_mode', 
+  drawMode: 'app.view.draw_mode',
+}, {
+  handleClick: 'app.handleClick',
+  noteListClicked: 'app.noteListClicked',
+  addNoteButtonClicked: 'app.addNoteButtonClicked',
+  noteRemoved: 'app.noteRemoved',
+},
 
 class NoteList extends React.Component {
 
-  static propTypes = {
-    sortMode : PropTypes.string,
-  };
+  constructor(props) {
+    super(props)
+  }
 
   getNotes () {
     var notes_array = [];
     var self = this;
     switch (this.props.sortMode){
       case 'all':
+//        Object.keys(self.props.notes).forEach(function(note) {
         _.each(self.props.notes, function (note) {
-          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
+          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
         });
         break;
 
@@ -37,7 +41,7 @@ class NoteList extends React.Component {
           notes_array.push(<h1 key={uuid.v4()}>{key}</h1>);
           notes_array.push(<hr key={uuid.v4()}/>);
           _.each(group, function(note) {
-            notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
+            notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
           });
         });
         break;
@@ -46,7 +50,7 @@ class NoteList extends React.Component {
         // First, add notes without any tags.
         _.each(self.props.notes, function(note) {
         if (_.isEmpty(note.tags)) {
-          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => signals.noteRemoved()} />);  
+          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
         }
       });
       // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
@@ -56,7 +60,7 @@ class NoteList extends React.Component {
         _.each(self.props.notes, function(note) {
           _.each(note.tags, function(noteTag) {
             if (noteTag === tag.text) {
-              notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => signals.noteRemoved()} />);  
+              notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => this.props.noteRemoved()} />);  
             }
           });
         });
@@ -69,14 +73,12 @@ class NoteList extends React.Component {
   handleClick(evt) {
     // call only for note-list element, not children note elements;
     if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
-      this.props.signals.home.noteListClicked({});
+      this.props.noteListClicked({});
     }
   }
   
   render() {
     var notes_array = this.getNotes();
-    const signals = this.props.signals.home;
-
     return (
       <div 
         className={styles['note-list']}>
@@ -90,12 +92,11 @@ class NoteList extends React.Component {
           type="button" 
           disabled={this.props.drawMode}
           className={styles['add-note-button']} 
-          onClick={() => {signals.addNoteButtonClicked({drawMode:true})}}>
+          onClick={() => {this.props.addNoteButtonClicked({drawMode:true})}}>
           Add Note
         </button>
       </div>
     );
   }
 }
-
-export default NoteList;
+)

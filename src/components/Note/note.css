@@ -29,11 +29,9 @@
   margin: 2px;
 }
 .done-drawing-button {
-  position: absolute;
-  bottom: 0px;
-  right: 5px;
-  margin: 2px;
+  float: right;
   color: #00FF00;
+  margin: 2px;
 }
 .delete-note-button {
   float: right;

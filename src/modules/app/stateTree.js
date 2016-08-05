@@ -1,13 +1,10 @@
 import uuid from 'uuid';
 
-var tree = {
- 
+var stateTree = {
+  title: 'All your base are belong',
   yield_revs: {},
-
   user: {},
-  
   token: {},
-  
   live_data: false,
 
   model: {
@@ -124,8 +121,10 @@ function initial_notes() {
   var notes_list = {};
 //  for (var i = 1; i<4;i++) {
   for (var i = 1; i<3;i++) {
+    var time = new Date(2015, 5, 17, 15);
     var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
     var note = {
+      time: time,
       text: 'n-serve test',
       tags: [],//['application', 
       fields: ['Bair100'],
@@ -148,10 +147,12 @@ function initial_notes() {
       mean: 155.26,
     };
     if (i === 2) {
+      var time = new Date(2015, 9, 22, 18);
       var col = '#cce6ff';
       var text = 'low area';
       note = {
         text: 'rootworm damage',
+        time: time,
         tags: ['low area'],
         area: 1.38,
         mean: 135.78,
@@ -184,8 +185,10 @@ function initial_notes() {
       };
     }
     if (i === 3) {
+      var time = new Date(2015, 6, 20, 11);
       var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
       note = {
+        time: time,
         text: 'applied snake oil',
         tags: [],
         fields: ['Smith40'],
@@ -214,4 +217,4 @@ function getColor() {
   return '#' + r.toString() + g.toString() + b.toString();
 }
 
-export default tree; 
+export default stateTree; 

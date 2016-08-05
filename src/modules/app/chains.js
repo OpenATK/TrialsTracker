@@ -15,7 +15,7 @@ import PouchDB from 'pouchdb';
 import cache from '../../components/RasterLayer/cache.js';
 
 export var initialize = [
-  createDb, getAccessToken, {
+  getAccessToken, {
     success: [storeToken], 
     error: [],
   },
@@ -231,7 +231,7 @@ function computeStats({input, state}) {
       gh.encode(bbox.south, bbox.east, 9),
       gh.encode(bbox.south, bbox.west, 9)];
     var commonString = longestCommonPrefix(strings);
-    var polygon = state.get(['home', 'model', 'notes', id, 'geometry']);
+    var polygon = state.get(['app', 'model', 'notes', id, 'geometry']);
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, commonString.length+1);
     var stats = {
  //     area_sum: 0,
@@ -239,9 +239,9 @@ function computeStats({input, state}) {
       sum: 0,
       count: 0,
     };
-    var token = state.get(['home', 'token']).access_token;
+    var token = state.get(['app', 'token']).access_token;
     console.log(geohashes);
-    var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+    var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
     console.log(availableGeohashes);
     return Promise.map(geohashes, function(geohash) {
       return recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes)
@@ -260,11 +260,11 @@ function computeStats({input, state}) {
     }).then(function() {
       console.log('FFFF - The End.  .then on computeStats promise.map');
       console.log(stats);
-//      state.set(['home', 'model', 'notes', id, 'area_sum'], stats.area_sum);
-//      state.set(['home', 'model', 'notes', id, 'bushels_sum'], stats.bushels_sum);
-      state.set(['home', 'model', 'notes', id, 'sum'], stats.sum);
-      state.set(['home', 'model', 'notes', id, 'count'], stats.count);
-      state.set(['home', 'model', 'notes', id, 'mean'], stats.sum/stats.count);
+//      state.set(['app', 'model', 'notes', id, 'area_sum'], stats.area_sum);
+//      state.set(['app', 'model', 'notes', id, 'bushels_sum'], stats.bushels_sum);
+      state.set(['app', 'model', 'notes', id, 'sum'], stats.sum);
+      state.set(['app', 'model', 'notes', id, 'count'], stats.count);
+      state.set(['app', 'model', 'notes', id, 'mean'], stats.sum/stats.count);
     });
   });
 };
@@ -275,7 +275,7 @@ function computeBoundingBox({input, state, output}) {
   var bboxes = [];
   for (var i = 0; i < input.ids.length; i++) {
     var id = input.ids[i];
-    var coords = state.get(['home', 'model', 'notes', id, 'geometry', 'coordinates', 0]);
+    var coords = state.get(['app', 'model', 'notes', id, 'geometry', 'coordinates', 0]);
     var north = coords[0][1];
     var south = coords[0][1];
     var east = coords[0][0];
@@ -287,7 +287,7 @@ function computeBoundingBox({input, state, output}) {
       if (coords[j][0] < west) west = coords[j][0];
     }
     var bbox = {north, south, east, west};
-    state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
+    state.set(['app', 'model', 'notes', id, 'bbox'], bbox);
     bboxes.push(bbox);
   }
   output({bboxes});
@@ -298,13 +298,13 @@ function prepNoteStats({state, output}) {
 //data points to evaluate. Create an array of promises to return the
 //data from the db, calculate the average and count, then save to state.
   var db = new PouchDB('yield-data');
-  var notes = state.get(['home', 'model', 'notes']);
+  var notes = state.get(['app', 'model', 'notes']);
   var ids = [];
   Object.keys(notes).forEach(function(key) {
     var note = notes[key];
     if (!note.area) {
       var area = gjArea.geometry(note.geometry)/4046.86; 
-      state.set(['home', 'model', 'notes', key, 'area'], area);
+      state.set(['app', 'model', 'notes', key, 'area'], area);
     }
     if (!note.bbox) {
       ids.push(note.id);
@@ -315,20 +315,20 @@ function prepNoteStats({state, output}) {
 
 function markDrawn({input, state}) {
   input.geohashes.forEach((geohash) => {
-    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], true);
+    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], true);
   });
 };
 
 function filterCurrentGeohashes({state}) {
   var i = 0;
-  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
-  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
+  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
   var geohashes = Object.keys(currentGeohashes);
 // The geohashes on screen are filtered here so only those with available data are added.
   geohashes.forEach((geohash) => {
     if (!availableGeohashes[geohash]) {
       i++;
-      state.unset(['home', 'model', 'current_geohashes', geohash]);
+      state.unset(['app', 'model', 'current_geohashes', geohash]);
     }
   });
   console.log('unset ' + i +' geohashes');
@@ -336,19 +336,19 @@ function filterCurrentGeohashes({state}) {
 
 function registerGeohashes({input, state}) {
 //  console.log('registering geohashes');
-  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
 // This case occurs before a token is available.  Just save all geohashes and
 // filter them later with filterCurrentGeohashes when the list of available
 // geohashes becomes known.
   if (Object.keys(availableGeohashes).length === 0) {
     input.geohashes.forEach((geohash) => {
-      state.set(['home', 'model', 'current_geohashes', geohash], {drawn: false});
+      state.set(['app', 'model', 'current_geohashes', geohash], {drawn: false});
     });
 
 // If the available geohashes are known, save each geohash's _rev
   } else {
     input.geohashes.forEach((geohash) => {
-      state.set(['home', 'model', 'current_geohashes', geohash], { 
+      state.set(['app', 'model', 'current_geohashes', geohash], { 
         _rev: availableGeohashes[geohash]._rev,
         drawn: false,
       });
@@ -359,16 +359,16 @@ function registerGeohashes({input, state}) {
 function unregisterGeohashes({input, state}) {
  // console.log('unregistering geohashes (actually setting drawn to false)');
   input.geohashesToRemove.forEach((geohash) => {
-    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], false);
+    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], false);
   });
 };
 
 function storeNewGeohashes({input, state}) {
-  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
-  var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
+  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
   input.geohashes.forEach((geohash) => {
-    state.set(['home', 'model', 'current_geohashes', geohash, '_rev'], availableGeohashes[geohash]._rev);
-//    state.set(['home', 'model', 'current_geohashes', geohash, 'drawn'], false);
+    state.set(['app', 'model', 'current_geohashes', geohash, '_rev'], availableGeohashes[geohash]._rev);
+//    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], false);
   });
 };
 
@@ -392,20 +392,15 @@ function computePolygonBoundingBox(vertices, id) {
   return bbox;
 };
 
-
-function createDb({}) {
-  var db = new PouchDB('yield-data');
-};
-
 function setNewData({input, state}) {
   console.log('setting new data value');
-  state.set(['home', 'dummy_value'], input.value+1);
+  state.set(['app', 'dummy_value'], input.value+1);
 };
 
 function sendNewData({state, output}) {
-  var token = state.get(['home', 'token']).access_token;
+  var token = state.get(['app', 'token']).access_token;
   console.log('sending new data');
-  var value = state.get(['home', 'dummy_value']);
+  var value = state.get(['app', 'dummy_value']);
   return agent('PUT', geohashesUrl+'dp68rsz/data/bd82151e-462c-4631-9b18-8024a8aa2d5f/')
     .set('Authorization', 'Bearer '+ token)
     .send({value: value+1})
@@ -419,24 +414,24 @@ sendNewData.async = true;
 
 
 function storeGeohash({input, state}) {
-  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
   if (input.rev !== currentGeohashes[input.geohash]) {
     console.log('updating current geohashes');
-    state.set(['home', 'model', 'current_geohashes', input.geohash], input.rev); 
+    state.set(['app', 'model', 'current_geohashes', input.geohash], input.rev); 
   }
 };
 
 function startStopTimer({input, state}) {
-  if (state.get(['home', 'live_data'])) {
-    state.set(['home', 'live_data'], 'false');
+  if (state.get(['app', 'live_data'])) {
+    state.set(['app', 'live_data'], 'false');
   } else {
-    state.set(['home', 'live_data'], 'true');
+    state.set(['app', 'live_data'], 'true');
   }
 };
 
 function requestAvailableGeohashes ({state, output}) {
   console.log('requesting newest geohash revs');
-  var token = state.get(['home', 'token']).access_token;
+  var token = state.get(['app', 'token']).access_token;
   var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-';
   var geohashes = {};
   Promise.map([2,3,4,5,6,7], (level) => {
@@ -459,15 +454,15 @@ requestAvailableGeohashes.async = true;
 
 function checkRevs ({input, state}) {
   var db = new PouchDB('yield-data');
-  var token = state.get(['home', 'token']).access_token;
-  var currentGeohashes = state.get(['home', 'model', 'current_geohashes']);
+  var token = state.get(['app', 'token']).access_token;
+  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
   console.log(currentGeohashes.dp68rsz);
   var geohashesToCheck = { dp68rsz: currentGeohashes.dp68rsz}; //hard code geohashes here
 //TODO: Enable the next line eventually. current_geohashes should likely
 //      contain the set of geohashes on screen at all times. It could also
 //      be a user-specified area -> geohashes to monitor.
-//  var geohashesToCheck = state.get(['home', 'view', 'current_geohashes']);
-//  var availableGeohashes = state.get(['home', 'model', 'availableGeohashes']);
+//  var geohashesToCheck = state.get(['app', 'view', 'current_geohashes']);
+//  var availableGeohashes = state.get(['app', 'model', 'availableGeohashes']);
   _.each(geohashesToCheck, function(rev, key) {
     console.log(rev);
     console.log(key);
@@ -479,7 +474,7 @@ function checkRevs ({input, state}) {
         .end()
         .then(function(response) {
           console.log('setting state');
-          state.set(['home', 'model', 'current_geohashes', key], response.body._rev);
+          state.set(['app', 'model', 'current_geohashes', key], response.body._rev);
           db.put({jsonData: response.body}, key).catch(function(err) {
             if (err.status !== 409) {
               throw err;
@@ -492,11 +487,11 @@ function checkRevs ({input, state}) {
 
 function storeAvailableGeohashes({input, state}) {
   console.log('storing available geohashes');
-  state.set(['home', 'model', 'available_geohashes'], input.geohashes)
+  state.set(['app', 'model', 'available_geohashes'], input.geohashes)
 };
 
 function setDrawMode({input, state}) {
-  state.set(['home', 'view', 'draw_mode'], input.drawMode); 
+  state.set(['app', 'view', 'draw_mode'], input.drawMode); 
 };
 
 function getAccessToken({input, state, output}) {
@@ -516,43 +511,43 @@ getAccessToken.async = true;
 
 function storeToken({input, state}) {
   console.log('token stored');
-  state.set(['home', 'token'], input.token);
+  state.set(['app', 'token'], input.token);
 };
 
 function changeShowHide ({input, state}) {
-  var geometryVisible = state.get(['home', 'model', 'notes', input.id, 'geometry_visible']);
+  var geometryVisible = state.get(['app', 'model', 'notes', input.id, 'geometry_visible']);
   if (geometryVisible) {
-    state.set(['home', 'model', 'notes', input.id, 'geometry_visible'], false);
+    state.set(['app', 'model', 'notes', input.id, 'geometry_visible'], false);
   } else {
-    state.set(['home', 'model', 'notes', input.id, 'geometry_visible'], true);
+    state.set(['app', 'model', 'notes', input.id, 'geometry_visible'], true);
   }
 };
 
 function setSortMode ({input, state}) {
-  state.set(['home', 'view', 'sort_mode'], input.newSortMode);
+  state.set(['app', 'view', 'sort_mode'], input.newSortMode);
 };
 
 function selectNote ({input, state}) {
   //check that the selected note isn't already selected
-  if (state.get(['home', 'model', 'selected_note']) !== input.note) {
+  if (state.get(['app', 'model', 'selected_note']) !== input.note) {
     // set the status of the currently selected note to "unselected"
-    if (!_.isEmpty(state.get(['home', 'model', 'selected_note']))) {
-      state.set(['home', 'model', 'notes', state.get(['home', 'model', 'selected_note']), 'selected'], false);
+    if (!_.isEmpty(state.get(['app', 'model', 'selected_note']))) {
+      state.set(['app', 'model', 'notes', state.get(['app', 'model', 'selected_note']), 'selected'], false);
     }
-    state.set(['home', 'model', 'selected_note'], input.note);
-    state.set(['home', 'model', 'notes', input.note, 'selected'], true);
+    state.set(['app', 'model', 'selected_note'], input.note);
+    state.set(['app', 'model', 'notes', input.note, 'selected'], true);
 /*
    // loop through each tag of each note, 
-    _.each(state.get(['home', 'model', 'notes']), function(note) {
+    _.each(state.get(['app', 'model', 'notes']), function(note) {
       _.each(note.tags, function(tag) {
-        if (!_.includes(state.get(['home','model', 'tags']), tag)) {
-          state.set(['home', 'model', 'tags', tag], {
+        if (!_.includes(state.get(['app','model', 'tags']), tag)) {
+          state.set(['app', 'model', 'tags', tag], {
             text: tag,
             references: 1,
           });
         } else {
-          var refs = state.get(['home', 'model', 'tags', tag, 'references']);
-          state.set(['home', 'model', 'tags', tag, 'references'], refs++);
+          var refs = state.get(['app', 'model', 'tags', tag, 'references']);
+          state.set(['app', 'model', 'tags', tag, 'references'], refs++);
         }
       });
     });
@@ -561,41 +556,42 @@ function selectNote ({input, state}) {
 };
 
 function setTextInputValue ({input, state}) {
+  console.log(state.get(['app', 'model', 'notes', input.noteId, 'text']));
   console.log(input);
-  state.set(['home', 'model', 'notes', input.noteId, 'text'], input.value);
+  state.set(['app', 'model', 'notes', input.noteId, 'text'], input.value);
 };
 
 function deselectNote ({input, state}) {
-  var note = state.get(['home', 'model', 'selected_note']);
+  var note = state.get(['app', 'model', 'selected_note']);
   if (!_.isEmpty(note)) {
-    state.set(['home', 'model', 'notes', note, 'selected'], false);
+    state.set(['app', 'model', 'notes', note, 'selected'], false);
   }
-  state.set(['home', 'model', 'selected_note'], {});
+  state.set(['app', 'model', 'selected_note'], {});
 };
 
 function checkTags ({input, state}) {
-  _.each(state.get(['home', 'model', 'notes', input.id, 'tags']), function(tag) {
-    if (_.has(state.get(['home', 'model', 'tags']), tag) && state.get(['home', 'model', 'tags', tag, 'references']) === 1) {
-      state.unset(['home', 'model', 'tags', tag]); 
+  _.each(state.get(['app', 'model', 'notes', input.id, 'tags']), function(tag) {
+    if (_.has(state.get(['app', 'model', 'tags']), tag) && state.get(['app', 'model', 'tags', tag, 'references']) === 1) {
+      state.unset(['app', 'model', 'tags', tag]); 
     }
   });
 };
 
 function deleteNote({input, state}) {
-  state.unset(['home', 'model', 'notes', input.id]); 
+  state.unset(['app', 'model', 'notes', input.id]); 
 };
 
 function updateTagsList({state}) {
-  _.each(state.get(['home', 'model', 'notes']), function(note) {
+  _.each(state.get(['app', 'model', 'notes']), function(note) {
     _.each(note.tags, function(tag) {
-      if (!_.includes(state.get(['home','model', 'tags']),tag)) {
-        state.set(['home', 'model', 'tags', tag], {
+      if (!_.includes(state.get(['app','model', 'tags']),tag)) {
+        state.set(['app', 'model', 'tags', tag], {
           text: tag,
           references: 1,
         });
       } else {
-        var refs = state.get(['home', 'model', 'tags', tag, 'references']);
-        state.set(['home', 'model', 'tags', tag, 'references'], refs++);
+        var refs = state.get(['app', 'model', 'tags', tag, 'references']);
+        state.set(['app', 'model', 'tags', tag, 'references'], refs++);
       }
     });
   });
@@ -604,11 +600,11 @@ function updateTagsList({state}) {
 function createNote({state, output}) {
   console.log('new note created');
   var newNote = {
+    time: Date.now(),
     id: uuid.v4(),
     text: '',
     tags: [],
     fields: [],
-//    geometry: [],
     geometry: { 
       "type":"Polygon",
       "coordinates": [[]],
@@ -618,32 +614,32 @@ function createNote({state, output}) {
     completions: [],
     selected: true,
   };
-  state.set(['home', 'model', 'notes', newNote.id], newNote);
+  state.set(['app', 'model', 'notes', newNote.id], newNote);
   output({note: newNote.id});
 };
 
 function addTagToNote({input, state}) {
-  var note = state.get(['home', 'model', 'selected_note']);
-  console.log(state.get(['home', 'model', 'notes', note, 'tags']));
-  state.concat(['home', 'model', 'notes', note, 'tags'], input.text);
+  var note = state.get(['app', 'model', 'selected_note']);
+  console.log(state.get(['app', 'model', 'notes', note, 'tags']));
+  state.concat(['app', 'model', 'notes', note, 'tags'], input.text);
 /*
-  var tags = state.get(['home', 'model', 'notes', note, 'tags']);
+  var tags = state.get(['app', 'model', 'notes', note, 'tags']);
   console.log(Object.isExtensible(tags));
   tags.push(input.text);
   console.log(tags);
-  state.set(['home', 'model', 'notes', selected_note, 'tags'], tags);
+  state.set(['app', 'model', 'notes', selected_note, 'tags'], tags);
 */
 };
 
 function addTagToAllTagsList({input, state}) {
-  var allTags = state.get(['home', 'model', 'tags']);
+  var allTags = state.get(['app', 'model', 'tags']);
   if (!allTags[input.text]) {
-    state.set(['home', 'model', 'tags', input.text], { 
+    state.set(['app', 'model', 'tags', input.text], { 
       text: input.text,
       references: 1
     });
   } else {
-    state.set(['home', 'model', 'tags', input.text, 'references'], allTags[input.text].references+1);
+    state.set(['app', 'model', 'tags', input.text, 'references'], allTags[input.text].references+1);
   }
 };
 
