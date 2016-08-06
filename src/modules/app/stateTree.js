@@ -25,6 +25,7 @@ var stateTree = {
     map: {$isLoading: true},
     dragMode: true,
     drawing: false,
+    editing_note: false,
     legends: {
       Corn: [{
         value: 130,

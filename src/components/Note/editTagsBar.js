@@ -8,9 +8,11 @@ import FontAwesome from 'react-fontawesome';
 export default connect(props => ({
   tags: `app.model.notes.${props.id}.tags`,
   allTags: 'app.model.tags',
+  editing: 'app.view.editing_note',
+  selected: `app.model.notes.${props.id}.selected`,
 }), {
   tagAdded: 'app.tagAdded',
-  removeTagButtonClicked: 'app.removeTagButtonClicked',
+  tagRemoved: 'app.tagRemoved',
 },
 
   class EditTagsBar extends React.Component {
@@ -32,6 +34,7 @@ export default connect(props => ({
     render() {
       var tags = [];
       var self = this;
+/*
       (this.props.tags).forEach((tag) => {
         tags.push(<div 
           key={uuid.v4()} 
@@ -39,22 +42,20 @@ export default connect(props => ({
             <FontAwesome 
               name='times'
               size='lg'
-              className={styles[this.props.selected ? 'remove-tag-button' : 'hidden']}
+              className={styles[this.props.selected && this.props.editing ? 
+                'remove-tag-button' : 'hidden']}
               onClick={() => signals.removeTagButtonClicked({})}
             />
             {tag}
         </div>);
       });
-  /*
-      var editTagsButton = (this.props.selected) ? 
-        <FontAwesome 
-          name='tags'
-          size='2x'
-          className={styles['edit-tags-button']}
-          onClick={() => signals.deleteNoteButtonClicked({id:this.props.id})}
-        /> : null;
-  */
+*/
       var options = [];
+///////////
+//      Object.keys(this.props.allTags).filter((tag) => {
+//        return 
+
+///////////
       Object.keys(this.props.allTags).forEach((tag) => {
         if (self.props.tags.indexOf(tag) < 0) {
           options.push(<option key={uuid.v4()} value={tag}>{tag} </option>);
@@ -63,22 +64,37 @@ export default connect(props => ({
       var id = uuid.v4();
   
       return (
-        <div className={styles['editTagsBar']} >
+        <div
+          className={styles['editTagsBar']}>
           <datalist id={id}>
             {options}
           </datalist>
           <hr 
              noshade
-             className={styles[this.props.selected ? 'hr' : 'hidden']}
+             className={styles[this.props.editing && this.props.selected ? 
+               'hr' : 'hidden']}
           />
           <input 
-            className={styles[this.props.selected ? 'input' : 'hidden']}
+            className={styles[this.props.editing && this.props.selected ? 
+              'input' : 'hidden']}
             placeholder='Add a new tag'
             list={id}
             autoComplete='on'
             onKeyDown={this.handleKeyDown}
           />
-          {tags}
+          {this.props.tags.map(tag => 
+          <div 
+            key={tag} 
+            className={styles["tag"]}>
+            <FontAwesome 
+              name='times'
+              size='lg'
+              className={styles[this.props.selected && this.props.editing ? 
+                'remove-tag-button' : 'hidden']}
+              onClick={() => this.props.tagRemoved({tag})}
+            />
+            {tag}
+          </div>)}
         </div>
       )
     }

@@ -30,8 +30,20 @@ export var addTag = [
   addTagToNote, addTagToAllTagsList,
 ];
 
+export var removeTag = [
+  removeTagFromNote, removeTagFromAllTagsList,
+];
+
 export var handleNoteListClick = [
-  deselectNote,
+  deselectNote, exitEditMode,
+];
+
+export var enterNoteEditMode = [
+  enterEditMode,
+];
+
+export var exitNoteEditMode = [
+  exitEditMode,
 ];
 
 export var changeSortMode = [
@@ -39,7 +51,7 @@ export var changeSortMode = [
 ];
 
 export var handleNoteClick = [
-  selectNote,
+  deselectNote, exitEditMode, selectNote,
 ];
 
 export var removeNote = [
@@ -98,6 +110,14 @@ export var updateGeohashes = [
 export var markGeohashDrawn = [
   markDrawn,
 ];
+
+function exitEditMode({state}) {
+  state.set(['app', 'view', 'editing_note'], false);
+};
+
+function enterEditMode({state}) {
+  state.set(['app', 'view', 'editing_note'], true);
+};
 
 function recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes) {
   console.log('AAAA - recursive stats', geohash, geohash.length);
@@ -556,8 +576,6 @@ function selectNote ({input, state}) {
 };
 
 function setTextInputValue ({input, state}) {
-  console.log(state.get(['app', 'model', 'notes', input.noteId, 'text']));
-  console.log(input);
   state.set(['app', 'model', 'notes', input.noteId, 'text'], input.value);
 };
 
@@ -567,6 +585,7 @@ function deselectNote ({input, state}) {
     state.set(['app', 'model', 'notes', note, 'selected'], false);
   }
   state.set(['app', 'model', 'selected_note'], {});
+  state.set(['app', 'view', 'editing_note'], false);
 };
 
 function checkTags ({input, state}) {
@@ -620,15 +639,14 @@ function createNote({state, output}) {
 
 function addTagToNote({input, state}) {
   var note = state.get(['app', 'model', 'selected_note']);
-  console.log(state.get(['app', 'model', 'notes', note, 'tags']));
   state.concat(['app', 'model', 'notes', note, 'tags'], input.text);
-/*
+};
+
+function removeTagFromNote({input, state}) {
+  var note = state.get(['app', 'model', 'selected_note']);
   var tags = state.get(['app', 'model', 'notes', note, 'tags']);
-  console.log(Object.isExtensible(tags));
-  tags.push(input.text);
-  console.log(tags);
-  state.set(['app', 'model', 'notes', selected_note, 'tags'], tags);
-*/
+  var idx = tags.indexOf(input.tag);
+  state.splice(['app', 'model', 'notes', note, 'tags'], idx, 1);
 };
 
 function addTagToAllTagsList({input, state}) {
@@ -640,6 +658,15 @@ function addTagToAllTagsList({input, state}) {
     });
   } else {
     state.set(['app', 'model', 'tags', input.text, 'references'], allTags[input.text].references+1);
+  }
+};
+
+function removeTagFromAllTagsList({input, state}) {
+  var refs = state.get(['app', 'model', 'tags', input.tag, 'references']);
+  if (refs == 0) {
+    state.unset(['app', 'model', 'tags', input.tag]);
+  } else {
+    state.set(['app', 'model', 'tags', input.tag, 'references'], refs - 1);
   }
 };
 

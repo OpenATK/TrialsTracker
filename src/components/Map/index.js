@@ -14,7 +14,7 @@ import Legend from '../Legend';
 export default connect(props => ({
   notes: 'app.model.notes',
   selectedNote: 'app.model.selected_note',
-  drawMode: 'app.view.draw_mode',
+  editing: 'app.view.editing',
   liveData: 'app.live_data',
   token: 'app.token.access_token',
   legends: 'app.view.legends',
@@ -27,14 +27,12 @@ export default connect(props => ({
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
 },
 
-  class Map extends React.Component {
+  class TrialsMap extends React.Component {
 
     render() {
       var self = this;
       var position = [40.8512578, -86.138977];
       var polygonList = [];
-      console.log(this.props);
-      console.log(this.props.notes);
       Object.keys(this.props.notes).forEach(function(key) {
         var note = self.props.notes[key];
         if (note.geometry.coordinates[0].length > 0) {

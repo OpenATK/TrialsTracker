@@ -19,6 +19,8 @@ import { removeGeohashes } from './chains';
 import { markGeohashDrawn } from './chains';
 import { addTag } from './chains';
 import { handleNoteListClick } from './chains';
+import { enterNoteEditMode } from './chains';
+import { removeTag } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -91,6 +93,10 @@ export default (module) => {
       ...removeNote
     ],
 
+    editNoteButtonClicked: [
+      ...enterNoteEditMode,
+    ],
+
     noteTextChanged: {
       chain: [...textInputChanged],
       immediate: true,
@@ -122,6 +128,10 @@ export default (module) => {
 
     addNoteButtonClicked: [
       ...addNewNote,
+    ],
+
+    tagRemoved: [
+      ...removeTag,
     ],
 
     tagAdded: [

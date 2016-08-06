@@ -30,12 +30,16 @@
 }
 .done-drawing-button {
   float: right;
-  color: #00FF00;
+  color: #00bb00;
+  margin: 2px;
+}
+.edit-note-button {
+  float: right;
+  color: #000000;
   margin: 2px;
 }
 .delete-note-button {
   float: right;
-  color: #FF0000;
   margin: 2px;
 }
 .note-text-input {

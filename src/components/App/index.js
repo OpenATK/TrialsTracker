@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import {connect} from 'cerebral-view-react';
 import NoteList from '../NoteList/';
-import Map from '../Map';
+import TrialsMap from '../Map';
 
 export default connect({
 
@@ -19,7 +19,7 @@ export default connect({
       return (
         <div className="app">
           <NoteList />
-          <Map />
+          <TrialsMap />
         </div>
       )
     }

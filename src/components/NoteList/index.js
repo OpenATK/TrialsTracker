@@ -31,7 +31,10 @@ class NoteList extends React.Component {
       case 'all':
 //        Object.keys(self.props.notes).forEach(function(note) {
         _.each(self.props.notes, function (note) {
-          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
+          notes_array.push(<Note 
+            id={note.id} 
+            key={note.id}
+          />);  
         });
         break;
 
@@ -41,7 +44,9 @@ class NoteList extends React.Component {
           notes_array.push(<h1 key={uuid.v4()}>{key}</h1>);
           notes_array.push(<hr key={uuid.v4()}/>);
           _.each(group, function(note) {
-            notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
+            notes_array.push(<Note 
+              id={note.id} 
+              key={uuid.v4()} />);  
           });
         });
         break;
@@ -50,7 +55,10 @@ class NoteList extends React.Component {
         // First, add notes without any tags.
         _.each(self.props.notes, function(note) {
         if (_.isEmpty(note.tags)) {
-          notes_array.push(<Note id={note.id} key={uuid.v4()} deleteNote={() => this.props.noteRemoved()} />);  
+          notes_array.push(<Note 
+            id={note.id} 
+            key={uuid.v4()}
+          />);  
         }
       });
       // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
@@ -60,7 +68,10 @@ class NoteList extends React.Component {
         _.each(self.props.notes, function(note) {
           _.each(note.tags, function(noteTag) {
             if (noteTag === tag.text) {
-              notes_array.push(<Note id={note.id} key={note.id} deleteNote={() => this.props.noteRemoved()} />);  
+              notes_array.push(<Note 
+                id={note.id} 
+                key={note.id} 
+              />);  
             }
           });
         });
