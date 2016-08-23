@@ -7,9 +7,8 @@ var fs = require('fs');
 var oadaIdClient = require('oada-id-client');
 var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
-var agent = require('superagent-promise')(require('superagent'), Promise);
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'TsHYJD2VvZAGwxxiKir5vdGyUet5U0D3pbgJWgar';
+var token = 'VNgjXjhXQdtjY5qdMlxcOle05mNzWwSUmFsiaUX9';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
@@ -30,46 +29,88 @@ exports.csvToOadaYield = function() {
 };
 
 recomputeStats = function(curStats, additionalStats) {
-  if (isNaN(curStats.sum_of_squares)) {
-    curStats.sum_of_squares = additionalStats.sum_of_squares;
+  if (isNaN(additionalStats.sum_area)) {
+    console.log('got oone');
+    console.log(additionalStats);
+  }
+  if (isNaN(curStats.sum_area)) {
     curStats.n = additionalStats.n;
-    curStats.sum = additionalStats.sum;
-    curStats.mean = curStats.sum/curStats.n;
-    curStats.min = additionalStats.min;
-    curStats.max = additionalStats.max;
+    curStats.sum_area = additionalStats.sum_area;
+    curStats.sum_bushels = additionalStats.sum_bushels;
+    curStats.min_yield = additionalStats.min_yield;
+    curStats.max_yield = additionalStats.max_yield;
+    curStats.sum_of_squares_yield = additionalStats.sum_of_squares_yield;
+    curStats.mean_yield = curStats.sum_bushels/curStats.sum_area;
     return curStats;
   }
-  curStats.sum_of_squares = curStats.sum_of_squares + additionalStats.sum_of_squares;
   curStats.n = curStats.n + additionalStats.n;
-  curStats.sum = curStats.sum + additionalStats.sum;
-  curStats.mean = curStats.sum/curStats.n;
-  if (curStats.min > additionalStats.min) { curStats.min = additionalStats.min;}
-  if (curStats.max < additionalStats.max) { curStats.max = additionalStats.max;}
-
+  curStats.sum_area = curStats.sum_area + additionalStats.sum_area;
+  curStats.sum_bushels = curStats.sum_bushels + additionalStats.sum_bushels;
+  if (curStats.min_yield > additionalStats.min_yield) { curStats.min_yield = additionalStats.min_yield;}
+  if (curStats.max_yield < additionalStats.max_yield) { curStats.max_yield = additionalStats.max_yield;}
+  curStats.mean_yield = curStats.sum_bushels/curStats.sum_area;
+  curStats.sum_of_squares_yield = curStats.sum_of_squares_yield + additionalStats.sum_of_squares_yield;
   return curStats;
 }
 
 processData = function(csvJson, filename) {
   var geohash;
+  // First check that all the keys are matched
+  if (!('Yield Vol(Wet)(bu/ac)' in csvJson[1])) {
+    if ((!'Estimated Volume (Wet)(bu/ac)' in csvJson[1])) {
+      console.log('!!!!!!!!Warning!!!!!!!');
+      console.log('Keys do not exist for "Yield Vol (Wet)(bu/ac)" nor "Estimated Volume (Wet)(bu/ac)"');
+    }
+  }
+  if (!('Product - Name' in csvJson[1])) {
+    console.log('!!!!!!!!Warning!!!!!!!');
+    console.log('"Product - Name" key does not exist')
+  }
+  if (!('Latitude' in csvJson[1])) {
+    console.log('!!!!!!!!Warning!!!!!!!');
+    console.log('"Latitude" key does not exist')
+  }
+  if (!('Longitude' in csvJson[1])) {
+    console.log('!!!!!!!!Warning!!!!!!!');
+    console.log('"Longitude" key does not exist');
+  }
+  if (!('Elevation(ft)' in csvJson[1])) {
+    console.log('!!!!!!!!Warning!!!!!!!');
+    console.log('"Elevation(ft)" key does not exist')
+  }
+  if (!('Speed(mph)' in csvJson[1])) {
+    console.log('!!!!!!!!Warning!!!!!!!');
+    console.log('"Speed(mph)" key does not exist');
+  }
+  if (!('Swath Width(ft)' in csvJson[1])) { 
+    if (!('Swth Wdth(ft)' in csvJson[1])) { 
+      console.log('!!!!!!!!Warning!!!!!!!');
+      console.log('Keys do not exist for "Swath Width(ft)" nor "Swth Wdth(ft)"');
+    }
+  }
+  if (!('Field - Name' in csvJson[1])) { 
+    if (!('Field' in csvJson[1])) { 
+      console.log('!!!!!!!!Warning!!!!!!!');
+      console.log('Keys do not exist for "Field - Name" nor "Field"');
+    }
+  } 
+
   for (var i = 0; i < csvJson.length; i++) {
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
     var val = +csvJson[i]['Estimated Volume (Wet)(bu/ac)'];
+    if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
     var cropType = csvJson[i]['Product - Name'];
     cropType = cropType.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 
-    if (!val) val = +csvJson[i]['Yld Vol(Wet)(bu/ac)'];
-    if (!val) console.log(csvJson[i], val);
+    if (isNaN(val)) {
+      console.log(csvJson[i]);
+    }
 
     //If the geohash doesn't exist, create it;
     if (!tempCache[geohash]) {
 
       tempCache[geohash] = {
 
-       /* _id: uuid.v4(),
-        _rev: '1-'+uuid.v4(),
-        _type: 'yield data. not sure what belongs here',
-        _meta: {},
-*/
         dataType: {
           definition: 'https://github.com/oada-formats',
           name: 'wet-yield',
@@ -78,7 +119,6 @@ processData = function(csvJson, filename) {
         context: {
           'geohash-7': geohash,
         },
-//TODO: populate these dynamically. If a crop type is encountered it, add it as a template present in this dataset
 
         template: {
           Corn: {
@@ -131,7 +171,6 @@ processData = function(csvJson, filename) {
       tempCache[geohash].stats[cropType] = recomputeStats(tempCache[geohash].stats[cropType], additionalStats);
     }
 */
-
     // Add the data point
     var id = uuid.v4();
     tempCache[geohash].data[id] = {
@@ -142,15 +181,32 @@ processData = function(csvJson, filename) {
         lon: csvJson[i].Longitude,
         alt: csvJson[i]['Elevation(ft)'],
       },
-//      value: val,
-      area: (csvJson[i]['Speed(mph)']*5280/3600)*csvJson[i]['Swath Width(ft)']/43560.0,
 //      time: csvJson[i]['Date / Time'],
     };
-    tempCache[geohash].data[id].bushels = csvJson[i]['Estimated Volume (Wet)(bu/ac)']*tempCache[geohash].data[id].area;
+    if (!csvJson[i]['Field - Name']) {
+      tempCache[geohash].data[id].field = csvJson[i]['Field'];
+    }
+    if (csvJson[i]['Swath Width(ft)']) {
+      tempCache[geohash].data[id].area = (csvJson[i]['Speed(mph)']*5280/3600)*csvJson[i]['Swath Width(ft)']/43560.0;
+    } else {
+      tempCache[geohash].data[id].area = (csvJson[i]['Speed(mph)']*5280/3600)*csvJson[i]['Swth Wdth(ft)']/43560.0;
+    }
+    tempCache[geohash].data[id].bushels = val*tempCache[geohash].data[id].area;
+    tempCache[geohash].data[id].yield = tempCache[geohash].data[id].bushels/tempCache[geohash].data[id].area;
+
+    if (isNaN(tempCache[geohash].data[id].bushels)) {
+      console.log('NEW ONE');
+      console.log(val);
+      console.log(csvJson[i]['Speed(mph)']);
+      console.log(csvJson[i]['Swath Width(ft)']);
+      console.log(tempCache[geohash].data[id].area);
+      console.log(tempCache[geohash].data[id].bushels);
+    }
   }
 }
 
 createAggregates = function(levels) {
+  console.log('NOW STARTING AGGREGATE CREATION');
   var i = 1;
   Object.keys(tempCache).forEach((geohash) => {
     console.log(geohash, i++);
@@ -161,13 +217,17 @@ createAggregates = function(levels) {
         var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
         var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
         var loc = gh.decode(aggregateGh);
+        if (isNaN(pt.bushels)) {
+          console.log(pt);
+        }
         additionalStats = {
+          sum_area: pt.area,
+          sum_bushels: pt.bushels, 
           n: 1,
-          sum: pt.value,
-          mean: pt.value,
-          min: pt.value,
-          max: pt.value,
-          sum_of_squares: Math.pow(pt.value,2),
+          mean_yield: pt.bushels/pt.area,
+          min_yield: pt.bushels/pt.area,
+          max_yield: pt.bushels/pt.area,
+          sum_of_squares_yield: Math.pow(pt.bushels/pt.area, 2),
         };
         // Create the bucket if it doesn't exist.
         tempCache[bucketGh] = tempCache[bucketGh] || {};
@@ -181,10 +241,10 @@ createAggregates = function(levels) {
             lon: loc.longitude,
            }, 
         };
-        // Create the cropType key if it doesn't exist and recompute stats.
+        // Store stats at the aggregate
         tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] || {};
         tempCache[bucketGh].aggregates[aggregateGh].stats[cropType] = recomputeStats(tempCache[bucketGh].aggregates[aggregateGh].stats[cropType], additionalStats);
-        // Create a stats object at the bucket level and recompute stats.
+        // Store stats at the bucket level
         tempCache[bucketGh].stats = tempCache[bucketGh].stats || {};
         tempCache[bucketGh].stats[cropType] = tempCache[bucketGh].stats[cropType] || {};
         tempCache[bucketGh].stats[cropType] = recomputeStats(tempCache[bucketGh].stats[cropType], additionalStats);
@@ -228,7 +288,7 @@ pushAggregates = function() {
 // Post each geohash resource
   Promise.each(aggregateKeys, function(key) {
     console.log(key, k++);
-    if (k < 746) return null;
+//    if (k < 746) return null;
     console.log(tempCache[key]);
     return agent('POST', 'https://localhost:3000/resources/')
     .set('Authorization', 'Bearer '+ token)
@@ -243,62 +303,4 @@ pushAggregates = function() {
       .end();
     });
   })
-}
-
-pushData = function() {
-  var self = this;
-  var cacheKeys = Object.keys(tempCache);
-  var k = 1;
-  Promise.each(cacheKeys, function(key) {
-    console.log(key, k++);
-    var geohash = tempCache[key];
-    if (!geohash) { 
-      console.log(key);
-      return false;
-    }
-// Attempt to get the geohash.
-    return agent('GET', url+key)
-      .set('Authorization', 'Bearer '+ token)
-      .end()
-// Success: update the stats 
-      .then(function onResult(response) {
-//        console.log('Updating existing geohash');
-//        console.log(response.body);
-        var newStats = self.recomputeStats(response.body.stats, geohash.stats);
-        return agent('PUT', url+key+'/stats/')
-          .set('Authorization', 'Bearer '+ token)
-          .send(newStats)
-          .end();
-      })
-// Failure: Post the geohash resource omitting the data
-      .catch((e) => e.response && e.response.res.statusCode === 404, function() {
-        var tmp = _.omit(geohash, 'data');
-        return agent('POST', 'https://localhost:3000/resources/')
-          .set('Authorization', 'Bearer '+ token)
-          .send(tmp)
-          .end()
-//Now, add a link in /resources
-          .then(function(response) {
-            var resId = response.headers.location.replace(/^\/resources\//, '');
-            return agent('PUT', url + key)
-              .set('Authorization', 'Bearer ' + token)
-              .send({_id: resId, _rev: '0-0'})
-              .end();
-          });
-
-      })
-// Now add the data regardless
-    .then(function() {
-      return agent('PUT', url+key+'/data/')
-        .set('Authorization', 'Bearer '+ token)
-        .send(geohash.data)
-        .end();     
-    });
-  })
-  .catch(function (e) {
-    console.log('Bad error');
-    console.log(filename);
-    console.log(e);
-    throw e;
-  });
 }

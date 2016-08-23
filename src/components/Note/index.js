@@ -37,8 +37,7 @@ export default connect(props => ({
         <div 
           style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
           className={styles[this.props.selected ? 'selected-note' : 'note']} 
-          onClick={(e) => this.handleNoteClick(e)}
-        >
+          onClick={(e) => this.handleNoteClick(e)}>
           <TextAreaAutoSize
             id={this.props.id+'-input'}
             value={this.props.text} 
@@ -66,12 +65,12 @@ export default connect(props => ({
           <hr noshade/>
           <div
             className={styles['note-info']}>
-          {this.props.note.area ? 
-            'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
-          <br/>
-          {this.props.note.mean ? 
-            'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null}
-        </div>
+            {this.props.note.area ? 
+              'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
+            <br/>
+            {this.props.note.mean ? 
+              'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null}
+          </div>
           <FontAwesome 
             tabIndex={2}
             className={styles[this.props.selected && this.props.editing ?
@@ -79,6 +78,11 @@ export default connect(props => ({
             name='check'
             size='2x'
             onClick={() => this.props.doneDrawingButtonClicked({drawMode:false, ids:[this.props.id]})}
+          />
+          <hr 
+            noshade
+            className={styles[this.props.editing && this.props.selected ? 
+              'hr' : 'hidden']}
           />
           <EditTagsBar 
             id={this.props.id} 

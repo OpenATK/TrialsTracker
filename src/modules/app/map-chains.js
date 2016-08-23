@@ -169,9 +169,7 @@ function computeStats({input, state}) {
 //data points to evaluate. Create an array of promises to return the
 //data from the db, calculate the average and count, then save to state.
   var db = new PouchDB('yield-data');
-//  for (var i = 0; i < input.bboxes.length; i++) {
   Promise.map(input.bboxes, function(bbox, i) {
-//    var bbox = input.bboxes[i];
     var id = input.ids[i];
     var nw = L.latLng(bbox.north, bbox.west),
         ne = L.latLng(bbox.north, bbox.east),
@@ -182,7 +180,7 @@ function computeStats({input, state}) {
       gh.encode(bbox.south, bbox.east, 9),
       gh.encode(bbox.south, bbox.west, 9)];
     var commonString = longestCommonPrefix(strings);
-    var polygon = state.get(['home', 'model', 'notes', id, 'geometry']);
+    var polygon = state.get(['app', 'model', 'notes', id, 'geometry']);
     var geohashes = gh.bboxes(bbox.south, bbox.west, bbox.north, bbox.east, commonString.length+1);
     var stats = {
  //     area_sum: 0,
@@ -190,9 +188,9 @@ function computeStats({input, state}) {
       sum: 0,
       count: 0,
     };
-    var token = state.get(['home', 'token']).access_token;
+    var token = state.get(['app', 'token']).access_token;
     console.log(geohashes);
-    var availableGeohashes = state.get(['home', 'model', 'available_geohashes']);
+    var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
     return Promise.map(geohashes, function(geohash) {
       return recursiveGeohashSum(polygon, geohash, stats, db, token, availableGeohashes)
       .then(function(newStats) {
@@ -210,11 +208,11 @@ function computeStats({input, state}) {
     }).then(function() {
       console.log('FFFF - The End.  .then on computeStats promise.map');
       console.log(stats);
-//      state.set(['home', 'model', 'notes', id, 'area_sum'], stats.area_sum);
-//      state.set(['home', 'model', 'notes', id, 'bushels_sum'], stats.bushels_sum);
-      state.set(['home', 'model', 'notes', id, 'sum'], stats.sum);
-      state.set(['home', 'model', 'notes', id, 'count'], stats.count);
-      state.set(['home', 'model', 'notes', id, 'mean'], stats.sum/stats.count);
+//      state.set(['app', 'model', 'notes', id, 'area_sum'], stats.area_sum);
+//      state.set(['app', 'model', 'notes', id, 'bushels_sum'], stats.bushels_sum);
+      state.set(['app', 'model', 'notes', id, 'sum'], stats.sum);
+      state.set(['app', 'model', 'notes', id, 'count'], stats.count);
+      state.set(['app', 'model', 'notes', id, 'mean'], stats.sum/stats.count);
     });
   });
 };
@@ -223,8 +221,8 @@ function computeBoundingBox({input, state, output}) {
   var bboxes = [];
   for (var i = 0; i < input.ids.length; i++) {
     var id = input.ids[i];
-    var coords = state.get(['home', 'model', 'notes', id, 'geometry', 'coordinates', 0]);
-    console.log(JSON.stringify(state.get(['home', 'model', 'notes', id, 'geometry'])));
+    var coords = state.get(['app', 'model', 'notes', id, 'geometry', 'coordinates', 0]);
+    console.log(JSON.stringify(state.get(['app', 'model', 'notes', id, 'geometry'])));
     var north = coords[0][1];
     var south = coords[0][1];
     var east = coords[0][0];
@@ -236,7 +234,7 @@ function computeBoundingBox({input, state, output}) {
       if (coords[j][0] < west) west = coords[j][0];
     }
     var bbox = {north, south, east, west};
-    state.set(['home', 'model', 'notes', id, 'bbox'], bbox);
+    state.set(['app', 'model', 'notes', id, 'bbox'], bbox);
     console.log(bbox);
     bboxes.push(bbox);
     console.log(bboxes);
@@ -245,17 +243,17 @@ function computeBoundingBox({input, state, output}) {
 };
 
 function setDrawMode({input, state}) {
-  state.set(['home', 'view', 'draw_mode'], input.drawMode); 
+  state.set(['app', 'view', 'draw_mode'], input.drawMode); 
 };
 
 function dropPoint ({input, state}) {
-  if(state.get(['home', 'view', 'draw_mode']) == true){
+  if(state.get(['app', 'view', 'draw_mode']) == true){
     mouse_up_flag = false;
     var currentSelectedNoteId = input.select_note;
-    _.each(state.get(['home', 'model', 'notes']), function(note) {
+    _.each(state.get(['app', 'model', 'notes']), function(note) {
       if (note.id === currentSelectedNoteId) {
         var pt = [input.pt.lng, input.pt.lat];
-        state.push(['home', 'model', 'notes', note.id, 'geometry', 'coordinates', 0], pt);
+        state.push(['app', 'model', 'notes', note.id, 'geometry', 'coordinates', 0], pt);
       }
     });
     mouse_down_flag = true;
@@ -263,7 +261,7 @@ function dropPoint ({input, state}) {
 };
 
 function mapMouseMove ({input, state}) {
-  if(state.get(['home', 'view', 'draw_mode']) === true){
+  if(state.get(['app', 'view', 'draw_mode']) === true){
     var vertex = [input.vertex_value.lng, input.vertex_value.lat];
     var currentSelectedNoteId = input.selected_note;
 
@@ -272,13 +270,13 @@ function mapMouseMove ({input, state}) {
     }
   
     if (mouse_down_flag === true) {
-      _.each(state.get(['home', 'model', 'notes']), function(note) {
+      _.each(state.get(['app', 'model', 'notes']), function(note) {
         if(note.id === currentSelectedNoteId){
         
-          var coor_array = state.get(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']);
+          var coor_array = state.get(['app', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0']);
           var coor_arr_length = coor_array.length;
 
-          state.set(['home', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0', (coor_arr_length-1)], vertex);
+          state.set(['app', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'coordinates', '0', '0', (coor_arr_length-1)], vertex);
         }
       });
     }
@@ -286,17 +284,17 @@ function mapMouseMove ({input, state}) {
 };
 
 function mapMouseUp ({input, state}) {
-  if(state.get(['home', 'view', 'draw_mode']) === true){
+  if(state.get(['app', 'view', 'draw_mode']) === true){
     mouse_up_flag = true;
   }
 };
 
 
 function dragMapToggle ({state}) {
-  if (state.get(['home', 'view', 'drag'])) {
-    state.set(['home', 'view', 'drag'], false);
+  if (state.get(['app', 'view', 'drag'])) {
+    state.set(['app', 'view', 'drag'], false);
   } else {
-    state.set(['home', 'view', 'drag'], true);
+    state.set(['app', 'view', 'drag'], true);
   }
 };
 

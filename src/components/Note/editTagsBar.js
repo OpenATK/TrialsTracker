@@ -69,11 +69,6 @@ export default connect(props => ({
           <datalist id={id}>
             {options}
           </datalist>
-          <hr 
-             noshade
-             className={styles[this.props.editing && this.props.selected ? 
-               'hr' : 'hidden']}
-          />
           <input 
             className={styles[this.props.editing && this.props.selected ? 
               'input' : 'hidden']}

@@ -12,6 +12,7 @@ var agent = require('superagent-promise')(require('superagent'), Promise);
 import uuid from 'uuid';
 var db = {};
 import ld from 'leaflet-draw';
+import Color from 'color';
 
 function blendColors(c1, c2, percent) {
   let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
@@ -20,7 +21,8 @@ function blendColors(c1, c2, percent) {
     r: c1.r * percent + c2.r * (1-percent),
     g: c1.g * percent + c2.g * (1-percent),
     b: c1.b * percent + c2.b * (1-percent),
-    a:   a1 * percent +   a2 * (1-percent),
+    a: 255,
+//    a:   a1 * percent +   a2 * (1-percent),
   };
 }
 
@@ -182,7 +184,7 @@ export default connect({
                 }
   */
    
-  
+ // This function gets the geohash data and begins the rendering 
     renderTile(canvas, geohash, tilePoint, index) {
       var zoom = this.props.map.getZoom();
       if (this.props.token) {
@@ -206,15 +208,18 @@ export default connect({
             if (zoom >= 16) {
               console.log('using geohash-'+geohash.length+ ' raw data');
               return self.handleGeohashData(canvas, data.data, tilePoint, geohash)
+              return null;
             } else {
               console.log('using geohash-'+geohash.length+ ' aggregate');
               return self.handleGeohashData(canvas, data.aggregates, tilePoint, geohash)
+              return null;
             }
           });
         });
       }
     }
-  
+ 
+// For the returned geohash data (points or aggregates), this function calls the appropriate recursive draw function 
     handleGeohashData(canvas, data, tilePoint, geohash) {
       var self = this;
       var zoom = self.props.map.getZoom();
@@ -233,6 +238,7 @@ export default connect({
           return self.recursiveDrawOnCanvas(imgData, tilePoint, bounds, data, 0, canvas, ctx);
         }
       }).then(function() {
+        // Grid lines must be drawn on top using the same canvas as the yield data.
         var bbox = gh.decode_bbox(geohash);
         var geohashesGrids = gh.bboxes(bbox[0], bbox[1], bbox[2], bbox[3], geohash.length+2);
         if (self.props.geohashGridlines) self.drawGeohashGrid(canvas, tilePoint, zoom, geohashesGrids, 'black', 1);
@@ -271,6 +277,7 @@ export default connect({
       }
     }
   
+// This function recursively draws 100 yield data points
     recursiveDrawOnCanvas(imageData, tilePoint, bounds, data, startIndex, canvas, context) {
       var zoom = this.props.map.getZoom();
       var keys = Object.keys(data);
@@ -299,37 +306,25 @@ export default connect({
   //Fill the entire geohash aggregate with the appropriate color
               context.lineWidth = 0;
               console.log(val);
-              var col = self.colorForvalue(val.stats[cropTypes[j]].mean, levels);
-              context.strokeStyle = 'rgb('+col.r+','+col.g+','+col.b+')';
-              context.fillStyle='rgb('+col.r+','+col.g+','+col.b+')';
+              console.log(val.stats[cropTypes[j]]);
+              var col = self.colorForvalue(val.stats[cropTypes[j]].mean_yield, levels);
+              col = Color(col);
+              col = col.hexString();
+              console.log(col);
               context.beginPath();
               context.rect(w + 0.5, n + 0.5, e - w - 0.5, s - n - 0.5);
-              context.closePath();
+ 
+//              context.fillStyle='rgba('+col.r+','+col.g+','+col.b+')'; //doesn't work for some reason...Only produces red and green, no mixing
+              context.fillStyle = col;
               context.fill();
-              context.stroke();
-  /*
-              var pt = self.props.map.project(latlng);
-              pt.x = Math.floor(pt.x - tilePoint.x*256);
-              pt.y = Math.floor(pt.y - tilePoint.y*256);
-              var color = self.colorForvalue(val.stats[cropTypes[j]].mean, levels);
-  //            var pixWidth = 0;
-              var pixWidth = self.getPixelWidth(zoom);
-              console.log('zoom: '+zoom+' pixWidth: '+pixWidth);
-              for (var m = 0-pixWidth; m < 1+pixWidth; m++) {
-                for (var n = 0-pixWidth; n < 1+pixWidth; n++) {
-                  pixelData[(((pt.y+n)*256+pt.x+m)*4)]   = color.r; // red
-                  pixelData[(((pt.y+n)*256+pt.x+m)*4)+1] = color.g; // green
-                  pixelData[(((pt.y+n)*256+pt.x+m)*4)+2] = color.b; // blue
-                  pixelData[(((pt.y+n)*256+pt.x+m)*4)+3] = 255; // alpha
-                }
-              }
-  */
+//              context.lineWidth = 0;
+//              context.strokeStyle = 'black';
+//              context.stroke();
             }
           }
         }
   
   //      context.putImageData(imageData, 0, 0);
-        console.log('drawing!');
         return self.leafletElement.tileDrawn(canvas);
       }).then(function() {
         if (stopIndex != keys.length) {
@@ -353,7 +348,7 @@ export default connect({
             var pt = self.props.map.project(latlng);
             pt.x = Math.floor(pt.x - tilePoint.x*256);
             pt.y = Math.floor(pt.y - tilePoint.y*256);
-            var color = self.colorForvalue(val.value, levels);
+            var color = self.colorForvalue(val.bushels/val.area, levels);
   //          var pixWidth = 0;
             var pixWidth = self.getPixelWidth(zoom);
             for (var m = 0-pixWidth; m < 1+pixWidth; m++) {
@@ -398,42 +393,35 @@ export default connect({
     validate(geohash) {
       return (this.props.currentGeohashes[geohash] !== this.props.availableGeohashes[geohash]._rev);
     }
-  
+ 
+// TODO: remember why this is necessary... 
     updateCanvas() {
       Object.keys(this.canvas).forEach((geohash) => {
         if (!this.props.availableGeohashes[geohash]) delete this.canvas[geohash];
       });
     }
   
-    updateDrawn(geohash) {
-      this.canvas[geohash].drawn = (this.props.currentGeohashes[geohash] !== this.props.availableGeohashes[geohash]._rev);
-      return (this.props.currentGeohashes[geohash] !== this.props.availableGeohashes[geohash]._rev);
-    }
-  
     render() {
       var self = this;
       console.log(this.props.map.getZoom());
-  /*
-      if (this.props.liveData) {
-        this.leafletElement.redraw();
-        setTimeout(signals.liveDataRequested({}), 3000);
-      }
-  */
       if (Object.keys(this.props.availableGeohashes).length > 0) {
         this.updateCanvas();
         var geohashes = Object.keys(this.canvas);
         Promise.map(geohashes, function(geohash) {
           if (self.canvas[geohash].drawn) {
-            return false;
-           } else {
+            return null;
+          } else {
             self.canvas[geohash].drawn = true;
             return Promise.map(self.canvas[geohash].canvases, function(cvs, idx) {
               return self.renderTile(cvs.canvas, geohash, cvs.tilePoint, idx);
-            }); 
+            }).then(function() {
+              console.log('finished rendering geohash', geohash);
+            });
           }
         }).then(function() {
+          console.log('finished drawing canvases promise.map');
         //  TODO check whether any geohashes were actually drawn
-          this.props.geohashDrawn({geohashes});
+          self.props.geohashDrawn({geohashes});
         });
       }
       return super.render();

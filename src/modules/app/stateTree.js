@@ -1,11 +1,11 @@
 import uuid from 'uuid';
 
 var stateTree = {
-  title: 'All your base are belong',
   yield_revs: {},
   user: {},
   token: {},
   live_data: false,
+  offline: true,
 
   model: {
     available_geohashes: {},

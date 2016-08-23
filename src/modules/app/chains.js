@@ -532,6 +532,7 @@ getAccessToken.async = true;
 function storeToken({input, state}) {
   console.log('token stored');
   state.set(['app', 'token'], input.token);
+  state.set('app.offline', false);
 };
 
 function changeShowHide ({input, state}) {

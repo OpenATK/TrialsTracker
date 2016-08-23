@@ -10,6 +10,8 @@ import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
 import RasterLayer from '../RasterLayer';
 import Legend from '../Legend';
+import fastyles from '../css/font-awesome.min.css';
+import FontAwesome from 'react-fontawesome';
 
 export default connect(props => ({
   notes: 'app.model.notes',
@@ -31,7 +33,7 @@ export default connect(props => ({
 
     render() {
       var self = this;
-      var position = [40.8512578, -86.138977];
+      var position = [40.847044, -86.170438];
       var polygonList = [];
       Object.keys(this.props.notes).forEach(function(key) {
         var note = self.props.notes[key];
@@ -96,7 +98,7 @@ export default connect(props => ({
             dragging={true}
             center={position} 
             ref='map'
-            zoom={17}>
+            zoom={15}>
   
             <div 
               className={styles[(this.props.drawMode) ? 
@@ -114,6 +116,14 @@ export default connect(props => ({
               async={true}
               geohashGridlines={false}
               tileGridlines={false}
+            />
+
+            <FontAwesome
+              className={styles[this.props.editing ?
+                'undo-button' : 'hidden']}
+              name='undo'
+              size='2x'
+              onClick={() => this.props.undoDrawPoint({})}
             />
   
             <button 

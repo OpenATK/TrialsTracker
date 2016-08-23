@@ -12,7 +12,7 @@ export default connect({
   class App extends React.Component {
  
     componentWillMount() {
-    //  this.props.init({});
+      this.props.init({});
     }
 
     render() {
