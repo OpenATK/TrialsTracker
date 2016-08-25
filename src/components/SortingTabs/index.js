@@ -19,7 +19,6 @@ export default connect(props => ({
   
       return ( 
         <div className={styles['sorting-tabs']}>
-
         <button 
           type="button" 
           className={styles[this.props.sortMode==='all' ? 
@@ -27,23 +26,22 @@ export default connect(props => ({
           onClick={() => this.props.sortingTabClicked({newSortMode: 'all'})}>
           All
         </button>
-
         <button 
-          type="button" 
+          type="button"
+          disabled
           className={styles[this.props.sortMode==='fields' ? 
             'selected-sorting-tab' : 'sorting-tab']} 
           onClick={() => this.props.sortingTabClicked({newSortMode: 'fields'})}>
           Fields
         </button>
-
         <button 
           type="button" 
+          disabled
           className={styles[this.props.sortMode==='tags' ? 
             'selected-sorting-tab' : 'sorting-tab']} 
           onClick={() => this.props.sortingTabClicked({newSortMode: 'tags'})}>
           Tags
         </button> 
-
         </div>
       );
     }

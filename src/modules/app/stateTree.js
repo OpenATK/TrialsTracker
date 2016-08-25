@@ -8,6 +8,8 @@ var stateTree = {
   offline: true,
 
   model: {
+    geohashes_to_draw: [],
+    geohashes_on_screen: {},
     available_geohashes: {},
     current_geohashes: {},
     selected_note: {},

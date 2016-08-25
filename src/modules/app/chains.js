@@ -23,7 +23,8 @@ export var initialize = [
     success: [storeAvailableGeohashes],
     error: [],
   },
-  prepNoteStats, //computeBoundingBox, computeStats
+//  prepNoteStats, //computeBoundingBox, computeStats
+  drawGeohashesOnScreen,
 ];
 
 export var addTag = [
@@ -73,10 +74,6 @@ export var changeShowHideState = [
   changeShowHide, 
 ];
 
-export var handleAuth = [
-  storeToken,
-];
-
 export var makeLiveDataRequest = [
   sendNewData, {
     success: [setNewData, requestAvailableGeohashes, {
@@ -91,10 +88,6 @@ export var startStopLiveData = [
   startStopTimer,
 ];
 
-export var handleTileGeohash = [
-  storeGeohash, 
-];
-
 export var removeGeohashes = [
   unregisterGeohashes,
 ];
@@ -103,13 +96,30 @@ export var addGeohashes = [
   registerGeohashes,
 ];
 
-export var updateGeohashes = [
-  storeNewGeohashes,
+export var clearCache = [
+  destroyCache,
 ];
 
-export var markGeohashDrawn = [
-  markDrawn,
-];
+//Fired after a token is acquired; the list of available geohashes on the
+//server will be available at this point. Filter the geohashes on screen
+//for the geohashes that are available on the server.
+function drawGeohashesOnScreen({state}) {
+  console.log('fired signal drawGeohashesOnScreen');
+  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
+  var geohashesOnScreen = state.get(['app', 'model', 'geohashes_on_screen']);
+  var geohashesToDraw = [];
+  Object.keys(geohashesOnScreen).forEach((geohash) => {
+    if (availableGeohashes[geohash]) {
+      geohashesToDraw.push(geohash);
+    }
+  });
+  state.set(['app', 'model', 'geohashes_to_draw'], geohashesToDraw);
+};
+
+function destroyCache() {
+  var db = new PouchDB('yield-data');
+  db.destroy();
+};
 
 function exitEditMode({state}) {
   state.set(['app', 'view', 'editing_note'], false);
@@ -333,62 +343,21 @@ function prepNoteStats({state, output}) {
   if (ids.length > 0) output({ids});
 };
 
-function markDrawn({input, state}) {
-  input.geohashes.forEach((geohash) => {
-    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], true);
-  });
-};
-
-function filterCurrentGeohashes({state}) {
-  var i = 0;
-  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
-  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
-  var geohashes = Object.keys(currentGeohashes);
-// The geohashes on screen are filtered here so only those with available data are added.
-  geohashes.forEach((geohash) => {
-    if (!availableGeohashes[geohash]) {
-      i++;
-      state.unset(['app', 'model', 'current_geohashes', geohash]);
-    }
-  });
-  console.log('unset ' + i +' geohashes');
-};
 
 function registerGeohashes({input, state}) {
-//  console.log('registering geohashes');
-  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
-// This case occurs before a token is available.  Just save all geohashes and
+// This case occurs before a token is available. Just save all geohashes and
 // filter them later with filterCurrentGeohashes when the list of available
 // geohashes becomes known.
-  if (Object.keys(availableGeohashes).length === 0) {
-    input.geohashes.forEach((geohash) => {
-      state.set(['app', 'model', 'current_geohashes', geohash], {drawn: false});
-    });
-
-// If the available geohashes are known, save each geohash's _rev
-  } else {
-    input.geohashes.forEach((geohash) => {
-      state.set(['app', 'model', 'current_geohashes', geohash], { 
-        _rev: availableGeohashes[geohash]._rev,
-        drawn: false,
-      });
-    });
-  }
-};
+  console.log('registering geohashes');
+  input.geohashes.forEach((geohash) => {
+    state.set(['app', 'model', 'geohashes_on_screen', geohash], geohash)
+  });
+}
 
 function unregisterGeohashes({input, state}) {
- // console.log('unregistering geohashes (actually setting drawn to false)');
+  console.log('unregistering geohashes');
   input.geohashesToRemove.forEach((geohash) => {
-    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], false);
-  });
-};
-
-function storeNewGeohashes({input, state}) {
-  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
-  var availableGeohashes = state.get(['app', 'model', 'available_geohashes']);
-  input.geohashes.forEach((geohash) => {
-    state.set(['app', 'model', 'current_geohashes', geohash, '_rev'], availableGeohashes[geohash]._rev);
-//    state.set(['app', 'model', 'current_geohashes', geohash, 'drawn'], false);
+    state.unset(['app', 'model', 'geohashes_on_screen', geohash]);
   });
 };
 
@@ -432,15 +401,6 @@ function sendNewData({state, output}) {
 sendNewData.outputs = ['success', 'error'];
 sendNewData.async = true;
 
-
-function storeGeohash({input, state}) {
-  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
-  if (input.rev !== currentGeohashes[input.geohash]) {
-    console.log('updating current geohashes');
-    state.set(['app', 'model', 'current_geohashes', input.geohash], input.rev); 
-  }
-};
-
 function startStopTimer({input, state}) {
   if (state.get(['app', 'live_data'])) {
     state.set(['app', 'live_data'], 'false');
@@ -449,29 +409,7 @@ function startStopTimer({input, state}) {
   }
 };
 
-function requestAvailableGeohashes ({state, output}) {
-  console.log('requesting newest geohash revs');
-  var token = state.get(['app', 'token']).access_token;
-  var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-';
-  var geohashes = {};
-  Promise.map([2,3,4,5,6,7], (level) => {
-    return agent('GET', url+level+'/')
-    .set('Authorization', 'Bearer '+ token)
-    .end()
-    .then(function(res) {
-      Object.keys(res.body).forEach(function(key) {
-        if (key.charAt(0) !== "_") {
-          geohashes[key] = res.body[key];
-        }
-      });
-    });
-  }).then(() => {
-    output.success({geohashes});
-  });
-};
-requestAvailableGeohashes.outputs = ['success', 'error'];
-requestAvailableGeohashes.async = true;
-
+//Not currently in use until we try to get live data streaming.
 function checkRevs ({input, state}) {
   var db = new PouchDB('yield-data');
   var token = state.get(['app', 'token']).access_token;
@@ -505,8 +443,29 @@ function checkRevs ({input, state}) {
   });
 };
 
+function requestAvailableGeohashes ({state, output}) {
+  console.log('requesting newest geohash revs');
+  var token = state.get(['app', 'token']).access_token;
+  var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/';
+  var geohashes = {};
+  Promise.map([2,3,4,5,6,7], (level) => {
+    return cache.get('geohash-'+level, url, token)
+    .then(function(res) {
+      Object.keys(res).forEach(function(key) {
+        if (key.charAt(0) !== "_") {
+          geohashes[key] = res[key];
+        }
+      });
+    });
+  }).then(function() {
+    output.success({geohashes});
+  });
+};
+requestAvailableGeohashes.outputs = ['success', 'error'];
+requestAvailableGeohashes.async = true;
+
 function storeAvailableGeohashes({input, state}) {
-  console.log('storing available geohashes');
+  console.log('storing list of available geohashes');
   state.set(['app', 'model', 'available_geohashes'], input.geohashes)
 };
 

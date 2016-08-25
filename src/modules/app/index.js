@@ -7,20 +7,17 @@ import { changeShowHideState } from './chains';
 import { addNewNote } from './chains';
 import { removeNote } from './chains';
 import { getYieldData } from './chains';
-import { handleAuth } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
 import { startStopLiveData } from './chains';
-import { handleTileGeohash } from './chains';
 import { makeLiveDataRequest } from './chains';
-import { updateGeohashes } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
-import { markGeohashDrawn } from './chains';
 import { addTag } from './chains';
 import { handleNoteListClick } from './chains';
 import { enterNoteEditMode } from './chains';
 import { removeTag } from './chains';
+import { clearCache } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -41,18 +38,10 @@ export default (module) => {
       ...initialize
     ],
 
-    geohashDrawn: [
-      ...markGeohashDrawn,
+    clearCacheButtonClicked: [
+      ...clearCache,
     ],
 
-    recievedUpdatedGeohashes: [
-      ...updateGeohashes,
-    ],
-
-    gotTileGeohash: [
-      ...handleTileGeohash,
-    ],
- 
     startStopLiveDataButtonClicked: [
       ...startStopLiveData,
    ],
@@ -77,10 +66,6 @@ export default (module) => {
       ...drawComplete,
     ],
   
-    recievedAccessToken: [
-      ...handleAuth,
-    ],
-
     sortingTabClicked: [
       ...changeSortMode
     ],
