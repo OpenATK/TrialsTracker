@@ -1,6 +1,7 @@
-var csvToGeohashYieldFormat = require('./csvConverter.js').csvToOadaYieldFormat;
-var setupOadaReferenceServer = require('./setupOadaReferenceServer.js').setup;
+var csvToOadaYield = require('./csvToOadaYieldFormat.js');
+var setupOadaReferenceServer = require('./setupOadaReferenceServer.js');
+var token = process.argv[2].val;
 
-setupOadaReferenceServer();
-csvToOadaYield();
+setupOadaReferenceServer(token);
+csvToOadaYield(token);
 

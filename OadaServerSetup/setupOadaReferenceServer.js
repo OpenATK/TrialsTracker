@@ -1,14 +1,13 @@
-import { Promise } from 'bluebird';
+var Promise = require('bluebird');
 var agent = require('superagent-promise')(require('superagent'), Promise);
-import uuid from 'uuid';
-var token = 'VNgjXjhXQdtjY5qdMlxcOle05mNzWwSUmFsiaUX9';
+var uuid = require('uuid');
 var levels = [2, 3, 4, 5, 6, 7];
 
-exports.setupOadaReferenceServer = function() {
+module.exports = function(token) {
 
   levels.forEach(function(lvl) {
     //Create the resources
-    var meta: {
+    var meta = {
       _mediaType: 'application/vnd.oada.yield.1+json',
     };
     var id = uuid.v4();

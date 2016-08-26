@@ -8,12 +8,11 @@ var oadaIdClient = require('oada-id-client');
 var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
 var url = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/';
-var token = 'VNgjXjhXQdtjY5qdMlxcOle05mNzWwSUmFsiaUX9';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
 
-exports.csvToOadaYield = function() {
+module.exports = function(token) {
   rr('.', function(err,files) {
     for (var i = 0; i < files.length; i++) {
       if ((files[i]).substr(-3) == 'csv') {
@@ -24,7 +23,7 @@ exports.csvToOadaYield = function() {
         this.processData(jsonCsvData, files[i]);
       }
     }
-    this.createAggregates([2, 3, 4, 5, 6, 7]);
+    this.createAggregates([2, 3, 4, 5, 6, 7], token);
   });
 };
 
@@ -170,7 +169,7 @@ processData = function(csvJson, filename) {
   }
 }
 
-createAggregates = function(levels) {
+createAggregates = function(levels, token) {
   var i = 1;
   Object.keys(tempCache).forEach((geohash) => {
     console.log(geohash, i++);
@@ -215,10 +214,10 @@ createAggregates = function(levels) {
       });
     });
   });
-  this.pushAggregates();
+  this.pushAggregates(token);
 }
 
-pushAggregates = function() {
+pushAggregates = function(token) {
   var baseUrl = 'https://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-';
   var aggregateKeys = Object.keys(tempCache);
   var k = 1;
