@@ -1,5 +1,5 @@
 module.exports = {
-  entry:"./app/main.js",
+  entry:"./src/main.js",
 //  devtool: 'eval',
   output: {
     path: __dirname + "/dist",

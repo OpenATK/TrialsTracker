@@ -1,0 +1,31 @@
+.editTagsBar {
+  width: 85%;
+}
+.input {
+  display: block;
+  border:none;
+  background-color:transparent;
+  outline: none;
+  margin: 3px;
+}
+.tag {
+  position: relative;
+  background-color: white;
+  border-radius: 2px;
+  display: inline-block;
+  font-family: sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  margin: 3px;
+  padding: 4px;
+  box-shadow: 1px 1px 2px black;
+}
+.remove-tag-button {
+  background-color: transparent;
+  border-color: transparent;
+  margin-right: 3px;
+  color: #FF0000;
+}
+.hidden {
+  display: none;
+}
