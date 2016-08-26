@@ -407,9 +407,8 @@ class RasterLayer extends CanvasTileLayer {
       if (self.canvas[geohash].drawn) {
         console.log(geohash, 'already drawn');
         return null;
-      } else {
-        self.canvas[geohash].drawn = true;
-      }
+      } 
+      self.canvas[geohash].drawn = true;
       return Promise.map(self.canvas[geohash].canvases, function(cvs, idx) {
         return self.renderTile(cvs.canvas, geohash, cvs.tilePoint, idx);
       });

@@ -15,7 +15,6 @@ export default connect(props => ({
   selected: `app.model.notes.${props.id}.selected`,
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
-  drawMode: 'app.view.draw_mode',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
@@ -47,6 +46,7 @@ export default connect(props => ({
             className={styles['note-text-input']} 
             tabIndex={1}
             placeholder='Type note description here'
+            readOnly={this.props.editing ? false : "readonly"}
           />
           <FontAwesome 
             name='pencil'
@@ -74,7 +74,7 @@ export default connect(props => ({
           <FontAwesome 
             tabIndex={2}
             className={styles[this.props.selected && this.props.editing ?
-              'done-drawing-button' : 'hidden']}
+              'done-editing-button' : 'hidden']}
             name='check'
             size='2x'
             onClick={() => this.props.doneDrawingButtonClicked({drawMode:false, ids:[this.props.id]})}

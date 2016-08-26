@@ -15,6 +15,7 @@ var stateTree = {
     selected_note: {},
     notes: initial_notes(),
     tags: initial_tags(),
+    tag_input_text: '',
     fields: {
       Smith40: {
         name: 'Smith40',

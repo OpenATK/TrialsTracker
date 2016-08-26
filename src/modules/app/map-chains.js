@@ -33,7 +33,7 @@ export var drawOnMap = [
 ];
 
 export var drawComplete = [
-  setDrawMode, computeBoundingBox, computeStats
+  setDrawMode, computeBoundingBox, //computeStats
 ];
 
 function contains(polyOut, polyIn) {
@@ -243,7 +243,7 @@ function computeBoundingBox({input, state, output}) {
 };
 
 function setDrawMode({input, state}) {
-  state.set(['app', 'view', 'draw_mode'], input.drawMode); 
+  state.set(['app', 'view', 'draw_mode'], false); 
 };
 
 function dropPoint ({input, state}) {

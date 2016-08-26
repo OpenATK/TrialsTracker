@@ -28,7 +28,7 @@ export var initialize = [
 ];
 
 export var addTag = [
-  addTagToNote, addTagToAllTagsList,
+  addTagToNote, addTagToAllTagsList, clearTagTextInputValue
 ];
 
 export var removeTag = [
@@ -59,15 +59,19 @@ export var removeNote = [
   deselectNote, checkTags, deleteNote, 
 ];
 
-export var textInputChanged = [
+export var noteTextInputChanged = [
   setTextInputValue
+];
+
+export var tagTextInputChanged = [
+  setTagTextInputValue
 ];
 
 export var changeShowHideState = [
 ];
 
 export var addNewNote = [
-  deselectNote, createNote, selectNote, setDrawMode
+  deselectNote, createNote, selectNote, setDrawMode, enterEditMode,
 ];
 
 export var changeShowHideState = [
@@ -533,6 +537,14 @@ function selectNote ({input, state}) {
     });
 */
   }
+};
+
+function setTagTextInputValue ({input, state}) {
+  state.set(['app', 'model', 'tag_input_text'], input.value);
+};
+
+function clearTagTextInputValue ({input, state}) {
+  state.set(['app', 'model', 'tag_input_text'], '');
 };
 
 function setTextInputValue ({input, state}) {

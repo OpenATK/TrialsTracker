@@ -1,7 +1,8 @@
 import stateTree from './stateTree.js';
 
 import { selectNote } from './chains';
-import { textInputChanged } from './chains';
+import { noteTextInputChanged } from './chains';
+import { tagTextInputChanged } from './chains';
 import { changeSortMode } from './chains';
 import { changeShowHideState } from './chains';
 import { addNewNote } from './chains';
@@ -16,6 +17,7 @@ import { removeGeohashes } from './chains';
 import { addTag } from './chains';
 import { handleNoteListClick } from './chains';
 import { enterNoteEditMode } from './chains';
+import { exitNoteEditMode } from './chains';
 import { removeTag } from './chains';
 import { clearCache } from './chains';
 
@@ -63,7 +65,7 @@ export default (module) => {
     ],
 
     doneDrawingButtonClicked: [
-      ...drawComplete,
+      ...drawComplete, ...exitNoteEditMode
     ],
   
     sortingTabClicked: [
@@ -83,7 +85,12 @@ export default (module) => {
     ],
 
     noteTextChanged: {
-      chain: [...textInputChanged],
+      chain: [...noteTextInputChanged],
+      immediate: true,
+    },
+
+    tagInputTextChanged: {
+      chain: [...tagTextInputChanged],
       immediate: true,
     },
 

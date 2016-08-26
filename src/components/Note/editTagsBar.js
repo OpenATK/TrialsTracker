@@ -10,17 +10,15 @@ export default connect(props => ({
   allTags: 'app.model.tags',
   editing: 'app.view.editing_note',
   selected: `app.model.notes.${props.id}.selected`,
+  tagInput: 'app.model.tag_input_text',
 }), {
   tagAdded: 'app.tagAdded',
   tagRemoved: 'app.tagRemoved',
+  tagInputTextChanged: 'app.tagInputTextChanged',
 },
 
   class EditTagsBar extends React.Component {
 
-    constructor(props) {
-      super(props)
-    }
-   
     componentWillMount() {
       this.handleKeyDown = this.handleKeyDown.bind(this);
     }
@@ -34,28 +32,7 @@ export default connect(props => ({
     render() {
       var tags = [];
       var self = this;
-/*
-      (this.props.tags).forEach((tag) => {
-        tags.push(<div 
-          key={uuid.v4()} 
-          className={styles["tag"]}>
-            <FontAwesome 
-              name='times'
-              size='lg'
-              className={styles[this.props.selected && this.props.editing ? 
-                'remove-tag-button' : 'hidden']}
-              onClick={() => signals.removeTagButtonClicked({})}
-            />
-            {tag}
-        </div>);
-      });
-*/
       var options = [];
-///////////
-//      Object.keys(this.props.allTags).filter((tag) => {
-//        return 
-
-///////////
       Object.keys(this.props.allTags).forEach((tag) => {
         if (self.props.tags.indexOf(tag) < 0) {
           options.push(<option key={uuid.v4()} value={tag}>{tag} </option>);
@@ -75,6 +52,8 @@ export default connect(props => ({
             placeholder='Add a new tag'
             list={id}
             autoComplete='on'
+            onChange={(e) => this.props.tagInputTextChanged({value: e.target.value, noteId:this.props.id})}
+            value={this.props.tagInput}
             onKeyDown={this.handleKeyDown}
           />
           {this.props.tags.map(tag => 
