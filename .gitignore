@@ -1,5 +1,6 @@
 node_modules
-dist
+dist/*
+!dist/index.html
 *.swp
 OadaServerSetup/2015/Kalloway
 OadaServerSetup/2015/Crispin

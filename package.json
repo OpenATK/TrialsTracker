@@ -22,9 +22,7 @@
   },
   "homepage": "https://github.com/openatk/trailstracker",
   "scripts": {
-    "start": "cross-env kotatsu serve app/main.js --index index.html --config webpack.config.js --devtool eval-source-map",
-    "start-run": "node server.js",
-    "build": "cross-env NODE_ENV=production kotatsu build client app/main.js --config webpack.production.config.js --minify -o dist/client_bundle.js "
+    "start": "node server.js"
   },
   "dependencies": {
     "autoprefixer": "^6.3.3",
@@ -38,6 +36,7 @@
     "cerebral-module-forms": "^0.5.0",
     "cerebral-module-router": "^0.16.1",
     "cerebral-view-react": "^0.12.6",
+    "color": "^0.11.3",
     "csvjson": "^2.1.0",
     "file-loader": "^0.8.5",
     "font-awesome": "^4.6.3",
@@ -50,12 +49,14 @@
     "lodash": "^4.14.1",
     "md5": "^2.1.0",
     "ngeohash": "^0.6.0",
+    "oada-id-client": "github:oada/oada-id-client-js",
     "pouchdb": "^5.4.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "react-fontawesome": "^1.1.0",
     "react-leaflet": "^0.10.1",
     "react-textarea-autosize": "^3.3.0",
+    "recursive-readdir": "^2.0.0",
     "superagent": "^2.0.0",
     "superagent-promise": "^1.1.0",
     "togeojson": "^0.14.2",
@@ -70,7 +71,6 @@
     "concurrently": "^2.0.0",
     "cross-env": "^1.0.7",
     "css-loader": "^0.23.1",
-    "kotatsu": "^0.10.0",
     "postcss-loader": "^0.8.1",
     "style-loader": "^0.13.0"
   }

@@ -12,8 +12,11 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var tempCache = {};
 
+var CSV_DIRECTORY='../csvConverter';
+
 module.exports = function(token) {
-  rr('.', function(err,files) {
+  console.log("Started import.");
+  rr(CSV_DIRECTORY, function(err,files) {
     for (var i = 0; i < files.length; i++) {
       if ((files[i]).substr(-3) == 'csv') {
         console.log('Processing ' + files[i]);
