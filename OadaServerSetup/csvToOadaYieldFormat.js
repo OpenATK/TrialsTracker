@@ -110,25 +110,24 @@ processData = function(csvJson, filename) {
 
       tempCache[geohash] = {
 
-        dataType: {
-          definition: 'https://github.com/oada-formats',
-          name: 'wet-yield',
-        },
-
         context: {
-          'geohash-7': geohash,
+          'harvest': 'as-harvested',
+          'as-harvested': 'wet-yield',
+          'wet-yield': 'geohash-index',
+          'geohash-index': 'geohash-7',
+          'geohash-7': '9j9j12f',
         },
 
-        template: {
-          Corn: {
-            units: 'bu/ac',
+        templates: {
+          area: {
+            units: 'acres',
           },
-          Soybeans: {
-            units: 'bu/ac',
+          weight: {
+            units: 'bushels',
           },
-          Wheat: {
-            units: 'bu/ac',
-          },
+          location: {
+            datum: 'WGS84',
+          }
         },    
   
         data: { },
