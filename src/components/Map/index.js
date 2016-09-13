@@ -33,7 +33,7 @@ export default connect(props => ({
 
     render() {
       var self = this;
-      var position = [40.847044, -86.170438];
+      var position = [40.98032883, -86.20182673]; // 40.97577156, -86.19773737    40.847044, -86.170438
       var polygonList = [];
       Object.keys(this.props.notes).forEach(function(key) {
         var note = self.props.notes[key];
