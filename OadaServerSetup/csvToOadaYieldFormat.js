@@ -12,7 +12,7 @@ var agent = require('superagent-promise')(require('superagent'), Promise);
 var rawData = {};
 var tiledMaps = {};
 
-var CSV_DIRECTORY='../csvConverter';
+var CSV_DIRECTORY='./YieldData';
 
 module.exports = function(token) {
   console.log("Started import.");
