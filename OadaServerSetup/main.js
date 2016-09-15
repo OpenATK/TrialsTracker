@@ -1,4 +1,5 @@
-var csvToOadaYield = require('./csvToOadaYieldFormat.js');
+var csvToNewOadaYield = require('./csvToNewOadaYieldFormat.js');
+var serverSetup = require('./serverSetup.js');
 /*
 	Obtain token for OADA server from command line
 		- obtain from https://client.oada-dev.com after running OADA server.
@@ -6,7 +7,6 @@ var csvToOadaYield = require('./csvToOadaYieldFormat.js');
 		- press Get Access Token
 */
 var token = process.argv[2];
-
+serverSetup(token);
 //Upload data from ../csvConverter to the OADA server
-csvToOadaYield(token);
-
+csvToNewOadaYield(token);
