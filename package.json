@@ -57,6 +57,7 @@
     "react-fontawesome": "^1.1.0",
     "react-leaflet": "^0.10.1",
     "react-textarea-autosize": "^3.3.0",
+    "readdir-recursive-promise": "0.0.1",
     "recursive-readdir": "^2.0.0",
     "superagent": "^2.0.0",
     "superagent-promise": "^1.1.0",
