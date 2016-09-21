@@ -77,7 +77,6 @@
     "cross-env": "^1.0.7",
     "css-loader": "^0.23.1",
     "postcss-loader": "^0.8.1",
-    "style-loader": "^0.13.0",
-    "webpack": "^1.13.2"
+    "style-loader": "^0.13.0"
   }
 }
