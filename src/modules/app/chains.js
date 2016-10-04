@@ -69,9 +69,6 @@ export var updateTagText = [
   setTagText,
 ];
 
-export var changeShowHideState = [
-];
-
 export var addNewNote = [
   deselectNote, createNote, selectNote, setDrawMode, enterEditMode,
 ];
