@@ -7,5 +7,5 @@ var serverSetup = require('./serverSetup.js');
 */
 var yield_data_directory = process.argv[2];
 var token = process.argv[3];
-//Upload data from < yield_data_directory > to the OADA server
+//Convert and upload data from yield_data_directory to the OADA server
 serverSetup(yield_data_directory, token);

@@ -17,12 +17,13 @@ export default connect(props => ({
   notes: 'app.model.notes',
   selectedNote: 'app.model.selected_note',
   editing: 'app.view.editing',
-  liveData: 'app.live_data',
-  token: 'app.token.access_token',
+  token: 'app.token',
   legends: 'app.view.legends',
+  domain: 'app.model.domain',
+  yieldDataIndex: 'app.model.yield_data_index',
+  drawMode: 'app.view.draw_mode',
 }), {
   toggleMap: 'app.ToggleMap',
-  drawMode: 'app.drawMode',
   mouseDownOnMap: 'app.mouseDownOnMap',
   mouseMoveOnMap: 'app.mouseMoveOnMap',
   mouseUpOnMap: 'app.mouseUpOnMap',
@@ -33,7 +34,8 @@ export default connect(props => ({
 
     render() {
       var self = this;
-      var position = [40.98032883, -86.20182673]; // 40.97577156, -86.19773737    40.847044, -86.170438
+      //var position = [40.98032883, -86.20182673]; // 40.97577156, -86.19773737    40.847044, -86.170438
+      var position = [40.853989, -86.142021]; 
       var polygonList = [];
       Object.keys(this.props.notes).forEach(function(key) {
         var note = self.props.notes[key];
@@ -74,7 +76,7 @@ export default connect(props => ({
       }
       
       var legends = [];
-      if (self.props.token) {
+      if (this.props.token) {
         legends.push(<Legend 
           position={'bottomright'} 
           key={uuid.v4()}
@@ -82,14 +84,26 @@ export default connect(props => ({
       } else {
         legends = null;
       }
-      var drag_flag = this.props.dragMode;
+
+      var rasterLayers = [];
+      Object.keys(this.props.yieldDataIndex).forEach((crop) => {
+        rasterLayers.push(
+          <RasterLayer
+            key={'RasterLayer-'+crop}
+            crop={crop}
+            async={true}
+            geohashGridlines={false}
+            tileGridlines={false}
+          />
+        )
+      })
+      console.log(this.props.drawMode);
   //        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMap()}>Lock Map</button>
   //        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>
       return (
         <div id='map-panel'>
           <Map 
             onLeafletMousedown={ (e) => this.props.mouseDownOnMap({pt: e.latlng, select_note: this.props.selectedNote, noteSelected:this.props.id}) } 
-            onLeafletMouseMove={ (e) => this.props.mouseMoveOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
             onLeafletMouseUp={ (e) => this.props.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
   //          onLeafletdblclick={ (e) => 
   //            signals.mapDoubleClicked({pt: e.latlng, drawMode: false})
@@ -99,25 +113,16 @@ export default connect(props => ({
             center={position} 
             ref='map'
             zoom={15}>
-  
             <div 
               className={styles[(this.props.drawMode) ? 
                 'drawing-popup' : 'hidden']}>
-              Tap the map to mark an area
+              Tap the map to draw a polygon
             </div>
-  
             <TileLayer
               url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             />
-    
-            <RasterLayer 
-              url="http://localhost:3000/bookmarks/harvest/as-harvested/maps/wet-yield/geohash-7/"
-              async={true}
-              geohashGridlines={false}
-              tileGridlines={false}
-            />
-
+            {rasterLayers}
             <FontAwesome
               className={styles[this.props.editing ?
                 'undo-button' : 'hidden']}
@@ -125,7 +130,6 @@ export default connect(props => ({
               size='2x'
               onClick={() => this.props.undoDrawPoint({})}
             />
-  
             <button 
               type="button" 
               id='start-stop-live-data-button'  
@@ -135,7 +139,6 @@ export default connect(props => ({
             {markerList}
             {polygonList}
             {legends}
-  
           </Map> 
         </div>
       );

@@ -1,34 +1,48 @@
-import { CanvasTileLayer, Point } from 'react-leaflet';
 import React from 'react';
 import styles from './style.css';
 import PouchDB from 'pouchdb';
 import { Promise } from 'bluebird';
+import uuid from 'uuid';
 var agent = require('superagent-promise')(require('superagent'), Promise);
-var global_cache = {};
 
 module.exports = {
-  get: function(resId, url, token) {
-    var db = new PouchDB('yield-data');
-    return db.get(resId).then(function(result) {
-//      console.log('got '+resId+' from CACHE');
-      return result.doc;
+  
+  get: function(url, token) {
+    var db = new PouchDB('TrialsTracker');
+    //get resource id from url
+    return db.get(url).then(function(urlRes) {
+      //get resource
+      return db.get(urlRes.doc).then(function(res) {
+        return res.doc;
+      }).catch(function(err) {
+        console.log(err);
+      })
+    // Perform an HTTP request to OADA 
     }).catch(function(err) {
-//      console.log(err);
       if (token) {
-        return agent('GET', url+resId)
+        return agent('GET', url)
         .set('Authorization', 'Bearer '+ token)
         .end()
-//        .then(function onResult(response) {
         .then(function(response) {
-//          console.log('got '+resId+' from SERVER');
+          // save the url to resource id mapping
+          var id = response.body._id;
+          if (!id) id = uuid.v4();
           db.put({
-            doc:response.body, 
-            _id: resId, 
+            doc: id, 
+            _id: url, 
 //            _rev: response.body._rev
-          }).then(function(res) {
           }).catch(function(err) {
             if (err.status !== 409) {
-              console.log('throwing');
+              throw err;
+            }
+          });
+          // Then, save the resource contents.
+          db.put({
+            doc: response.body, 
+            _id: id,
+//            _rev: response.body._rev
+          }).catch(function(err) {
+            if (err.status !== 409) {
               throw err;
             }
           });
@@ -42,5 +56,5 @@ module.exports = {
         });
       } else { return null;}
     });
-  }
+  },
 }

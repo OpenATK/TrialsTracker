@@ -2,13 +2,15 @@ import React, { PropTypes } from 'react';
 import {connect} from 'cerebral-view-react';
 import NoteList from '../NoteList/';
 import TrialsMap from '../Map';
-import styles from './app.css'
+import OadaDomainModal from '../OadaDomainModal';
+import styles from './app.css';
 
 export default connect({
 
 }, {
   init: 'app.init',
   clearCache: 'app.clearCacheButtonClicked',
+  showDomainModal: 'app.setDomainButtonClicked',
 },
 
   class App extends React.Component {
@@ -20,6 +22,7 @@ export default connect({
     render() {
       return (
         <div className="app">
+          <OadaDomainModal />
           <NoteList />
           <TrialsMap />
           <button
@@ -27,6 +30,12 @@ export default connect({
             className={styles["clear-cache-button"]}
             onClick={() => {this.props.clearCache({})}}>
               Clear Cache
+          </button>
+          <button
+            type="button"
+            className={styles["set-domain-button"]}
+            onClick={() => {this.props.showDomainModal({})}}>
+              Change Domain
           </button>
         </div>
       )

@@ -1,6 +1,12 @@
 .clear-cache-button {
-  position: absolute;
-  right: 0;
-  top: 0;
+  position: relative;
+  float: right;
+  top: 5px;
+  z-index: 2;
+}
+.set-domain-button {
+  position: relative;
+  float: right;
+  top: 5px;
   z-index: 2;
 }

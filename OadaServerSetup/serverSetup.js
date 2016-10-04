@@ -113,24 +113,23 @@ processRawData = function(csvJson, filename) {
     //Handle new crop types
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] || {
       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.crop.1+json',
-      'geohash-index': {
+      'geohash-length-index': {
         'geohash-7': {
-          _type: 'application/vnd.oada.data-index.geohash.1+json',
-          geohashes: {},
+         'geohash-index': {},
         },
       },
     };
     //Handle new geohashes
-    tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash] || {
+    tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] || {
       _type: 'application/vnd.oada.as-harvested.yield-moisture.1+json',
       data: { },
     };
  
     var template_id;
-    if (!tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].templates) { 
+    if (!tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].templates) { 
       template_id = uuid.v4();
-      tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].templates = {};
-      tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].templates[template_id] = {
+      tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].templates = {};
+      tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].templates[template_id] = {
         area: { units: 'acres' },
         weight: { units: 'bushels' },
         yield: { units: 'bu/ac' },
@@ -138,7 +137,7 @@ processRawData = function(csvJson, filename) {
         location: { datum: 'WGS84' },
       }
     } else { 
-      template_id = Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].templates)[0];
+      template_id = Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].templates)[0];
     }
 
     // Add the data point
@@ -172,7 +171,7 @@ processRawData = function(csvJson, filename) {
       console.log(pt.weight);
     }
     //push the point
-    tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].data[id] = pt;
+    tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data[id] = pt;
     return tree;
   });
 }
@@ -180,15 +179,15 @@ processRawData = function(csvJson, filename) {
 createAggregates = function(levels) {
   var i = 1;
   return Promise.map(Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index']), function(cropType) {
-   Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes).forEach(function(geohash) {
-      Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].data).forEach(function(key) {
-        var pt = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-index']['geohash-7'].geohashes[geohash].data[key];
+   Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index']).forEach(function(geohash) {
+      Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data).forEach(function(key) {
+        var pt = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data[key];
         levels.forEach((level) => {
           var weight = pt.weight;
           if (pt.moisture > tradeMoisture[cropType]) {
             weight = weight*(100-pt.moisture)/(100-tradeMoisture[cropType]);// Adjust weight for moisture content
           }
-          var ghlen = 'geohash-'+(level+2);
+          var ghlen = 'geohash-'+(level);
           var bucketGh = gh.encode(pt.location.lat, pt.location.lon, level);
           var aggregateGh = gh.encode(pt.location.lat, pt.location.lon, level+2);
           if (isNaN(pt.weight)) {
@@ -209,14 +208,13 @@ createAggregates = function(levels) {
           //Handle new crop types
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.crop.1+json',
-            'geohash-index': {},
+            'geohash-length-index': {},
           };
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen] || {
-            _type: 'application/vnd.oada.data-index.geohash.1+json',
-            geohashes: {},
+          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] || {
+           'geohash-index': {},
           }
           //Handle new geohashes
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh] || {
+          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] || {
             _type: 'application/vnd.oada.tiled-maps.dry-yield.crop.1+json',
             stats: {
               area: {
@@ -234,27 +232,27 @@ createAggregates = function(levels) {
           };
  
           var template_id;
-          if (!tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].templates) { 
+          if (!tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].templates) { 
             template_id = uuid.v4();
-            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].templates = {};
-            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].templates[template_id] = {
+            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].templates = {};
+            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].templates[template_id] = {
               area: { units: 'acres' },
               weight: { units: 'bushels' },
               moisture: { 
                 units: '%H2O',
-                value: tradeMoisture[cropType] 
+                value: tradeMoisture[cropType]
               },
               location: { datum: 'WGS84' },
             }
           } else { 
-            template_id = Object.keys(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].templates)[0];
+            template_id = Object.keys(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].templates)[0];
           }
         
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].stats = 
-            recomputeStats(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh].stats, additionalStats);
+          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].stats = 
+            recomputeStats(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh].stats, additionalStats);
         
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh]['geohash-data'][aggregateGh] = 
-            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh]['geohash-data'][aggregateGh] || {
+          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh] = 
+            tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh] || {
               template: template_id,
               area: {
                 sum: 0,
@@ -267,8 +265,8 @@ createAggregates = function(levels) {
               count: 0,
             };
 
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh]['geohash-data'][aggregateGh] = 
-            recomputeStats(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-index'][ghlen].geohashes[bucketGh]['geohash-data'][aggregateGh], additionalStats);
+          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh] = 
+            recomputeStats(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh], additionalStats);
 
           return tree;
         });
@@ -278,25 +276,11 @@ createAggregates = function(levels) {
 };
 
 recomputeStats = function(currentStats, additionalStats) {
-/*
-  console.log('~~~~~~~~~~~~~~~~~~');
-  console.log(currentStats);
-  console.log(additionalStats);
-  if (isNaN(currentStats.area)) {
-    currentStats.count = additionalStats.count;
-    currentStats.area.sum = additionalStats.area.sum;
-    currentStats.area['sum-of-squares'] = additionalStats.area['sum-of-squares'];
-    currentStats.weight.sum = additionalStats.weight.sum;
-    currentStats.weight['sum-of-squares'] = additionalStats.weight['sum-of-squares'];
-  } else {
-*/
-  //  console.log('!!!!!!!!!!!!!!!!!did the new thing!!!!!!!!!!!!!!!!!!!');
-    currentStats.count = currentStats.count + additionalStats.count;
-    currentStats.area.sum = currentStats.area.sum + additionalStats.area.sum;
-    currentStats.area['sum-of-squares'] = currentStats.area['sum-of-squares'] + additionalStats.area['sum-of-squares'];
-    currentStats.weight.sum = currentStats.weight.sum + additionalStats.weight.sum;
-    currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] + additionalStats.weight['sum-of-squares'];
- // }
+  currentStats.count = currentStats.count + additionalStats.count;
+  currentStats.area.sum = currentStats.area.sum + additionalStats.area.sum;
+  currentStats.area['sum-of-squares'] = currentStats.area['sum-of-squares'] + additionalStats.area['sum-of-squares'];
+  currentStats.weight.sum = currentStats.weight.sum + additionalStats.weight.sum;
+  currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] + additionalStats.weight['sum-of-squares'];
   return currentStats;
 };
 
@@ -322,7 +306,7 @@ var _Setup = {
       for (var i = 0; i < keysArray.length-1; i++) {
         resource.context[keysArray[i]] = keysArray[i+1];
       }
-      //console.log('POSTed ', resource);
+//      console.log('POSTed ', resource);
       return agent('POST', 'https://localhost:3000/resources/')
         .set('Authorization', 'Bearer '+ TOKEN)
         .send(resource)
@@ -334,7 +318,7 @@ var _Setup = {
         var url = 'https://localhost:3000/bookmarks/' + keysArray.slice(0, keysArray.length-1).join('/');
         var content = {};
         content[keysArray[keysArray.length-1]] = {_id: resId, _rev: '0-0'}
-        //console.log('PUT ', content, ' to url: ', url);
+//        console.log('PUT ', content, ' to url: ', url);
         return agent('PUT', url)
           .set('Authorization', 'Bearer ' + TOKEN)
           .send(content)
@@ -367,5 +351,3 @@ var _Setup = {
     return ret;
   },
 };
-
-
