@@ -20,6 +20,7 @@ var Promise = require('bluebird');
 var agent = require('superagent-promise')(require('superagent'), Promise);
 var uuid = require('uuid');
 var TOKEN;
+var DOMAIN;
 
 var tree = {
   harvest: {
@@ -41,8 +42,9 @@ var tree = {
   },
 };
 
-module.exports = function(yield_data_directory, token) {
+module.exports = function(yield_data_directory, domain, token) {
   TOKEN = token;
+  DOMAIN = domain;
   console.log("Started import.");
   rr('./' + yield_data_directory, function(err,files) {
     return Promise.map(files, function(file) {
@@ -307,7 +309,7 @@ var _Setup = {
         resource.context[keysArray[i]] = keysArray[i+1];
       }
 //      console.log('POSTed ', resource);
-      return agent('POST', 'https://localhost:3000/resources/')
+      return agent('POST', 'https://'+DOMAIN+'/resources/')
         .set('Authorization', 'Bearer '+ TOKEN)
         .send(resource)
         .end()
@@ -315,7 +317,7 @@ var _Setup = {
         var resId = response.headers.location.replace(/^\/resources\//, '');
         desc._id = resId;
         desc._rev = '0-0';
-        var url = 'https://localhost:3000/bookmarks/' + keysArray.slice(0, keysArray.length-1).join('/');
+        var url = 'https://'+DOMAIN+'/bookmarks/' + keysArray.slice(0, keysArray.length-1).join('/');
         var content = {};
         content[keysArray[keysArray.length-1]] = {_id: resId, _rev: '0-0'}
 //        console.log('PUT ', content, ' to url: ', url);
