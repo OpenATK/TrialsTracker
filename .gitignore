@@ -2,6 +2,5 @@ node_modules
 dist/*
 !dist/index.html
 *.swp
-/OadaServerSetup/2015
-/OadaServerSetup/2015/Winegardener/All52/winegardener_all52_2015_harvest.csv
+/OadaServerSetup/2015/
 *.DS_Store

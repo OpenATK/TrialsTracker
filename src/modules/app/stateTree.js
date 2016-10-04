@@ -1,14 +1,16 @@
 import uuid from 'uuid';
 
 var stateTree = {
-  yield_revs: {},
-  user: {},
   token: {},
-  live_data: false,
   offline: true,
 
   model: {
-    geohashes_to_draw: [],
+    user: {},
+    domain: '',
+    'yield_data_index': {
+    },
+    selected_crops: {},
+    geohashes_to_draw: {},
     geohashes_on_screen: {},
     available_geohashes: {},
     current_geohashes: {},
@@ -24,13 +26,18 @@ var stateTree = {
     }, 
   },
   view: {
+    notifications: [],
     sort_mode: 'all', //'all' 'fields' 'tags'
     map: {$isLoading: true},
-    dragMode: true,
+    drag_mode: false,
     drawing: false,
     editing_note: false,
+    domain_modal: {
+      text: '',
+      visible: true,
+    }, 
     legends: {
-      Corn: [{
+      corn: [{
         value: 130,
         color: {
           r: 255,
@@ -56,7 +63,7 @@ var stateTree = {
         },
       }],
 
-      Soybeans: [{ 
+      soybeans: [{ 
         value: 30,
         color: { 
           r: 255,
@@ -81,7 +88,7 @@ var stateTree = {
           a: 255,
         },
       }],
-      Wheat: [{ 
+      wheat: [{ 
         value: 40,
         color: { 
           r: 255,
@@ -133,6 +140,14 @@ function initial_notes() {
       tags: [],//['application', 
       fields: ['Bair100'],
       area: 17.34,
+      stats: {
+        corn: { 
+          area_sum: 16.28,
+          weight_sum: 2527.7032924,
+          count: 699,
+          mean_yield: 155.2643300, 
+        },
+      },
 //      geometry: [{latitude: 40.858384, longitude: -86.138859},{latitude: 40.851257, longitude: -86.138790}, {latitude: 40.851244, longitude: -86.139479}, {latitude: 40.858316, longitude: -86.139746}],
       geometry: {"type":"Polygon","coordinates":[[
         [-86.14511646330357,40.85140222836006],
@@ -148,7 +163,6 @@ function initial_notes() {
       color: '#99e7c1',
       completions: [],
       selected: false,
-      mean: 155.26,
     };
     if (i === 2) {
       var time = new Date(2015, 9, 22, 18);
@@ -159,7 +173,14 @@ function initial_notes() {
         time: time,
         tags: ['low area'],
         area: 1.38,
-        mean: 135.78,
+        stats: {
+          corn: {
+            area_sum: 1.38,
+            weight_sum: 182.16,
+            count: 100,
+            mean_yield: 132.40011, 
+          },
+        },
         fields: ['Bair100'],
 //        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
         geometry: {"type":"Polygon","coordinates":[[

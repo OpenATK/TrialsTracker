@@ -68,8 +68,8 @@ export default connect(props => ({
             {this.props.note.area ? 
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
             <br/>
-            {this.props.note.mean ? 
-              'Yield: ' + this.props.note.mean.toFixed(2) + ' bu/ac' : null}
+            {this.props.note.stats.corn ? 
+              'Yield: ' + this.props.note.stats.corn.mean_yield.toFixed(2) + ' bu/ac' : null}
           </div>
           <FontAwesome 
             tabIndex={2}
@@ -77,7 +77,7 @@ export default connect(props => ({
               'done-editing-button' : 'hidden']}
             name='check'
             size='2x'
-            onClick={() => this.props.doneDrawingButtonClicked({drawMode:false, ids:[this.props.id]})}
+            onClick={() => this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
           />
           <hr 
             noshade

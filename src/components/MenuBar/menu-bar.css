@@ -18,3 +18,8 @@
   border-color: black;
   background-color: white;
 }
+.notification {
+  display:inline-block;
+  float:right;
+  width:auto;
+}

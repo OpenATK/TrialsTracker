@@ -1,8 +1,8 @@
 import stateTree from './stateTree.js';
 
 import { selectNote } from './chains';
-import { noteTextInputChanged } from './chains';
-import { tagTextInputChanged } from './chains';
+import { updateNoteText } from './chains';
+import { updateTagText } from './chains';
 import { changeSortMode } from './chains';
 import { changeShowHideState } from './chains';
 import { addNewNote } from './chains';
@@ -11,7 +11,7 @@ import { getYieldData } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
 import { startStopLiveData } from './chains';
-import { makeLiveDataRequest } from './chains';
+//import { makeLiveDataRequest } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
 import { addTag } from './chains';
@@ -20,6 +20,10 @@ import { enterNoteEditMode } from './chains';
 import { exitNoteEditMode } from './chains';
 import { removeTag } from './chains';
 import { clearCache } from './chains';
+import { updateDomainText } from './chains';
+import { submitDomainModal } from './chains';
+import { cancelDomainModal } from './chains';
+import { displayDomainModal } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -40,6 +44,19 @@ export default (module) => {
       ...initialize
     ],
 
+    domainSubmitClicked: [
+      ...submitDomainModal,
+    ],
+
+    domainCancelClicked: [
+      ...cancelDomainModal,
+    ],
+
+    domainTextChanged: {
+      chain: [...updateDomainText],
+      immediate: true,
+    },
+
     clearCacheButtonClicked: [
       ...clearCache,
     ],
@@ -48,9 +65,9 @@ export default (module) => {
       ...startStopLiveData,
    ],
 
-   liveDataRequested: [
-     ...makeLiveDataRequest,
-   ],
+   //liveDataRequested: [
+   //  ...makeLiveDataRequest,
+   //],
 
    tileUnloaded: [
      ...removeGeohashes,
@@ -85,12 +102,12 @@ export default (module) => {
     ],
 
     noteTextChanged: {
-      chain: [...noteTextInputChanged],
+      chain: [...updateNoteText],
       immediate: true,
     },
 
     tagInputTextChanged: {
-      chain: [...tagTextInputChanged],
+      chain: [...updateTagText],
       immediate: true,
     },
 
@@ -132,6 +149,10 @@ export default (module) => {
 
     noteListClicked: [
       ...handleNoteListClick,
+    ],
+
+    setDomainButtonClicked: [
+      ...displayDomainModal,
     ],
 
   })
