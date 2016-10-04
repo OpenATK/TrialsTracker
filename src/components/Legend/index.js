@@ -7,6 +7,7 @@ import uuid from 'uuid';
 
 export default connect({
   legends: 'app.view.legends',
+  yieldDataIndex: 'app.model.yield_data_index',
 }, {
 
 },
@@ -28,9 +29,10 @@ export default connect({
       var self = this;
       var legendPieces = [];
   
-      Object.keys(this.props.legends).forEach(function(key) {
+      Object.keys(this.props.yieldDataIndex).forEach(function(key) {
         var levels = self.props.legends[key];
-        legendPieces.push(key + ' (bu/ac)');
+        var title = key.charAt(0).toUpperCase() + key.slice(1);
+        legendPieces.push(title + ' (bu/ac)');
         legendPieces.push(<br key={uuid.v4()}/>);
         // loop through our density intervals and generate a label with a colored square for each interval
         for (var i = 0; i < levels.length-1; i++) {
