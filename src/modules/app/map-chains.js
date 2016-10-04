@@ -14,23 +14,12 @@ export var handleMouseDown = [
  dropPoint 
 ];
 
-export var mouseMoveOnmap = [
-//  mapMouseMove
-];
-
 export var mouseUpOnmap = [
   mapMouseUp
 ];
 
 export var ToggleMap = [
   dragMapToggle
-];
-
-export var mouseDown = [
-  
-];
-
-export var drawOnMap = [
 ];
 
 export var drawComplete = [
