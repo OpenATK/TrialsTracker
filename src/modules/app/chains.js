@@ -58,7 +58,7 @@ export var handleNoteClick = [
 ];
 
 export var removeNote = [
-  deselectNote, checkTags, deleteNote, 
+  setDrawMode, deselectNote, checkTags, deleteNote, 
 ];
 
 export var updateNoteText = [

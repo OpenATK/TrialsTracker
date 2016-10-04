@@ -42,7 +42,8 @@ export default connect(props => ({
   
       return (
         <div
-          className={styles['editTagsBar']}>
+          className={styles[this.props.editing && this.props.selected ? 
+            'editTagsBar' : 'hidden']}>
           <datalist id={id}>
             {options}
           </datalist>

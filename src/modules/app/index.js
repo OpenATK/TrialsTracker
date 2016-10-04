@@ -27,10 +27,8 @@ import { displayDomainModal } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
-import { mouseMoveOnmap } from './map-chains';
 import { mouseUpOnmap } from './map-chains';
 import { ToggleMap } from './map-chains';
-import { drawOnMap } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
 
 export default (module) => {
@@ -115,20 +113,12 @@ export default (module) => {
       ...handleMouseDown
     ],
 
-    mouseMoveOnMap: [
-      ...mouseMoveOnmap
-    ],
-
     mouseUpOnMap: [
       ...mouseUpOnmap
     ],
 
     ToggleMap: [
       ...ToggleMap
-    ],
-
-    DrawMode: [
-      ...drawOnMap
     ],
 
     showHideButtonClicked: [

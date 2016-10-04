@@ -26,9 +26,14 @@ export default connect(props => ({
   class Note extends React.Component {
 
     handleNoteClick(evt) {
-//      if (evt.target.className.substring(0,5).indexOf('note') >= 0) {
       if (!this.props.selected) this.props.noteClicked({note:this.props.id})
-//      }
+    }
+    
+    validatePolygon() {
+      console.log(this.props.note.geometry);
+      if (this.props.note.geometry.coordinates[0].length > 3) {
+        this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
+      }
     }
   
     render() {
@@ -60,7 +65,7 @@ export default connect(props => ({
             size='2x'
             className={styles[this.props.selected && this.props.editing ? 
              'delete-note-button' : 'hidden']}
-            onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id})}
+            onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
           />
           <hr noshade/>
           <div
@@ -77,7 +82,7 @@ export default connect(props => ({
               'done-editing-button' : 'hidden']}
             name='check'
             size='2x'
-            onClick={() => this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})}
+            onClick={() => this.validatePolygon()}
           />
           <hr 
             noshade

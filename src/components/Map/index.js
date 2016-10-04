@@ -97,18 +97,11 @@ export default connect(props => ({
           />
         )
       })
-      console.log(this.props.drawMode);
-  //        <button type="button" id='drag-button'  onClick={(e) => signals.ToggleMap()}>Lock Map</button>
-  //        <button type="button" id='draw-polygon' onClick={(e) => signals.DrawMode()}>Draw Polygon</button>
       return (
         <div id='map-panel'>
           <Map 
             onLeafletMousedown={ (e) => this.props.mouseDownOnMap({pt: e.latlng, select_note: this.props.selectedNote, noteSelected:this.props.id}) } 
             onLeafletMouseUp={ (e) => this.props.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
-  //          onLeafletdblclick={ (e) => 
-  //            signals.mapDoubleClicked({pt: e.latlng, drawMode: false})
-  //          }
-  //          dragging={this.props.dragMode} 
             dragging={true}
             center={position} 
             ref='map'
