@@ -6,6 +6,7 @@ import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
 
 export default connect(props => ({
+  note: `app.model.notes.${props.id}`,
   tags: `app.model.notes.${props.id}.tags`,
   allTags: 'app.model.tags',
   editing: 'app.view.editing_note',
@@ -42,8 +43,8 @@ export default connect(props => ({
   
       return (
         <div
-          className={styles[this.props.editing && this.props.selected ? 
-            'editTagsBar' : 'hidden']}>
+          className={styles[((this.props.editing && this.props.selected) || this.props.tags.length > 0) ? 
+            'edit-tags-bar' : 'hidden']}>
           <datalist id={id}>
             {options}
           </datalist>
@@ -51,6 +52,7 @@ export default connect(props => ({
             className={styles[this.props.editing && this.props.selected ? 
               'input' : 'hidden']}
             placeholder='Add a new tag'
+            style={{color:this.props.note.font_color}} 
             list={id}
             autoComplete='on'
             onChange={(e) => this.props.tagInputTextChanged({value: e.target.value, noteId:this.props.id})}

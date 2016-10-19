@@ -47,6 +47,7 @@ module.exports = function(yield_data_directory, domain, token) {
   DOMAIN = domain;
   console.log("Started import.");
   rr('./' + yield_data_directory, function(err,files) {
+    console.log(files);
     return Promise.map(files, function(file) {
       if ((file).substr(-3) == 'csv') {
         console.log('Processing ' + file);

@@ -10,8 +10,12 @@ import gjArea from 'geojson-area';
 var mouse_up_flag = false;
 var mouse_down_flag = false;
 
+export var calculatePolygonArea = [
+  recalculateArea,
+];
+
 export var handleMouseDown = [
- dropPoint 
+ dropPoint
 ];
 
 export var mouseUpOnmap = [
@@ -20,6 +24,10 @@ export var mouseUpOnmap = [
 
 export var ToggleMap = [
   dragMapToggle
+];
+
+export var undoDrawPoint = [
+  undo,
 ];
 
 export var drawComplete = [
@@ -31,6 +39,18 @@ export var drawComplete = [
     error: [],
   },
 ];
+
+function recalculateArea({state}) {
+  var id = state.get(['app', 'model', 'selected_note']);
+  var note = state.get(['app', 'model', 'notes', id]);
+  var area = gjArea.geometry(note.geometry)/4046.86;
+  state.set(['app', 'model', 'notes', id, 'area'], area);
+}
+
+function undo({input, state}) {
+  console.log(state.get(['app', 'model', 'notes', input.id, 'geometry', 0]));
+  state.pop(['app', 'model', 'notes', input.id, 'geometry']);
+}
 
 function contains(polyOut, polyIn) {
   for (var i = 0; i < polyOut.length-1; i++) {
@@ -211,16 +231,12 @@ function setDrawMode({input, state}) {
 };
 
 function dropPoint ({input, state}) {
-  if(state.get(['app', 'view', 'draw_mode']) == true){
-    mouse_up_flag = false;
-    var currentSelectedNoteId = input.select_note;
-    _.each(state.get(['app', 'model', 'notes']), function(note) {
-      if (note.id === currentSelectedNoteId) {
-        var pt = [input.pt.lng, input.pt.lat];
-        state.push(['app', 'model', 'notes', note.id, 'geometry', 'coordinates', 0], pt);
-      }
-    });
-    mouse_down_flag = true;
+  if (state.get(['app', 'view', 'draw_mode']) == true){
+    //mouse_up_flag = false;
+    var id = state.get(['app', 'model', 'selected_note']);
+    var pt = [input.pt.lng, input.pt.lat];
+    state.push(['app', 'model', 'notes', id, 'geometry', 'coordinates', 0], pt);
+    //mouse_down_flag = true;
   }
 };
 

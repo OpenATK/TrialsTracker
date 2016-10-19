@@ -1,25 +1,27 @@
 .menu-bar {
-  display:inline-block;
-  right:0px;
-  top:0px;
-  width:100%;
-  z-index:2;
-  border-style:solid;
-  border-radius:2px;
-  border-color:black;
-  background-color:white;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  height: 27px;
 }
-.menu-button {
-  display:inline-block;
-  float:right;
-  width:auto;
-  border-style: solid;
-  border-radius: 2px;
-  border-color: black;
-  background-color: white;
+.clear-cache-button {
+  cursor: pointer;
+  z-index: 2;
+  background-color: lightgrey;
 }
-.notification {
-  display:inline-block;
-  float:right;
-  width:auto;
+.change-domain-button {
+  cursor: pointer;
+  z-index: 2;
+  background-color: lightgrey;
 }
+@media screen and (max-width: 600px) {
+  .menu-bar {
+    order: 1;
+  }
+  .clear-cache-button {
+
+  }
+  .change-domain-button {
+
+  }
+} 

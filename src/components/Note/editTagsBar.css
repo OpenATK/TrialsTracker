@@ -1,13 +1,14 @@
-.editTagsBar {
-  width: 85%;
-  height: 30px;
+.edit-tags-bar {
+  flex: 1;
+  color: black;
 }
 .input {
   display: block;
   border:none;
-  background-color:transparent;
+  background-color: transparent;
   outline: none;
   margin: 3px;
+  font-size: small;
 }
 .tag {
   position: relative;

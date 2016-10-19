@@ -20,7 +20,7 @@ class OadaDomainModal extends React.Component {
           <br />
           <span 
             className={styles['subtext']}>
-            (e.g. oada-dev.com)
+            (e.g. yield.oada-dev.com)
           </span>
           <input 
             type='text' 
