@@ -2,10 +2,18 @@
   flex: 1;
   color: black;
 }
-.input {
+.input-black::-webkit-input-placeholder {
+  color: black;
   display: block;
-  border:none;
-  background-color: transparent;
+  border: none;
+  outline: none;
+  margin: 3px;
+  font-size: small;
+}
+.input-white::-webkit-input-placeholder {
+  color: white;
+  display: block;
+  border: none;
   outline: none;
   margin: 3px;
   font-size: small;

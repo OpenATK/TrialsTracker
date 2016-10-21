@@ -40,10 +40,6 @@ export default connect(props => ({
       }
     }
 
-    validateComplete() {
-
-    }
-  
     render() {
       return (
         <div 
@@ -53,14 +49,18 @@ export default connect(props => ({
           <div
             className={styles['note-upper']}>
             <TextAreaAutoSize
-              className={styles['note-text-input']}
+              className={styles[this.props.note.font_color == '#ffffff' ? 
+              'note-text-input-white' : 'note-text-input-black']}
               id={this.props.id+'-input'}
               value={this.props.text} 
               onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
-              style={{backgroundColor:this.props.note.color, color:this.props.note.font_color}} 
+              style={{
+                backgroundColor:this.props.note.color, 
+                color:this.props.note.font_color, 
+              }} 
               minRows={1} 
               tabIndex={1}
-              placeholder='Type note description here'
+              placeholder='Type note description here...'
               readOnly={this.props.editing ? false : "readonly"}
             />
             <FontAwesome 

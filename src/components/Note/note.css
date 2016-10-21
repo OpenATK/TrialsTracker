@@ -46,7 +46,8 @@
   justify-content: flex-end;
   margin: 2px;
 }
-.note-text-input {
+.note-text-input-black {
+  color: black;
   flex: 1;
   border-radius: 2px;
   resize: none;
@@ -55,6 +56,23 @@
   font-size: 16px;
   margin-left: 3px;
   margin-top: 3px;
+}
+.note-text-input-black::-webkit-input-placeholder {
+  color: black;
+}
+.note-text-input-white {
+  color: white;
+  flex: 1;
+  border-radius: 2px;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  margin-left: 3px;
+  margin-top: 3px;
+}
+.note-text-input-white::-webkit-input-placeholder {
+  color: white;
 }
 hr {
   position: relative;

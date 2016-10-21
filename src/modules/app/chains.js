@@ -299,7 +299,8 @@ function getToken({input, state, output}) {
       scope: 'yield-data field-notes field-boundaries',
 //      params: {
 //        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
-        "redirect": 'http://localhost:8000/oauth2/redirect.html',
+        "redirect_uri": 'http://10.186.153.189:8000/oauth2/redirect.html', 
+//        "redirect": 'http://localhost:8000/oauth2/redirect.html',
 //      }
     };
     var domain = state.get(['app', 'model', 'domain']);
