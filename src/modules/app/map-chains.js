@@ -40,6 +40,17 @@ export var drawComplete = [
   },
 ];
 
+export var handleDrag = [
+  setMarkerPosition,
+];
+
+function setMarkerPosition({input, state}) {
+  var id = state.get('app.model.selected_note');
+  console.log(input);
+  console.log(state.get(['app', 'model', 'notes', id, 'geometry', 'coordinates', 0, input.idx]));
+  state.set(['app', 'model', 'notes', id, 'geometry', 'coordinates', 0, input.idx], [input.lng, input.lat])
+}
+
 function recalculateArea({state}) {
   var id = state.get(['app', 'model', 'selected_note']);
   var note = state.get(['app', 'model', 'notes', id]);

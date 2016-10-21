@@ -26,6 +26,9 @@
 	top: 20px;
 	z-index: 3;
 }
+.selected-note-marker {
+
+}
 .note-polygon {
   stroke-opacity: 1;
   stroke-width: 3.5;

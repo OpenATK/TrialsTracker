@@ -29,6 +29,7 @@ export default connect(props => ({
   mouseUpOnMap: 'app.mouseUpOnMap',
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
   undoButtonClicked: 'app.undoButtonClicked',
+  markerDragged: 'app.markerDragged',
 },
 
 class TrialsMap extends React.Component {
@@ -63,23 +64,16 @@ class TrialsMap extends React.Component {
       var note = this.props.notes[this.props.selectedNote];
       if (note.geometry.coordinates[0].length > 0) {
         var markerList = [];
-        for (var i = 0; i < note.geometry.coordinates[0].length; i++) {
-          var geojson = {
-            "type": "Feature",
-            "geometry": {
-              "type": "Point",
-              "coordinates": note.geometry.coordinates[0][i],
-            }
-          };
-          markerList.push(<GeoJSON 
-            key={uuid.v4()} 
-            data={geojson} 
-//            color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color }
+        note.geometry.coordinates[0].forEach((pt, i)=> { 
+          markerList.push(<Marker
+            className={styles['selected-note-marker']}
+            key={this.props.selectedNote+'-'+i} 
+            position={[pt[1], pt[0]]}
             color={note.color}
-            key={uuid.v4()}
             draggable={true}
+            onDrag={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
           />);
-        }
+        })
       }
     }
     
