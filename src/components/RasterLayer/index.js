@@ -208,7 +208,7 @@ class RasterLayer extends CanvasTileLayer {
         context.beginPath();
         //context.rect(w + 0.5, n + 0.5, width - 0.5, height - 0.5);
         context.rect(w, n, width, height);
-//        context.fillStyle='rgba('+col.r+','+col.g+','+col.b+')'; //doesn't work for some reason...Only produces red and green, no mixing
+//        context.fillStyle='rgba('+col.r+','+col.g+','+col.b+','+col.a+')'; //doesn't work for some reason...Only produces red and green, no mixing
         context.fillStyle = Color(col).hexString();
         context.fill();
       }

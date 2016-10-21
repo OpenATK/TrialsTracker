@@ -1,23 +1,27 @@
 .note {
   border-radius: 3px;
-  height: initial;
-  margin: 5px;
-  padding-bottom: 3px;
+  margin-bottom: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  cursor: pointer;
 }
 .selected-note {
-  position: relative;
   border-radius: 3px;
-  height: initial;
-  margin: 5px;
-  box-shadow: 5px 5px 5px black;
-  padding-bottom: 3px;
+  margin-bottom: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  box-shadow: 3px 3px 5px black;
 }
-.note-info {
-  margin: 3px;
+.note-upper {
+  display: flex;
 }
-.custom-class {
-  width:25px;
-  height:25px;
+.note-middle {
+  margin-left: 3px;
+  margin-right: 3px;
+}
+.note-lower {
+  display: flex;
+  flex-wrap: wrap;
 }
 .hidden {
   display: none;
@@ -29,28 +33,46 @@
   margin: 2px;
 }
 .done-editing-button {
-  float: right;
+  justify-content: flex-end;
   color: #00bb00;
   margin: 2px;
 }
 .edit-note-button {
-  float: right;
+  justify-content: flex-end;
   color: #000000;
   margin: 2px;
 }
 .delete-note-button {
-  float: right;
+  justify-content: flex-end;
   margin: 2px;
 }
-.note-text-input {
+.note-text-input-black {
+  color: black;
+  flex: 1;
   border-radius: 2px;
   resize: none;
   border: none;
   outline: none;
   font-size: 16px;
-  width: 85%;
   margin-left: 3px;
   margin-top: 3px;
+}
+.note-text-input-black::-webkit-input-placeholder {
+  color: black;
+}
+.note-text-input-white {
+  color: white;
+  flex: 1;
+  border-radius: 2px;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  margin-left: 3px;
+  margin-top: 3px;
+}
+.note-text-input-white::-webkit-input-placeholder {
+  color: white;
 }
 hr {
   position: relative;
@@ -74,9 +96,11 @@ hr {
   font-weight: 400;
   margin: 5px;
 }
-.edit-tags-button {
-  position: relative;
-  bottom: 0;
-  left: 0;
-  margin: 2px;
+@media screen and (max-width: 600px) {
+  .note {
+    order: 2;
+  }
+  .selected-note {
+    order: 1;
+  }
 }

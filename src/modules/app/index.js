@@ -30,6 +30,9 @@ import { handleMouseDown } from './map-chains';
 import { mouseUpOnmap } from './map-chains';
 import { ToggleMap } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
+import { undoDrawPoint } from './map-chains';
+import { calculatePolygonArea } from './map-chains';
+import { handleDrag } from './map-chains';
 
 export default (module) => {
   module.addState(
@@ -40,6 +43,10 @@ export default (module) => {
 
     init: [
       ...initialize
+    ],
+
+    markerDragged: [
+      ...handleDrag,
     ],
 
     domainSubmitClicked: [
@@ -110,7 +117,7 @@ export default (module) => {
     },
 
     mouseDownOnMap: [
-      ...handleMouseDown
+      ...handleMouseDown, ...calculatePolygonArea,
     ],
 
     mouseUpOnMap: [
@@ -143,6 +150,10 @@ export default (module) => {
 
     setDomainButtonClicked: [
       ...displayDomainModal,
+    ],
+
+    undoButtonClicked: [
+      ...undoDrawPoint,
     ],
 
   })

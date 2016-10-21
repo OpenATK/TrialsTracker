@@ -1,6 +1,7 @@
 node_modules
 dist/*
 !dist/index.html
+!dist/leaflet.css
 *.swp
 /OadaServerSetup/2015/
 *.DS_Store

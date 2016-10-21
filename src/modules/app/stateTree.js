@@ -1,4 +1,6 @@
 import uuid from 'uuid';
+import rmc from 'random-material-color';
+import Color from 'color';
 
 var stateTree = {
   token: {},
@@ -34,7 +36,7 @@ var stateTree = {
     editing_note: false,
     domain_modal: {
       text: '',
-      visible: true,
+      visible: false,
     }, 
     legends: {
       corn: [{
@@ -130,7 +132,6 @@ function initial_tags() {
 
 function initial_notes() { 
   var notes_list = {};
-//  for (var i = 1; i<4;i++) {
   for (var i = 1; i<3;i++) {
     var time = new Date(2015, 5, 17, 15);
     var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
@@ -160,7 +161,6 @@ function initial_notes() {
       geojson_visible: 'Show',
       tags_modal_visibility: false,
       geometry_visible: true,
-      color: '#99e7c1',
       completions: [],
       selected: false,
     };
@@ -204,42 +204,26 @@ function initial_notes() {
         geojson_visible: 'Show',
         tags_modal_visibility: false,
         geometry_visible: true,
-        color: col,
         completions: [],
         selected: false,
-      };
-    }
-    if (i === 3) {
-      var time = new Date(2015, 6, 20, 11);
-      var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
-      note = {
-        time: time,
-        text: 'applied snake oil',
-        tags: [],
-        fields: ['Smith40'],
-        geometry: [{latitude:40.854786, longitude: -86.142976},{latitude: 40.854748, longitude: -86.142987}, {latitude: 40.854741, longitude: -86.143324}, {latitude: 40.854753, longitude: -86.143646}, {latitude: 40.854783, longitude: -86.143833}, {latitude: 40.854793, longitude: -86.143336}],
-//        geojson:
-//          {"type":"FeatureCollection","properties":{"kind":"state","state":"IN"},"features":[
-//          {"type":"Feature","properties":{"kind":"county","name":"Tippecanoe","state":"IN"},"geometry":{"type":"MultiPolygon","coordinates":[[[[-87.0964,40.5603],[-86.7733,40.5603],[-86.6966,40.5603],[-86.6966,40.4343],[-86.6966,40.2152],[-86.9211,40.2152],[-87.0909,40.2152],[-87.0909,40.3686],[-87.0964,40.4781]]]]}}
-//        ]},
-        geometry_visible: true,
-        color: col,
-        completions: [],
-        selected: false,
-      };
+      }
     }
     note.order = i;
     note.id = uuid.v4();
+    note.color = rmc.getColor();
+    note.font_color = getFontColor(note.color); 
     notes_list[note.id] = note;
-  };
+  }
   return notes_list;
 }
 
-function getColor() {
-  var r = (Math.round(Math.random()* 127) + 127).toString(16);
-  var g = (Math.round(Math.random()* 127) + 127).toString(16);
-  var b = (Math.round(Math.random()* 127) + 127).toString(16);
-  return '#' + r.toString() + g.toString() + b.toString();
+function getFontColor(color) {
+  var L = Color(color).luminosity();
+  if (L > 0.179) {
+    return '#000000';
+  } else {
+    return '#ffffff';
+  }
 }
 
 export default stateTree; 

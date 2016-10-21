@@ -15,6 +15,7 @@ export default connect(props => ({
   selected: `app.model.notes.${props.id}.selected`,
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
+  drawMode: 'app.view.draw_mode',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
@@ -26,72 +27,91 @@ export default connect(props => ({
   class Note extends React.Component {
 
     handleNoteClick(evt) {
-      if (!this.props.selected) this.props.noteClicked({note:this.props.id})
+      if (!this.props.drawMode) {
+        if (!this.props.selected) this.props.noteClicked({note:this.props.id})
+      }
     }
     
     validatePolygon() {
-      console.log(this.props.note.geometry);
       if (this.props.note.geometry.coordinates[0].length > 3) {
-        this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
+        if (this.props.note.text !== '') {
+          this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
+        }
       }
     }
-  
+
     render() {
       return (
         <div 
-          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
+          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color, color:this.props.note.font_color}} 
           className={styles[this.props.selected ? 'selected-note' : 'note']} 
           onClick={(e) => this.handleNoteClick(e)}>
-          <TextAreaAutoSize
-            id={this.props.id+'-input'}
-            value={this.props.text} 
-            onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
-            style={{backgroundColor:this.props.note.color}} 
-            minRows={1} 
-            className={styles['note-text-input']} 
-            tabIndex={1}
-            placeholder='Type note description here'
-            readOnly={this.props.editing ? false : "readonly"}
-          />
-          <FontAwesome 
-            name='pencil'
-            size='2x'
-            className={styles[this.props.selected && !this.props.editing ? 
-              'edit-note-button' : 'hidden']}
-            onClick={() => this.props.editNoteButtonClicked({})}
-          />
-          <FontAwesome 
-            name='trash'
-            size='2x'
-            className={styles[this.props.selected && this.props.editing ? 
-             'delete-note-button' : 'hidden']}
-            onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
-          />
-          <hr noshade/>
           <div
-            className={styles['note-info']}>
+            className={styles['note-upper']}>
+            <TextAreaAutoSize
+              className={styles[this.props.note.font_color == '#ffffff' ? 
+              'note-text-input-white' : 'note-text-input-black']}
+              id={this.props.id+'-input'}
+              value={this.props.text} 
+              onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
+              style={{
+                backgroundColor:this.props.note.color, 
+                color:this.props.note.font_color, 
+              }} 
+              minRows={1} 
+              tabIndex={1}
+              placeholder='Type note description here...'
+              readOnly={this.props.editing ? false : "readonly"}
+            />
+            <FontAwesome 
+              name='pencil'
+              size='lg'
+              className={styles[this.props.selected && !this.props.editing ? 
+                'edit-note-button' : 'hidden']}
+              onClick={() => this.props.editNoteButtonClicked({})}
+            />
+            <FontAwesome 
+              name='trash'
+              size='2x'
+              className={styles[this.props.selected && this.props.editing ? 
+               'delete-note-button' : 'hidden']}
+              onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
+            />
+          </div>
+          <div
+            className={styles[this.props.note.area ?
+              'note-middle' : 'hidden']}>
+            <hr 
+              className={styles['hr']}
+              style={{backgroundColor:this.props.note.font_color}} 
+              noshade
+            />
             {this.props.note.area ? 
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
             <br/>
             {this.props.note.stats.corn ? 
               'Yield: ' + this.props.note.stats.corn.mean_yield.toFixed(2) + ' bu/ac' : null}
           </div>
-          <FontAwesome 
-            tabIndex={2}
-            className={styles[this.props.selected && this.props.editing ?
-              'done-editing-button' : 'hidden']}
-            name='check'
-            size='2x'
-            onClick={() => this.validatePolygon()}
-          />
-          <hr 
-            noshade
-            className={styles[this.props.editing && this.props.selected ? 
-              'hr' : 'hidden']}
-          />
-          <EditTagsBar 
-            id={this.props.id} 
-          />
+          <div
+            className={styles['note-lower']}>
+            <hr 
+              noshade
+              style={{backgroundColor:this.props.note.font_color}} 
+              className={styles[this.props.editing && this.props.selected ? 
+                'hr' : 'hidden']}
+            />
+            <EditTagsBar 
+              id={this.props.id} 
+            />
+            <FontAwesome 
+              tabIndex={2}
+              className={styles[this.props.selected && this.props.editing ?
+                'done-editing-button' : 'hidden']}
+              name='check'
+              size='2x'
+              onClick={() => this.validatePolygon()}
+            />
+          </div>
         </div>
       );
     }

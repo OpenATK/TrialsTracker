@@ -12,7 +12,6 @@ export default connect({
   sortMode: 'app.view.sort_mode', 
   drawMode: 'app.view.draw_mode',
 }, {
-  handleClick: 'app.handleClick',
   noteListClicked: 'app.noteListClicked',
   addNoteButtonClicked: 'app.addNoteButtonClicked',
   noteRemoved: 'app.noteRemoved',
@@ -29,12 +28,12 @@ class NoteList extends React.Component {
     var self = this;
     switch (this.props.sortMode){
       case 'all':
-//        Object.keys(self.props.notes).forEach(function(note) {
-        _.each(self.props.notes, function (note) {
+        Object.keys(self.props.notes).forEach(function(key) {
+          var note = self.props.notes[key];
           notes_array.push(<Note 
             id={note.id} 
-            key={note.id}
-          />);  
+            key={note.id}/>
+          );
         });
         break;
 
@@ -46,7 +45,8 @@ class NoteList extends React.Component {
           _.each(group, function(note) {
             notes_array.push(<Note 
               id={note.id} 
-              key={uuid.v4()} />);  
+              key={note.id} />
+            );  
           });
         });
         break;
@@ -57,8 +57,8 @@ class NoteList extends React.Component {
         if (_.isEmpty(note.tags)) {
           notes_array.push(<Note 
             id={note.id} 
-            key={uuid.v4()}
-          />);  
+            key={note.id} />
+          );  
         }
       });
       // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
@@ -83,8 +83,10 @@ class NoteList extends React.Component {
   
   handleClick(evt) {
     // call only for note-list element, not children note elements;
-    if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
-      this.props.noteListClicked({});
+    if (!this.props.drawMode) {
+      if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
+        this.props.noteListClicked({});
+      }
     }
   }
   
@@ -94,20 +96,17 @@ class NoteList extends React.Component {
       <div 
         className={styles['note-list']}>
         <SortingTabs />
+        <div
+          className={styles['add-note']}
+          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          Create a new note...
+        </div>
         <div 
           className={styles['notes-container']}
           onClick={(evt) => {this.handleClick(evt)}}>
          {notes_array} 
         </div>
-        <button 
-          type="button" 
-          disabled={this.props.drawMode}
-          className={styles['add-note-button']} 
-          onClick={() => {this.props.addNoteButtonClicked({drawMode:true})}}>
-          Add Note
-        </button>
       </div>
     );
   }
-}
-)
+})

@@ -13,32 +13,19 @@ export default connect({
   showDomainModal: 'app.setDomainButtonClicked',
 },
 
-  class App extends React.Component {
+class App extends React.Component {
  
-    componentWillMount() {
-      this.props.init({});
-    }
-
-    render() {
-      return (
-        <div className="app">
-          <OadaDomainModal />
-          <NoteList />
-          <TrialsMap />
-          <button
-            type="button"
-            className={styles["clear-cache-button"]}
-            onClick={() => {this.props.clearCache({})}}>
-              Clear Cache
-          </button>
-          <button
-            type="button"
-            className={styles["set-domain-button"]}
-            onClick={() => {this.props.showDomainModal({})}}>
-              Change Domain
-          </button>
-        </div>
-      )
-    }
+  componentWillMount() {
+    this.props.init({});
   }
-)
+
+  render() {
+    return (
+      <div className={styles['app']}>
+        <OadaDomainModal />
+        <NoteList />
+        <TrialsMap />
+      </div>
+    )
+  }
+})
