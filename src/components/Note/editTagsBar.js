@@ -53,12 +53,10 @@ export default connect(props => ({
               (this.props.note.font_color == '#ffffff' ? 'input-white' : 'input-black')
               : 'hidden'
             ]}
-            placeholder='Add a new tag'
+            placeholder='Add a new tag...'
             style={{
               backgroundColor: this.props.note.color, 
               border: 'none', 
-              'fontSize': 'larger',
-              'marginLeft': '3px',
             }}
             list={id}
             autoComplete='on'
@@ -72,7 +70,6 @@ export default connect(props => ({
             className={styles["tag"]}>
             <FontAwesome 
               name='times'
-              size='lg'
               className={styles[this.props.selected && this.props.editing ? 
                 'remove-tag-button' : 'hidden']}
               onClick={() => this.props.tagRemoved({tag})}

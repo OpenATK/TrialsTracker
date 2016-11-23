@@ -10,6 +10,7 @@
 .notes-container {
   display: flex;
   flex-direction: column;
+  padding: 5px 5px 0px 5px;
   overflow: scroll;
 }
 .note-tag-headings {

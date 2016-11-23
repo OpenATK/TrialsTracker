@@ -16,6 +16,8 @@ export default connect(props => ({
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
   drawMode: 'app.view.draw_mode',
+  noteFields: `app.model.notes.${props.id}.fields`,
+  fields: 'app.model.fields',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
@@ -33,7 +35,7 @@ export default connect(props => ({
     }
     
     validatePolygon() {
-      if (this.props.note.geometry.coordinates[0].length > 3) {
+      if (this.props.note.geometry.coordinates[0].length >= 3) {
         if (this.props.note.text !== '') {
           this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
         }
@@ -41,9 +43,67 @@ export default connect(props => ({
     }
 
     render() {
+      var yields = [];
+      if (this.props.note.stats.computing) {
+        yields.push(
+          <div
+            key={'yield-waiting-div-'+this.props.note.id}
+            className={styles['yield-info']}>
+          <span
+            key={'yield-waiting-1-'+this.props.note.id}
+            className={styles[this.props.note.stats.computing ? 
+              'yield-text': 'hidden']}>
+              {'Yield: '}
+          </span>
+          <span
+            key={'yield-waiting-2-'+this.props.note.id}
+            className={styles[this.props.note.stats.computing ? 
+              'blinker': 'hidden']}>
+              {'...'}
+          </span>
+          </div>
+        )
+      } else {
+        Object.keys(this.props.note.stats).forEach((crop) => {
+          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+            yields.push(
+
+            <span
+              key={this.props.note.id+'-yield-text-'+crop}
+              className={styles['yield-text']}>
+                {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
+            </span>
+
+            )
+          }
+        })
+      }
+
+      var fieldComparisons = [];
+      Object.keys(this.props.noteFields).forEach((field) => {
+        Object.keys(this.props.note.stats).forEach((crop) => {
+          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+            var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
+            fieldComparisons.push(
+
+              <span
+                key={this.props.note.id+'-'+field+'-comparison'}
+                className={styles['field-comparison']}>
+                {field + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
+                 ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+              </span>
+
+            );
+            fieldComparisons.push(
+              <br/>
+            );
+          }
+        })
+      })
+
       return (
         <div 
-          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color, color:this.props.note.font_color}} 
+          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color, color:this.props.note.font_color, order: this.props.note.order}} 
           className={styles[this.props.selected ? 'selected-note' : 'note']} 
           onClick={(e) => this.handleNoteClick(e)}>
           <div
@@ -60,46 +120,53 @@ export default connect(props => ({
               }} 
               minRows={1} 
               tabIndex={1}
+              autoFocus={this.props.editing}
               placeholder='Type note description here...'
               readOnly={this.props.editing ? false : "readonly"}
             />
             <FontAwesome 
               name='pencil'
-              size='lg'
+              style={{
+                color:this.props.note.font_color, 
+              }}
               className={styles[this.props.selected && !this.props.editing ? 
                 'edit-note-button' : 'hidden']}
               onClick={() => this.props.editNoteButtonClicked({})}
             />
             <FontAwesome 
               name='trash'
-              size='2x'
+              style={{
+                color:this.props.note.font_color, 
+              }}
               className={styles[this.props.selected && this.props.editing ? 
                'delete-note-button' : 'hidden']}
               onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
             />
           </div>
+          <hr 
+            className={styles[this.props.note.area ? 
+              'hr' : 'hidden']}
+            style={{backgroundColor:this.props.note.font_color}} 
+            noshade
+          />
           <div
             className={styles[this.props.note.area ?
               'note-middle' : 'hidden']}>
-            <hr 
-              className={styles['hr']}
-              style={{backgroundColor:this.props.note.font_color}} 
-              noshade
-            />
             {this.props.note.area ? 
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
             <br/>
-            {this.props.note.stats.corn ? 
-              'Yield: ' + this.props.note.stats.corn.mean_yield.toFixed(2) + ' bu/ac' : null}
+            {yields}
+            <br/>
+            {fieldComparisons}
           </div>
+          <hr 
+            noshade
+            style={{backgroundColor:this.props.note.font_color}} 
+            className={styles[this.props.editing && this.props.selected ? 
+              'hr' : 'hidden']}
+          />
           <div
             className={styles['note-lower']}>
-            <hr 
-              noshade
-              style={{backgroundColor:this.props.note.font_color}} 
-              className={styles[this.props.editing && this.props.selected ? 
-                'hr' : 'hidden']}
-            />
             <EditTagsBar 
               id={this.props.id} 
             />
@@ -108,12 +175,11 @@ export default connect(props => ({
               className={styles[this.props.selected && this.props.editing ?
                 'done-editing-button' : 'hidden']}
               name='check'
-              size='2x'
               onClick={() => this.validatePolygon()}
             />
           </div>
         </div>
-      );
+      )
     }
   }
 )

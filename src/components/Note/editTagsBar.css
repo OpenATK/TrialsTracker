@@ -4,19 +4,25 @@
 }
 .input-black::-webkit-input-placeholder {
   color: black;
+}
+.input-black {
+  min-width: 250px;
+  color: black;
   display: block;
   border: none;
+  font-size: 18px;
   outline: none;
-  margin: 3px;
-  font-size: small;
 }
 .input-white::-webkit-input-placeholder {
   color: white;
+}
+.input-white {
+  min-width: 250px;
+  color: white;
   display: block;
   border: none;
+  font-size: 18px;
   outline: none;
-  margin: 3px;
-  font-size: small;
 }
 .tag {
   position: relative;

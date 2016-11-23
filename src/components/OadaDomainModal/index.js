@@ -24,8 +24,8 @@ class OadaDomainModal extends React.Component {
           </span>
           <input 
             type='text' 
-//            value={this.props.text} 
-            value={'yield.oada-dev.com'}
+            value={this.props.text} 
+//            value={'yield.oada-dev.com'}
             onChange={(e) => this.props.textChanged({value: e.target.value})}
           />
           <br />

@@ -24,6 +24,11 @@ import { updateDomainText } from './chains';
 import { submitDomainModal } from './chains';
 import { cancelDomainModal } from './chains';
 import { displayDomainModal } from './chains';
+import { toggleCropLayerVisibility } from './chains';
+import { toggleCropDropdownVisibility } from './chains';
+import { handleLocationFound } from './chains';
+import { handleCurrentLocationButton } from './chains';
+import { handleMapMoved } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -43,6 +48,18 @@ export default (module) => {
 
     init: [
       ...initialize
+    ],
+
+    mapMoved: [
+      ...handleMapMoved,
+    ],
+
+    toggleCropLayer: [
+      ...toggleCropLayerVisibility,
+    ],
+
+    cropDropdownClicked: [
+      ...toggleCropDropdownVisibility,
     ],
 
     markerDragged: [
@@ -156,5 +173,13 @@ export default (module) => {
       ...undoDrawPoint,
     ],
 
+    locationFound: [
+      ...handleLocationFound,
+    ],
+
+    currentLocationButtonClicked: [
+      ...handleCurrentLocationButton,
+    ],
+ 
   })
 }

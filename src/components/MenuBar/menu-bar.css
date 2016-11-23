@@ -1,18 +1,37 @@
 .menu-bar {
+  z-index: 2;
   display: flex;
-  flex-direction: row;
   justify-content: flex-end;
   height: 27px;
 }
 .clear-cache-button {
   cursor: pointer;
-  z-index: 2;
   background-color: lightgrey;
+  border: 1px solid #000;
+  order: 3;
 }
 .change-domain-button {
   cursor: pointer;
-  z-index: 2;
   background-color: lightgrey;
+  border: 1px solid #000;
+  order: 2;
+}
+.crop-dropdown-button {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  font-size: 12px;
+  padding: 2px;
+  cursor: pointer;
+  background-color: lightgrey;
+  border: 1px solid #000;
+  order: 1;
+}
+.hidden {
+  display:none;
+}
+.crop-dropdown-content {
+  background-color: white;
 }
 @media screen and (max-width: 600px) {
   .menu-bar {
