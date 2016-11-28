@@ -8,6 +8,9 @@
   margin-bottom: 5px;
   box-shadow: 0px 0px 3px 3px #0000FF;
 }
+.field-comparison {
+  font-size: 15px;
+}
 .note-upper {
   display: flex;
   padding: 2px;

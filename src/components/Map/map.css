@@ -28,18 +28,6 @@
 .selected-note-marker {
 
 }
-.field-polygon {
-  stroke: #0000ff;
-  fill: #0000ff;
-  stroke-width: 2.5;
-  fill-opacity: 0.08;
-  cursor: -webkit-grab;
-}
-.note-polygon {
-  stroke-width: 3.5;
-  fill-opacity: 0.2;
-  stroke-opacity: 1;
-}
 .hidden {
   display:none;
 }
@@ -54,6 +42,17 @@
   font-size: large;
   pointer-events: none;
   color: #FFFFFF;
+}
+.field-polygon {
+  stroke-width: 2.5;
+  stroke: #000000;
+  fill: #000000;
+  fill-opacity: 0.15;
+}
+.note-polygon {
+  stroke-width: 4;
+  stroke-opacity: 1;
+  fill-opacity: 0;
 }
 
 @media screen and (max-width: 600px) {

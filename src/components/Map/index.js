@@ -24,13 +24,12 @@ export default connect(props => ({
   fields: 'app.model.fields',
   currentLocation: 'app.view.map.current_location',
   mapLocation: 'app.view.map.map_location',
+  mapZoom: 'app.view.map.map_zoom',
   token: 'app.view.server.token',
   domain: 'app.view.server.domain',
 }), {
-  toggleMap: 'app.ToggleMap',
   mouseDownOnMap: 'app.mouseDownOnMap',
   mouseMoveOnMap: 'app.mouseMoveOnMap',
-  mouseUpOnMap: 'app.mouseUpOnMap',
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
   undoButtonClicked: 'app.undoButtonClicked',
   markerDragged: 'app.markerDragged',
@@ -41,16 +40,20 @@ export default connect(props => ({
 
 class TrialsMap extends React.Component {
 
+  move(evt) {
+    console.log(evt);
+  }
+
   validatePolygon(evt) {
-    if (this.props.drawMode) {
-      this.props.mouseDownOnMap({pt: evt.latlng})
+    console.log(evt);
+    if (this.props.drawing) {
+      this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
     }
   }
 
   render() {
     var self = this;
     var position = [40.98551896940516, -86.18823766708374];
-
     var notePolygons = [];
     Object.keys(this.props.notes).forEach(function(key) {
       if (self.props.notes[key].geometry.geojson.coordinates[0].length > 0) {
@@ -59,7 +62,7 @@ class TrialsMap extends React.Component {
           data={self.props.notes[key].geometry.geojson} 
           color={self.props.notes[key].color} 
           dragging={true} 
-          key={key}
+          key={uuid.v4()}
         />)
       }
     })
@@ -69,8 +72,8 @@ class TrialsMap extends React.Component {
       var note = this.props.notes[this.props.selectedNote];
       if (note.geometry.geojson.coordinates[0].length > 0) {
         var markerList = [];
-        note.geometry.geojson.coordinates[0].forEach((pt, i)=> { 
-          markerList.push(<Marker
+        note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
+           markerList.push(<Marker
             className={styles['selected-note-marker']}
             key={this.props.selectedNote+'-'+i} 
             position={[pt[1], pt[0]]}
@@ -78,6 +81,19 @@ class TrialsMap extends React.Component {
             draggable={true}
             onDragEnd={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
           />)
+/*
+          markerList.push(<CircleMarker
+            className={styles['selected-note-marker']}
+            key={this.props.selectedNote+'-'+i} 
+            center={[pt[1], pt[0]]}
+            color={note.color}
+            fillOpacity={1}
+            radius={6}
+            draggable={true}
+            onMouseDown={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+            onMouseUp={(e)=>{console.log(this.refs.map)}}
+          />)
+*/
         })
       }
     }
@@ -90,7 +106,7 @@ class TrialsMap extends React.Component {
         key={key}
       />)
     })
-    
+
     var rasterLayers = [];
     Object.keys(this.props.yieldDataIndex).forEach((crop) => {
       if (this.props.cropLayers[crop].visible) {
@@ -114,13 +130,13 @@ class TrialsMap extends React.Component {
         <MenuBar/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-          onLeafletMousedown={(e)=>{this.validatePolygon(e)}} 
-          onLeafletMouseUp={(e) => this.props.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote})}
-          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter()})}}
+          onLeafletMouseup={(e)=>{this.validatePolygon(e)}} 
+          onMove={(e) => {this.move(e)}}
+          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}}
           dragging={true}
           center={this.props.mapLocation[0] ? this.props.mapLocation : position} 
           ref='map'
-          zoom={15}>
+          zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
           <div 
             className={styles[(this.props.drawing) ? 
               'drawing-popup' : 'hidden']}>
@@ -130,7 +146,6 @@ class TrialsMap extends React.Component {
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
-          {rasterLayers}
           <FontAwesome
             className={styles[this.props.editing ?
               'undo-button' : 'hidden']}
@@ -141,6 +156,7 @@ class TrialsMap extends React.Component {
           {markerList}
           {notePolygons}
           {fields}
+          {rasterLayers}
           <Legend 
             position={'bottomright'} 
             key={'legend'}

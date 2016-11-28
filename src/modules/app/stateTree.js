@@ -21,7 +21,8 @@ var stateTree = {
       geohashes_to_draw: {},
       geohashes_on_screen: {},
       current_location: {},
-      map_location: {},
+      map_location: [],
+      map_zoom: 15,
       crop_layers: {},
       $isLoading: true,
       drawing_note_polygon: false,
@@ -138,6 +139,7 @@ function initial_notes() {
       tags: [],//['application', 
       fields: {},
       area: 12.439745214592033,
+      color: '#E91E63',
       stats: {
         corn: { 
           area_sum: 14.017808080808045,
@@ -174,7 +176,6 @@ function initial_notes() {
         visible: true,
       },
       tags_modal_visibility: false,
-      geometry_visible: true,
       completions: [],
       selected: false,
     };
@@ -187,6 +188,7 @@ function initial_notes() {
         time: time,
         tags: ['low area'],
         area: 0.9776069561840566,
+        color: '#8BC34A',
         stats: {
           corn: {
             area_sum: 0.9599224747474746,
@@ -219,14 +221,12 @@ function initial_notes() {
           visible: true,
         },
         tags_modal_visibility: false,
-        geometry_visible: true,
         completions: [],
         selected: false,
       }
     }
     note.order = i;
     note.id = uuid.v4();
-    note.color = rmc.getColor();
     note.font_color = getFontColor(note.color); 
     notes_list[note.id] = note;
   }

@@ -15,7 +15,6 @@ export default connect(props => ({
   selected: `app.model.notes.${props.id}.selected`,
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
-  drawMode: 'app.view.draw_mode',
   noteFields: `app.model.notes.${props.id}.fields`,
   fields: 'app.model.fields',
 }), {
@@ -34,15 +33,16 @@ export default connect(props => ({
       }
     }
     
-    validatePolygon() {
-      if (this.props.note.geometry.coordinates[0].length >= 3) {
+    validateNote() {
+      if (this.props.note.geometry.geojson.coordinates[0].length >= 3) {
         if (this.props.note.text !== '') {
-          this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
+          this.props.doneDrawingButtonClicked({id:this.props.id})
         }
       }
     }
 
     render() {
+      if (!this.props.note) return null;
       var yields = [];
       if (this.props.note.stats.computing) {
         yields.push(
@@ -67,13 +67,11 @@ export default connect(props => ({
         Object.keys(this.props.note.stats).forEach((crop) => {
           if (!isNaN(this.props.note.stats[crop].mean_yield)) {
             yields.push(
-
-            <span
-              key={this.props.note.id+'-yield-text-'+crop}
-              className={styles['yield-text']}>
-                {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
-            </span>
-
+              <span
+                key={this.props.note.id+'-yield-text-'+crop}
+                className={styles['yield-text']}>
+                  {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
+              </span>
             )
           }
         })
@@ -95,7 +93,7 @@ export default connect(props => ({
 
             );
             fieldComparisons.push(
-              <br/>
+              <br key={uuid.v4()}/>
             );
           }
         })
@@ -140,7 +138,7 @@ export default connect(props => ({
               }}
               className={styles[this.props.selected && this.props.editing ? 
                'delete-note-button' : 'hidden']}
-              onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
+              onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id})}
             />
           </div>
           <hr 
@@ -154,9 +152,9 @@ export default connect(props => ({
               'note-middle' : 'hidden']}>
             {this.props.note.area ? 
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
-            <br/>
+            {yields.length < 1 ? null : <br/>}
             {yields}
-            <br/>
+            {fieldComparisons.length < 1 ? null : <br/>}
             {fieldComparisons}
           </div>
           <hr 
@@ -175,7 +173,7 @@ export default connect(props => ({
               className={styles[this.props.selected && this.props.editing ?
                 'done-editing-button' : 'hidden']}
               name='check'
-              onClick={() => this.validatePolygon()}
+              onClick={() => this.validateNote()}
             />
           </div>
         </div>

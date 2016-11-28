@@ -1,3 +1,4 @@
+import { set } from 'cerebral/operators';
 import _ from 'lodash';
 import geolib from 'geolib';
 import gh from 'ngeohash';
@@ -6,10 +7,8 @@ import PouchDB from 'pouchdb';
 import cache from '../Cache/cache.js';
 import gju from 'geojson-utils';
 import gjArea from 'geojson-area';
-import { computeBoundingBox } from './utils/computeBoundingBox.js';
-
-var mouse_up_flag = false;
-var mouse_down_flag = false;
+import computeBoundingBox from './utils/computeBoundingBox.js';
+import polygonContainsPolygon from './utils/polygonContainsPolygon.js';
 
 export var calculatePolygonArea = [
   recalculateArea,
@@ -19,22 +18,14 @@ export var handleMouseDown = [
  dropPoint
 ];
 
-export var mouseUpOnmap = [
-  mapMouseUp
-];
-
-export var ToggleMap = [
-  dragMapToggle
-];
-
 export var undoDrawPoint = [
   undo,
 ];
 
 export var drawComplete = [
-  setDrawMode, setWaiting, getNoteBoundingBox, {
+  set('state:app.view.map.drawing_note_polygon', false), setWaiting, getNoteBoundingBox, {
     success: [setBoundingBox, computeStats, {
-      success: [setStats],
+      success: [setStats, setNoteFields],
       error: [],
     }],
     error: [],
@@ -42,27 +33,46 @@ export var drawComplete = [
 ];
 
 export var handleDrag = [
-  setMarkerPosition,
+  setMarkerPosition, recalculateArea
 ];
+
+function setNoteFields({input, state}) {
+  var note = state.get(['app', 'model', 'notes', input.id]);
+  var fields = state.get(['app', 'model', 'fields']);
+  Object.keys(fields).forEach((field) => {
+    if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], note.geometry.geojson.coordinates[0])) {
+      //get the field average for each crop and compare to note average
+      var obj = {};
+      Object.keys(fields[field].stats).forEach((crop) => {
+        if (note.stats[crop]) {
+          obj[crop] = {
+            difference: note.stats[crop].mean_yield - fields[field].stats[crop].mean_yield
+          }
+        }
+      })
+    }
+    state.set(['app', 'model', 'notes', input.id, 'fields', field], obj);
+  })
+}
+
 
 function setWaiting({input, state}) {
   state.set(['app', 'model', 'notes', input.id, 'stats', 'computing'], true);
 }
 
 function setMarkerPosition({input, state}) {
-  var id = state.get('app.model.selected_note');
+  var id = state.get('app.view.selected_note');
   state.set(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0, input.idx], [input.lng, input.lat])
 }
 
 function recalculateArea({state}) {
-  var id = state.get(['app', 'model', 'selected_note']);
+  var id = state.get(['app', 'view', 'selected_note']);
   var note = state.get(['app', 'model', 'notes', id]);
   var area = gjArea.geometry(note.geometry.geojson)/4046.86;
   state.set(['app', 'model', 'notes', id, 'area'], area);
 }
 
 function undo({input, state}) {
-  console.log(state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates', 0]));
   state.pop(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates']);
 }
 
@@ -162,7 +172,6 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
                 var pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
                 var poly = {"type":"Polygon","coordinates": [polygon]};
                 if (gju.pointInPolygon(pt, poly)) {
-                  console.log(geohashes[g])
                   stats.area_sum += geohashes[g].area.sum;
                   stats.weight_sum += geohashes[g].weight.sum;
                   stats.count += geohashes[g].count;
@@ -234,69 +243,20 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
 }
 
 function getNoteBoundingBox({input, state, output}) {
-  var selectedNote = state.get(['app', 'model', 'selected_note']);
+  var selectedNote = state.get(['app', 'view', 'selected_note']);
   var note = state.get(['app', 'model', 'notes', selectedNote]);
-  var bbox = this.computeBoundingBox(note.geometry.geojson);
+  var bbox = computeBoundingBox(note.geometry.geojson);
   var area = gjArea.geometry(note.geometry.geojson)/4046.86; 
   output.success({bbox, area, id: selectedNote});
-};
+}
 
 function setBoundingBox({input, state, output}) {
-  state.set(['app', 'model', 'notes', input.id, 'bbox'], input.bbox);
+  state.set(['app', 'model', 'notes', input.id, 'geometry', 'bbox'], input.bbox);
+  state.set(['app', 'model', 'notes', input.id, 'geometry', 'centroid'], [(input.bbox.north + input.bbox.south)/2, (input.bbox.east + input.bbox.west)/2]);
   state.set(['app', 'model', 'notes', input.id, 'area'], input.area);
 }
 
-function setDrawMode({input, state}) {
-  state.set(['app', 'view', 'map', 'drawing_note_polygon'], false); 
-};
-
 function dropPoint ({input, state}) {
-  if (state.get(['app', 'view', 'map', 'drawing_note_polygon']) == true){
-    //mouse_up_flag = false;
-    var id = state.get(['app', 'model', 'selected_note']);
-    var pt = [input.pt.lng, input.pt.lat];
-    state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], pt);
-    //mouse_down_flag = true;
-  }
-};
-
-function mapMouseMove ({input, state}) {
-  if(state.get(['app', 'view', 'map', 'drawing_note_polygon']) === true){
-    var vertex = [input.vertex_value.lng, input.vertex_value.lat];
-    var currentSelectedNoteId = input.selected_note;
-
-    if (mouse_up_flag === true) {
-      mouse_down_flag = false;
-    }
-  
-    if (mouse_down_flag === true) {
-      _.each(state.get(['app', 'model', 'notes']), function(note) {
-        if(note.id === currentSelectedNoteId){
-        
-          var coor_array = state.get(['app', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'geojson', 'coordinates', '0', '0']);
-          var coor_arr_length = coor_array.length;
-
-          state.set(['app', 'model', 'notes', note.id, 'geojson', 'features', '0', 'geometry', 'geojson', 'coordinates', '0', '0', (coor_arr_length-1)], vertex);
-        }
-      });
-    }
-  }
-};
-
-function mapMouseUp ({input, state}) {
-  if(state.get(['app', 'view', 'map', 'drawing_note_polygon']) === true){
-    mouse_up_flag = true;
-  }
-};
-
-
-function dragMapToggle ({state}) {
-  if (state.get(['app', 'view', 'drag'])) {
-    state.set(['app', 'view', 'drag'], false);
-  } else {
-    state.set(['app', 'view', 'drag'], true);
-  }
-};
-
-
-
+  var id = state.get(['app', 'view', 'selected_note']);
+  state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
+}

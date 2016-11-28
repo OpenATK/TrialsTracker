@@ -32,8 +32,6 @@ import { handleMapMoved } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
-import { mouseUpOnmap } from './map-chains';
-import { ToggleMap } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
 import { undoDrawPoint } from './map-chains';
 import { calculatePolygonArea } from './map-chains';
@@ -87,10 +85,6 @@ export default (module) => {
       ...startStopLiveData,
    ],
 
-   //liveDataRequested: [
-   //  ...makeLiveDataRequest,
-   //],
-
    tileUnloaded: [
      ...removeGeohashes,
    ],
@@ -135,14 +129,6 @@ export default (module) => {
 
     mouseDownOnMap: [
       ...handleMouseDown, ...calculatePolygonArea,
-    ],
-
-    mouseUpOnMap: [
-      ...mouseUpOnmap
-    ],
-
-    ToggleMap: [
-      ...ToggleMap
     ],
 
     showHideButtonClicked: [

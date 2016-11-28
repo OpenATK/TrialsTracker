@@ -1,4 +1,4 @@
-import {set, copy, toggle } from 'cerebral/operators';
+import {set, unset, copy, toggle } from 'cerebral/operators';
 import uuid from 'uuid';
 import gh from 'ngeohash';
 import request from 'superagent';
@@ -69,7 +69,7 @@ export var handleNoteListClick = [
 ];
 
 export var enterNoteEditMode = [
-  enterEditMode,
+  enterEditMode, set('state:app.view.map.drawing_note_polygon', true),
 ];
 
 export var exitNoteEditMode = [
@@ -85,7 +85,10 @@ export var handleNoteClick = [
 ];
 
 export var removeNote = [
-  setDrawMode, deselectNote, checkTags, deleteNote, 
+ set('state:app.view.map.drawing_note_polygon', false), 
+ deselectNote,
+ checkTags, 
+ deleteNote, 
 ];
 
 export var updateNoteText = [
@@ -97,7 +100,7 @@ export var updateTagText = [
 ];
 
 export var addNewNote = [
-  createNote, setDrawMode, enterEditMode,
+  createNote, set('state:app.view.map.drawing_note_polygon', true), enterEditMode,
 ];
 
 export var changeShowHideState = [
@@ -212,18 +215,19 @@ function setNoteFields({input, state}) {
   var fields = state.get(['app', 'model', 'fields']);
   Object.keys(notes).forEach((note) => {
     Object.keys(fields).forEach((field) => {
-      if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], notes[note].geometry.geojson.coordinates[0])) {
-        console.log(field, note);
-        //get the field average for each crop and compare to note average
-        var obj = {};
-        Object.keys(fields[field].stats).forEach((crop) => {
-          if (notes[note].stats[crop]) {
-            obj[crop] = {
-              difference: notes[note].stats[crop].mean_yield - fields[field].stats[crop].mean_yield
+      if (notes[note].geometry.geojson.coordinates[0].length > 3) {
+        if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], notes[note].geometry.geojson.coordinates[0])) {
+          //get the field average for each crop and compare to note average
+          var obj = {};
+          Object.keys(fields[field].stats).forEach((crop) => {
+            if (notes[note].stats[crop]) {
+              obj[crop] = {
+                difference: notes[note].stats[crop].mean_yield - fields[field].stats[crop].mean_yield
+              }
             }
-          }
-        })
-        state.set(['app', 'model', 'notes', note, 'fields', field], obj);
+          })
+          state.set(['app', 'model', 'notes', note, 'fields', field], obj);
+        }
       }
     })
   })
@@ -236,6 +240,7 @@ function mapToNotePolygon({input, state}) {
 
 function setMapLocation({input, state}) {
   state.set(['app', 'view', 'map', 'map_location'], [input.latlng.lat, input.latlng.lng]);
+  state.set(['app', 'view', 'map', 'map_zoom'], input.zoom);
 }
 
 function setMapToCurrentLocation({input, state}) {
@@ -410,10 +415,6 @@ function startStopTimer({input, state}) {
   }
 };
 
-function setDrawMode({input, state}) {
-  state.set(['app', 'view', 'map', 'drawing_note_polygon'], input.drawMode); 
-};
-
 function getToken({input, state, output}) {
   var self = this;
   var db = new PouchDB('TrialsTracker');
@@ -497,9 +498,7 @@ function selectNote ({input, state}) {
 
 function deselectNote ({input, state}) {
   var note = state.get(['app', 'view', 'selected_note']);
-  if (!_.isEmpty(note)) {
-    state.set(['app', 'model', 'notes', note, 'selected'], false);
-  }
+  if (note) state.set(['app', 'model', 'notes', note, 'selected'], false);
   state.set(['app', 'view', 'selected_note'], {});
   state.set(['app', 'view', 'editing_note'], false);
 };
