@@ -4,7 +4,6 @@ import { CircleMarker, Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, la
 import styles from './map.css';
 import uuid from 'uuid';
 var GeoJSON = require('react-leaflet').GeoJson;
-import { buildImage } from './geotiffConverter.js';
 import gh from 'ngeohash';
 import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
@@ -12,129 +11,173 @@ import RasterLayer from '../RasterLayer';
 import Legend from '../Legend';
 import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
+import MenuBar from '../MenuBar';
 
 export default connect(props => ({
+  cropLayers: 'app.view.map.crop_layers',
   notes: 'app.model.notes',
-  selectedNote: 'app.model.selected_note',
+  selectedNote: 'app.view.selected_note',
   editing: 'app.view.editing',
-  token: 'app.token',
   legends: 'app.view.legends',
-  domain: 'app.model.domain',
   yieldDataIndex: 'app.model.yield_data_index',
-  drawMode: 'app.view.draw_mode',
+  drawing: 'app.view.map.drawing_note_polygon',
+  fields: 'app.model.fields',
+  currentLocation: 'app.view.map.current_location',
+  mapLocation: 'app.view.map.map_location',
+  mapZoom: 'app.view.map.map_zoom',
+  token: 'app.view.server.token',
+  domain: 'app.view.server.domain',
 }), {
-  toggleMap: 'app.ToggleMap',
   mouseDownOnMap: 'app.mouseDownOnMap',
   mouseMoveOnMap: 'app.mouseMoveOnMap',
-  mouseUpOnMap: 'app.mouseUpOnMap',
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
+  undoButtonClicked: 'app.undoButtonClicked',
+  markerDragged: 'app.markerDragged',
+  locationFound: 'app.locationFound',
+  mapMoved: 'app.mapMoved',
+  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
 },
 
-  class TrialsMap extends React.Component {
+class TrialsMap extends React.Component {
 
-    render() {
-      var self = this;
-      //var position = [40.98032883, -86.20182673]; // 40.97577156, -86.19773737    40.847044, -86.170438
-      var position = [40.853989, -86.142021]; 
-      var polygonList = [];
-      Object.keys(this.props.notes).forEach(function(key) {
-        var note = self.props.notes[key];
-        if (note.geometry.coordinates[0].length > 0) {
-          var geojson = note.geometry;
-          polygonList.push(<GeoJSON 
-            className={styles['note-polygon']}
-            data={geojson} 
-            color={note.color} 
-            dragging={true} 
-            key={uuid.v4()}
-          />);
-        }
-      });
-  
-      var markerList = [];
-      if (this.props.drawMode) {
-        var note = this.props.notes[this.props.selectedNote];
-        if (note.geometry.coordinates[0].length > 0) {
-          var markerList = [];
-          for (var i = 0; i < note.geometry.coordinates[0].length; i++) {
-            var geojson = {
-              "type": "Feature",
-              "geometry": {
-                "type": "Point",
-                "coordinates": note.geometry.coordinates[0][i],
-              }
-            };
-            markerList.push(<GeoJSON 
-              key={uuid.v4()} 
-              data={geojson} 
-  //            color={(note.id === self.props.selectedNote) ? "#FFFAFA" : note.color }
-              color={note.color}
-              key={uuid.v4()}
-            />);
-          }
-        }
-      }
-      
-      var legends = [];
-      if (this.props.token) {
-        legends.push(<Legend 
-          position={'bottomright'} 
+  move(evt) {
+    console.log(evt);
+  }
+
+  validatePolygon(evt) {
+    console.log(evt);
+    if (this.props.drawing) {
+      this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+    }
+  }
+
+  render() {
+    var self = this;
+    var position = [40.98551896940516, -86.18823766708374];
+    var notePolygons = [];
+    Object.keys(this.props.notes).forEach(function(key) {
+      if (self.props.notes[key].geometry.geojson.coordinates[0].length > 0) {
+        notePolygons.push(<GeoJSON 
+          className={styles['note-polygon']}
+          data={self.props.notes[key].geometry.geojson} 
+          color={self.props.notes[key].color} 
+          dragging={true} 
           key={uuid.v4()}
-         />);
-      } else {
-        legends = null;
+        />)
       }
+    })
 
-      var rasterLayers = [];
-      Object.keys(this.props.yieldDataIndex).forEach((crop) => {
+    var markerList = [];
+    if (this.props.drawing) {
+      var note = this.props.notes[this.props.selectedNote];
+      if (note.geometry.geojson.coordinates[0].length > 0) {
+        var markerList = [];
+        note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
+           markerList.push(<Marker
+            className={styles['selected-note-marker']}
+            key={this.props.selectedNote+'-'+i} 
+            position={[pt[1], pt[0]]}
+            color={note.color}
+            draggable={true}
+            onDragEnd={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+          />)
+/*
+          markerList.push(<CircleMarker
+            className={styles['selected-note-marker']}
+            key={this.props.selectedNote+'-'+i} 
+            center={[pt[1], pt[0]]}
+            color={note.color}
+            fillOpacity={1}
+            radius={6}
+            draggable={true}
+            onMouseDown={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+            onMouseUp={(e)=>{console.log(this.refs.map)}}
+          />)
+*/
+        })
+      }
+    }
+
+    var fields = [];
+    Object.keys(this.props.fields).forEach(function(key) {
+      fields.push(<GeoJSON 
+        className={styles['field-polygon']}
+        data={self.props.fields[key].boundary.geojson} 
+        key={key}
+      />)
+    })
+
+    var rasterLayers = [];
+    Object.keys(this.props.yieldDataIndex).forEach((crop) => {
+      if (this.props.cropLayers[crop].visible) {
         rasterLayers.push(
           <RasterLayer
             key={'RasterLayer-'+crop}
-            crop={crop}
+            data={'app.model.yield_data_index.'+crop}
+            layer={crop}
+            url={'https://'+self.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
+            token={self.props.token}
             async={true}
             geohashGridlines={false}
             tileGridlines={false}
           />
         )
-      })
-      return (
-        <div id='map-panel'>
-          <Map 
-            onLeafletMousedown={ (e) => this.props.mouseDownOnMap({pt: e.latlng, select_note: this.props.selectedNote, noteSelected:this.props.id}) } 
-            onLeafletMouseUp={ (e) => this.props.mouseUpOnMap({vertex_value: e.latlng, selected_note:this.props.selectedNote}) }
-            dragging={true}
-            center={position} 
-            ref='map'
-            zoom={15}>
-            <div 
-              className={styles[(this.props.drawMode) ? 
-                'drawing-popup' : 'hidden']}>
-              Tap the map to draw a polygon
-            </div>
-            <TileLayer
-              url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            />
-            {rasterLayers}
-            <FontAwesome
-              className={styles[this.props.editing ?
-                'undo-button' : 'hidden']}
-              name='undo'
-              size='2x'
-              onClick={() => this.props.undoDrawPoint({})}
-            />
-            <button 
-              type="button" 
-              id='start-stop-live-data-button'  
-              onClick={(e) => this.props.startStopLiveDataButtonClicked({})}
-              >{this.props.liveData ? 'Stop' : 'Start' }
-            </button>
-            {markerList}
-            {polygonList}
-            {legends}
-          </Map> 
-        </div>
-      );
-    }
+      }
+    })
+
+    return (
+      <div className={styles['map-panel']}>
+        <MenuBar/>
+        <Map 
+          onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
+          onLeafletMouseup={(e)=>{this.validatePolygon(e)}} 
+          onMove={(e) => {this.move(e)}}
+          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}}
+          dragging={true}
+          center={this.props.mapLocation[0] ? this.props.mapLocation : position} 
+          ref='map'
+          zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
+          <div 
+            className={styles[(this.props.drawing) ? 
+              'drawing-popup' : 'hidden']}>
+            Tap the map to draw a polygon
+          </div>
+          <TileLayer
+            url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+          />
+          <FontAwesome
+            className={styles[this.props.editing ?
+              'undo-button' : 'hidden']}
+            name='undo'
+            size='2x'
+            onClick={() => this.props.undoButtonClicked({})}
+          />
+          {markerList}
+          {notePolygons}
+          {fields}
+          {rasterLayers}
+          <Legend 
+            position={'bottomright'} 
+            key={'legend'}
+          />
+          {this.props.currentLocation.lat ? <CircleMarker
+            key={'currentLocationMarker'}
+            center={this.props.currentLocation}
+            radius={8}
+            opacity={1.0}
+            color={"white"}
+            weight={2}
+            fillColor={"#0080ff"}
+            fillOpacity={0.8}
+            >
+          </CircleMarker> : null}
+          <button
+            className={styles['gps-button']}
+            onClick={() => this.props.currentLocationButtonClicked({})}
+          />
+        </Map> 
+      </div>
+    )
   }
-)
+})

@@ -15,6 +15,8 @@ export default connect(props => ({
   selected: `app.model.notes.${props.id}.selected`,
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
+  noteFields: `app.model.notes.${props.id}.fields`,
+  fields: 'app.model.fields',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
@@ -26,74 +28,156 @@ export default connect(props => ({
   class Note extends React.Component {
 
     handleNoteClick(evt) {
-      if (!this.props.selected) this.props.noteClicked({note:this.props.id})
-    }
-    
-    validatePolygon() {
-      console.log(this.props.note.geometry);
-      if (this.props.note.geometry.coordinates[0].length > 3) {
-        this.props.doneDrawingButtonClicked({drawMode:false, id:this.props.id})
+      if (!this.props.drawMode) {
+        if (!this.props.selected) this.props.noteClicked({note:this.props.id})
       }
     }
-  
+    
+    validateNote() {
+      if (this.props.note.geometry.geojson.coordinates[0].length >= 3) {
+        if (this.props.note.text !== '') {
+          this.props.doneDrawingButtonClicked({id:this.props.id})
+        }
+      }
+    }
+
     render() {
+      if (!this.props.note) return null;
+      var yields = [];
+      if (this.props.note.stats.computing) {
+        yields.push(
+          <div
+            key={'yield-waiting-div-'+this.props.note.id}
+            className={styles['yield-info']}>
+          <span
+            key={'yield-waiting-1-'+this.props.note.id}
+            className={styles[this.props.note.stats.computing ? 
+              'yield-text': 'hidden']}>
+              {'Yield: '}
+          </span>
+          <span
+            key={'yield-waiting-2-'+this.props.note.id}
+            className={styles[this.props.note.stats.computing ? 
+              'blinker': 'hidden']}>
+              {'...'}
+          </span>
+          </div>
+        )
+      } else {
+        Object.keys(this.props.note.stats).forEach((crop) => {
+          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+            yields.push(
+              <span
+                key={this.props.note.id+'-yield-text-'+crop}
+                className={styles['yield-text']}>
+                  {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
+              </span>
+            )
+          }
+        })
+      }
+
+      var fieldComparisons = [];
+      Object.keys(this.props.noteFields).forEach((field) => {
+        Object.keys(this.props.note.stats).forEach((crop) => {
+          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+            var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
+            fieldComparisons.push(
+
+              <span
+                key={this.props.note.id+'-'+field+'-comparison'}
+                className={styles['field-comparison']}>
+                {field + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
+                 ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+              </span>
+
+            );
+            fieldComparisons.push(
+              <br key={uuid.v4()}/>
+            );
+          }
+        })
+      })
+
       return (
         <div 
-          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color}} 
+          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color, color:this.props.note.font_color, order: this.props.note.order}} 
           className={styles[this.props.selected ? 'selected-note' : 'note']} 
           onClick={(e) => this.handleNoteClick(e)}>
-          <TextAreaAutoSize
-            id={this.props.id+'-input'}
-            value={this.props.text} 
-            onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
-            style={{backgroundColor:this.props.note.color}} 
-            minRows={1} 
-            className={styles['note-text-input']} 
-            tabIndex={1}
-            placeholder='Type note description here'
-            readOnly={this.props.editing ? false : "readonly"}
-          />
-          <FontAwesome 
-            name='pencil'
-            size='2x'
-            className={styles[this.props.selected && !this.props.editing ? 
-              'edit-note-button' : 'hidden']}
-            onClick={() => this.props.editNoteButtonClicked({})}
-          />
-          <FontAwesome 
-            name='trash'
-            size='2x'
-            className={styles[this.props.selected && this.props.editing ? 
-             'delete-note-button' : 'hidden']}
-            onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id, drawMode: false})}
-          />
-          <hr noshade/>
           <div
-            className={styles['note-info']}>
+            className={styles['note-upper']}>
+            <TextAreaAutoSize
+              className={styles[this.props.note.font_color == '#ffffff' ? 
+              'note-text-input-white' : 'note-text-input-black']}
+              id={this.props.id+'-input'}
+              value={this.props.text} 
+              onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
+              style={{
+                backgroundColor:this.props.note.color, 
+                color:this.props.note.font_color, 
+              }} 
+              minRows={1} 
+              tabIndex={1}
+              autoFocus={this.props.editing}
+              placeholder='Type note description here...'
+              readOnly={this.props.editing ? false : "readonly"}
+            />
+            <FontAwesome 
+              name='pencil'
+              style={{
+                color:this.props.note.font_color, 
+              }}
+              className={styles[this.props.selected && !this.props.editing ? 
+                'edit-note-button' : 'hidden']}
+              onClick={() => this.props.editNoteButtonClicked({})}
+            />
+            <FontAwesome 
+              name='trash'
+              style={{
+                color:this.props.note.font_color, 
+              }}
+              className={styles[this.props.selected && this.props.editing ? 
+               'delete-note-button' : 'hidden']}
+              onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id})}
+            />
+          </div>
+          <hr 
+            className={styles[this.props.note.area ? 
+              'hr' : 'hidden']}
+            style={{backgroundColor:this.props.note.font_color}} 
+            noshade
+          />
+          <div
+            className={styles[this.props.note.area ?
+              'note-middle' : 'hidden']}>
             {this.props.note.area ? 
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
-            <br/>
-            {this.props.note.stats.corn ? 
-              'Yield: ' + this.props.note.stats.corn.mean_yield.toFixed(2) + ' bu/ac' : null}
+            {yields.length < 1 ? null : <br/>}
+            {yields}
+            {fieldComparisons.length < 1 ? null : <br/>}
+            {fieldComparisons}
           </div>
-          <FontAwesome 
-            tabIndex={2}
-            className={styles[this.props.selected && this.props.editing ?
-              'done-editing-button' : 'hidden']}
-            name='check'
-            size='2x'
-            onClick={() => this.validatePolygon()}
-          />
           <hr 
             noshade
+            style={{backgroundColor:this.props.note.font_color}} 
             className={styles[this.props.editing && this.props.selected ? 
               'hr' : 'hidden']}
           />
-          <EditTagsBar 
-            id={this.props.id} 
-          />
+          <div
+            className={styles['note-lower']}>
+            <EditTagsBar 
+              id={this.props.id} 
+            />
+            <FontAwesome 
+              tabIndex={2}
+              className={styles[this.props.selected && this.props.editing ?
+                'done-editing-button' : 'hidden']}
+              name='check'
+              onClick={() => this.validateNote()}
+            />
+          </div>
         </div>
-      );
+      )
     }
   }
 )

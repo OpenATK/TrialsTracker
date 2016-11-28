@@ -24,12 +24,18 @@ import { updateDomainText } from './chains';
 import { submitDomainModal } from './chains';
 import { cancelDomainModal } from './chains';
 import { displayDomainModal } from './chains';
+import { toggleCropLayerVisibility } from './chains';
+import { toggleCropDropdownVisibility } from './chains';
+import { handleLocationFound } from './chains';
+import { handleCurrentLocationButton } from './chains';
+import { handleMapMoved } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
-import { mouseUpOnmap } from './map-chains';
-import { ToggleMap } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
+import { undoDrawPoint } from './map-chains';
+import { calculatePolygonArea } from './map-chains';
+import { handleDrag } from './map-chains';
 
 export default (module) => {
   module.addState(
@@ -40,6 +46,22 @@ export default (module) => {
 
     init: [
       ...initialize
+    ],
+
+    mapMoved: [
+      ...handleMapMoved,
+    ],
+
+    toggleCropLayer: [
+      ...toggleCropLayerVisibility,
+    ],
+
+    cropDropdownClicked: [
+      ...toggleCropDropdownVisibility,
+    ],
+
+    markerDragged: [
+      ...handleDrag,
     ],
 
     domainSubmitClicked: [
@@ -62,10 +84,6 @@ export default (module) => {
     startStopLiveDataButtonClicked: [
       ...startStopLiveData,
    ],
-
-   //liveDataRequested: [
-   //  ...makeLiveDataRequest,
-   //],
 
    tileUnloaded: [
      ...removeGeohashes,
@@ -110,15 +128,7 @@ export default (module) => {
     },
 
     mouseDownOnMap: [
-      ...handleMouseDown
-    ],
-
-    mouseUpOnMap: [
-      ...mouseUpOnmap
-    ],
-
-    ToggleMap: [
-      ...ToggleMap
+      ...handleMouseDown, ...calculatePolygonArea,
     ],
 
     showHideButtonClicked: [
@@ -145,5 +155,17 @@ export default (module) => {
       ...displayDomainModal,
     ],
 
+    undoButtonClicked: [
+      ...undoDrawPoint,
+    ],
+
+    locationFound: [
+      ...handleLocationFound,
+    ],
+
+    currentLocationButtonClicked: [
+      ...handleCurrentLocationButton,
+    ],
+ 
   })
 }

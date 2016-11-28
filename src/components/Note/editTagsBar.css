@@ -1,13 +1,28 @@
-.editTagsBar {
-  width: 85%;
-  height: 30px;
+.edit-tags-bar {
+  flex: 1;
+  color: black;
 }
-.input {
+.input-black::-webkit-input-placeholder {
+  color: black;
+}
+.input-black {
+  min-width: 250px;
+  color: black;
   display: block;
-  border:none;
-  background-color:transparent;
+  border: none;
+  font-size: 18px;
   outline: none;
-  margin: 3px;
+}
+.input-white::-webkit-input-placeholder {
+  color: white;
+}
+.input-white {
+  min-width: 250px;
+  color: white;
+  display: block;
+  border: none;
+  font-size: 18px;
+  outline: none;
 }
 .tag {
   position: relative;

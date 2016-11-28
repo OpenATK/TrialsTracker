@@ -16,7 +16,6 @@ export default connect(props => ({
 
     render() {
   
-  
       return ( 
         <div className={styles['sorting-tabs']}>
         <button 

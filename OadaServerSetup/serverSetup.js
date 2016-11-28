@@ -47,16 +47,15 @@ module.exports = function(yield_data_directory, domain, token) {
   DOMAIN = domain;
   console.log("Started import.");
   rr('./' + yield_data_directory, function(err,files) {
+    files = files.filter(function(file) {
+      return (file.substr(-3) == 'csv');
+    })
     return Promise.map(files, function(file) {
-      if ((file).substr(-3) == 'csv') {
-        console.log('Processing ' + file);
-        var options = { delimiter : ','};
-        var data = fs.readFileSync(file, { encoding : 'utf8'});
-        var jsonCsvData = csvjson.toObject(data, options);
-        return this.processRawData(jsonCsvData, file);
-      } else {
-        return null;
-      }
+      console.log('Processing ' + file);
+      var options = { delimiter : ','};
+      var data = fs.readFileSync(file, { encoding : 'utf8'});
+      var jsonCsvData = csvjson.toObject(data, options);
+      return this.processRawData(jsonCsvData, file);
     }).then(function() {
       return this.createAggregates([2, 3, 4, 5, 6, 7]);
     }).then(function() {
@@ -299,7 +298,7 @@ var _Setup = {
         newArray.push(key);
         return _Setup.putLinkedTree(val, newArray);
       }
-    }).then(function() {
+    }, {concurrency: 5}).then(function() {
       if (!desc._type) throw {cancel: true}; // don't put non-resources
       return desc;
     }).then(function(resource) {
@@ -327,7 +326,6 @@ var _Setup = {
           .end();
       });
     }).catch(function(e) {
-      // Skip non-resource objects
       if(!e.cancel) {
         throw e;
       }

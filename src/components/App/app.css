@@ -1,12 +1,14 @@
-.clear-cache-button {
-  position: relative;
-  float: right;
-  top: 5px;
-  z-index: 2;
+.app {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
 }
-.set-domain-button {
-  position: relative;
-  float: right;
-  top: 5px;
-  z-index: 2;
-}
+
+@media screen and (max-width: 600px) {
+  .app {
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+  }
+} 

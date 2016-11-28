@@ -23,3 +23,8 @@ INSTALLATION AND USAGE
 - Press 'Submit' in the popup window that appears.
 - Press 'Allow' to allow the TrialsTracker to access the sample data hosted on the oada-api-server that is running on port 3000.
 - All done. You should see some yield data loaded in the center of your screen.
+
+## Demo
+- Go to trialstracker.oada-dev.com.
+- Enter "yield.oada-dev.com" as the domain.
+- At the login screen, enter username "frank" and password "pass"

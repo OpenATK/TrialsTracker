@@ -1,23 +1,30 @@
 .note {
   border-radius: 3px;
-  height: initial;
-  margin: 5px;
-  padding-bottom: 3px;
+  margin-bottom: 5px;
+  cursor: pointer;
 }
 .selected-note {
-  position: relative;
   border-radius: 3px;
-  height: initial;
-  margin: 5px;
-  box-shadow: 5px 5px 5px black;
-  padding-bottom: 3px;
+  margin-bottom: 5px;
+  box-shadow: 0px 0px 3px 3px #0000FF;
 }
-.note-info {
-  margin: 3px;
+.field-comparison {
+  font-size: 15px;
 }
-.custom-class {
-  width:25px;
-  height:25px;
+.note-upper {
+  display: flex;
+  padding: 2px;
+  font-size: 18px;
+}
+.note-middle {
+  margin-left: 3px;
+  margin-right: 3px;
+  font-size: 18px;
+}
+.note-lower {
+  padding: 2px;
+  display: flex;
+  font-size: 18px;
 }
 .hidden {
   display: none;
@@ -29,38 +36,57 @@
   margin: 2px;
 }
 .done-editing-button {
-  float: right;
+  font-size: 18px;
   color: #00bb00;
-  margin: 2px;
+  outline: none;
 }
 .edit-note-button {
-  float: right;
+  justify-content: flex-end;
   color: #000000;
-  margin: 2px;
+  cursor: pointer;
 }
 .delete-note-button {
-  float: right;
-  margin: 2px;
+  justify-content: flex-end;
+  cursor: pointer;
 }
-.note-text-input {
-  border-radius: 2px;
+.note-text-input-black {
+  padding: 0px;
+  color: black;
+  flex: 1;
+  font-size: 18px;
   resize: none;
   border: none;
   outline: none;
-  font-size: 16px;
-  width: 85%;
-  margin-left: 3px;
-  margin-top: 3px;
+}
+.note-text-input-black::-webkit-input-placeholder {
+  color: black;
+}
+.note-text-input-white {
+  padding: 0px;
+  color: white;
+  flex: 1;
+  font-size: 18px;
+  resize: none;
+  border: none;
+  outline: none;
+}
+.note-text-input-white::-webkit-input-placeholder {
+  color: white;
+}
+.blinker {
+  animation: blinker 1s linear infinite;
+}
+@keyframes blinker {  
+  50% { opacity: 0; }
 }
 hr {
-  position: relative;
   height: 1px;
   color: #989898;
   border: 0;
   background-color: #989898;
   width: 100%;
-  margin-top: -2px;
-  margin-bottom: 3px;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 .tag {
   position: relative;
@@ -74,9 +100,11 @@ hr {
   font-weight: 400;
   margin: 5px;
 }
-.edit-tags-button {
-  position: relative;
-  bottom: 0;
-  left: 0;
-  margin: 2px;
+@media screen and (max-width: 600px) {
+  .note {
+    order: 2;
+  }
+  .selected-note {
+    order: 1;
+  }
 }

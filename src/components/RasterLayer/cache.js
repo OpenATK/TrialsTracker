@@ -1,5 +1,3 @@
-import React from 'react';
-import styles from './style.css';
 import PouchDB from 'pouchdb';
 import { Promise } from 'bluebird';
 import uuid from 'uuid';
@@ -17,7 +15,7 @@ module.exports = {
       }).catch(function(err) {
         console.log(err);
       })
-    // Perform an HTTP request to OADA 
+    // Resource isn't in the cache. Perform an HTTP request to OADA 
     }).catch(function(err) {
       if (token) {
         return agent('GET', url)
@@ -35,7 +33,7 @@ module.exports = {
             if (err.status !== 409) {
               throw err;
             }
-          });
+          })
           // Then, save the resource contents.
           db.put({
             doc: response.body, 
@@ -45,7 +43,7 @@ module.exports = {
             if (err.status !== 409) {
               throw err;
             }
-          });
+          })
           return response.body;
 //        }, function onError(err) {
         }).catch(function(err) {
@@ -53,8 +51,8 @@ module.exports = {
           if (err.status == 404) {
             return null;
           }
-        });
+        })
       } else { return null;}
-    });
+    })
   },
 }

@@ -1,23 +1,49 @@
+import {set, unset, copy, toggle } from 'cerebral/operators';
 import uuid from 'uuid';
 import gh from 'ngeohash';
 import request from 'superagent';
 import _ from 'lodash';
-import geolib from 'geolib';
-import md5 from 'md5';
 import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import gju from 'geojson-utils';
-import initializeMap from './map-chains.js';
 import PouchDB from 'pouchdb';
-import cache from '../../components/RasterLayer/cache.js';
+import cache from '../Cache/cache.js';
+import rmc from 'random-material-color';
+import Color from 'color';
+import gjArea from 'geojson-area';
+import computeBoundingBox from './utils/computeBoundingBox.js';
+import yieldDataStatsForPolygon from './utils/yieldDataStatsForPolygon.js';
+import polygonContainsPolygon from './utils/polygonContainsPolygon.js';
 
 var drawFirstGeohashes = [
   getToken, {
-    success: [storeToken, getAvailableData, {
-      success: [setAvailableData],
-      error: [],
-    }], 
+    success: [
+      storeToken, 
+      getFields, {
+        success: [
+          setFields, 
+          computeFieldBoundingBoxes, {
+            success: [setFieldBoundingBoxes],
+            error: [],
+          }
+        ],
+        error: [],
+      }, 
+      getAvailableYieldData, {
+        success: [
+          setAvailableData,
+          computeFieldStats, {
+            success: [
+              setFieldStats,
+              setNoteFields,
+            ],
+            error: [],
+          }  
+        ],
+        error: [],
+      }
+    ], 
     error: [],
   },
 ];
@@ -26,6 +52,7 @@ export var initialize = [
   getOadaDomain, {
     cached: [setOadaDomain, hideDomainModal, drawFirstGeohashes],
     offline: [],
+    fail: [showDomainModal],
   },
 ];
 
@@ -42,7 +69,7 @@ export var handleNoteListClick = [
 ];
 
 export var enterNoteEditMode = [
-  enterEditMode,
+  enterEditMode, set('state:app.view.map.drawing_note_polygon', true),
 ];
 
 export var exitNoteEditMode = [
@@ -54,11 +81,14 @@ export var changeSortMode = [
 ];
 
 export var handleNoteClick = [
-  deselectNote, exitEditMode, selectNote,
+  deselectNote, exitEditMode, selectNote, mapToNotePolygon
 ];
 
 export var removeNote = [
-  setDrawMode, deselectNote, checkTags, deleteNote, 
+ set('state:app.view.map.drawing_note_polygon', false), 
+ deselectNote,
+ checkTags, 
+ deleteNote, 
 ];
 
 export var updateNoteText = [
@@ -70,7 +100,7 @@ export var updateTagText = [
 ];
 
 export var addNewNote = [
-  deselectNote, createNote, selectNote, setDrawMode, enterEditMode,
+  createNote, set('state:app.view.map.drawing_note_polygon', true), enterEditMode,
 ];
 
 export var changeShowHideState = [
@@ -103,50 +133,215 @@ export var submitDomainModal = [
 
 export var cancelDomainModal = [
   setOadaDomain, hideDomainModal,
-];
+]
 
 export var displayDomainModal = [
   showDomainModal,
-];
+]
 
-function getAvailableData({state, output}) {
-  var token = state.get(['app', 'token']);
-  var domain = state.get(['app', 'model', 'domain']);
+export var toggleCropLayerVisibility = [
+  toggleCropLayer,
+]
+
+export var toggleCropDropdownVisibility = [
+  toggleCropDropdown,
+]
+
+export var handleLocationFound = [
+  setCurrentLocation,
+]
+
+export var handleCurrentLocationButton = [
+  setMapToCurrentLocation,
+]
+
+export var handleMapMoved = [
+  setMapLocation,
+]
+
+function computeFieldBoundingBoxes({input, state, output}) {
+  var bboxes = {};
+  var areas = {};
+  Object.keys(input.fields).forEach((field) => {
+    bboxes[field] = computeBoundingBox(input.fields[field].boundary.geojson);
+    areas[field] = gjArea.geometry(input.fields[field].boundary.geojson)/4046.86;
+  })
+  output.success({bboxes, areas})
+}
+computeFieldBoundingBoxes.async = true;
+computeFieldBoundingBoxes.outputs = ['success', 'error'];
+
+function setFieldBoundingBoxes({input, state}) {
+  Object.keys(input.bboxes).forEach((field) => {
+    state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
+    state.set(['app', 'model', 'fields', field, 'boundary', 'bbox'], input.bboxes[field]);
+  })
+}
+
+function computeFieldStats({input, state, output}) {
+  var token = state.get(['app', 'view', 'server', 'token']);
+  var domain = state.get(['app', 'view', 'server', 'domain']);
+  var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
+  var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
+  var stats = {};
+  Promise.map(Object.keys(input.fields), function(field) {
+    return yieldDataStatsForPolygon(input.fields[field].boundary.geojson.coordinates[0], input.bboxes[field], availableGeohashes, baseUrl, token)
+    .then((fieldStats) => {
+      stats[field] = fieldStats;
+      return stats;
+    })
+  }).then(() => { 
+    output.success({stats});
+  })
+}
+computeFieldStats.outputs = ['success', 'error'];
+computeFieldStats.async = true;
+
+function setFieldStats({input, state}) {
+  Object.keys(input.stats).forEach((field) => {
+    Object.keys(input.stats[field]).forEach((crop) => {
+      if (isNaN(input.stats[field][crop].mean_yield)) {
+        state.unset(['app', 'model', 'fields', field, 'stats', crop]);
+      } else {
+        state.set(['app', 'model', 'fields', field, 'stats', crop], input.stats[field][crop]);
+      }
+    })
+    state.unset(['app', 'model', 'fields', field, 'stats', 'computing']);
+  })
+}
+
+function setNoteFields({input, state}) {
+  var notes = state.get(['app', 'model', 'notes']);
+  var fields = state.get(['app', 'model', 'fields']);
+  Object.keys(notes).forEach((note) => {
+    Object.keys(fields).forEach((field) => {
+      if (notes[note].geometry.geojson.coordinates[0].length > 3) {
+        if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], notes[note].geometry.geojson.coordinates[0])) {
+          //get the field average for each crop and compare to note average
+          var obj = {};
+          Object.keys(fields[field].stats).forEach((crop) => {
+            if (notes[note].stats[crop]) {
+              obj[crop] = {
+                difference: notes[note].stats[crop].mean_yield - fields[field].stats[crop].mean_yield
+              }
+            }
+          })
+          state.set(['app', 'model', 'notes', note, 'fields', field], obj);
+        }
+      }
+    })
+  })
+}
+
+function mapToNotePolygon({input, state}) {
+  var note = state.get(['app', 'model', 'notes', input.note]);
+  state.set(['app', 'view', 'map', 'map_location'], note.geometry.centroid);
+}
+
+function setMapLocation({input, state}) {
+  state.set(['app', 'view', 'map', 'map_location'], [input.latlng.lat, input.latlng.lng]);
+  state.set(['app', 'view', 'map', 'map_zoom'], input.zoom);
+}
+
+function setMapToCurrentLocation({input, state}) {
+  console.log(input);
+  var loc = state.get(['app', 'view', 'current_location']);
+  state.set(['app', 'view', 'map', 'map_location'], loc);
+}
+
+function getFields({state, output}) {
+  var token = state.get(['app', 'view', 'server', 'token']);
+  var domain = state.get(['app', 'view', 'server', 'domain']);
+  var url = 'https://' + domain + '/bookmarks/fields/fields-index/';
+  var fields = {};
+  cache.get(url, token).then(function(fieldsIndex) {
+    return Promise.each(Object.keys(fieldsIndex), function(item) {
+      return cache.get(url + item, token).then(function(fieldItem) {
+        if (fieldItem['fields-index']) {
+          return cache.get(url + item + '/fields-index/', token).then(function(fieldKeys) {
+            return Promise.each(Object.keys(fieldKeys), function(key) {
+              return cache.get(url + item + '/fields-index/'+key, token).then(function(field) {
+                return fields[key] = field;
+              })
+            })
+          })
+        } else {
+          return cache.get(url + item, token).then(function(field) {
+            return fields[item] = field;
+          })
+        }
+      })
+    })
+  }).then(function() {
+    output.success({fields});
+  })
+}
+getFields.outputs = ['success', 'error'];
+getFields.async = true;
+
+function setFields({input, state}) {
+  Object.keys(input.fields).forEach(function(field) {
+    state.set(['app', 'model', 'fields', field], input.fields[field]);
+  })
+}
+
+function setCurrentLocation({input, state}) {
+  var obj = {
+    lat: input.lat,
+    lng: input.lng,
+  }
+  state.set(['app', 'model', 'current_location'], obj);
+}
+
+function toggleCropDropdown({input, state}) {
+  var vis = state.get(['app', 'view', 'crop_dropdown_visible']);
+  state.set(['app', 'view', 'crop_dropdown_visible'], !vis);
+}
+
+function toggleCropLayer({input, state}) {
+  var vis = state.get(['app', 'view', 'map', 'crop_layers', input.crop, 'visible']);
+  state.set(['app', 'view', 'map', 'crop_layers', input.crop, 'visible'], !vis);
+}
+
+function getAvailableYieldData({state, output}) {
+  var token = state.get(['app', 'view', 'server', 'token']);
+  var domain = state.get(['app', 'view', 'server', 'domain']);
   var url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var data = {};
+  var cropStatus = {};
   cache.get(url, token).then(function(crops) {
     return Promise.each(Object.keys(crops), function(crop) {
       data[crop] = {};
       return cache.get(url + crop + '/geohash-length-index', token).then(function(geohashLengthIndex) {
         return Promise.each(Object.keys(geohashLengthIndex), function(ghLength) {
+          data[crop][ghLength] = data[crop][ghLength] || {};
           return cache.get(url + crop + '/geohash-length-index/' + ghLength + '/geohash-index', token).then(function(ghIndex) {
             return Promise.each(Object.keys(ghIndex), function(bucket) {
-              return cache.get(url + crop + '/geohash-length-index/' + ghLength + '/geohash-index/' + bucket + '/geohash-data', token).then(function(geohashData) {
-                return Promise.each(Object.keys(geohashData), function(geohash) {
-                  return data[crop][geohash] = geohash;
-                })
-              })
+              return data[crop][ghLength][bucket] = bucket;
             })
           })
         })
       })
     })
   }).then(function() {
-    output.success({data});
+    output.success({data, cropStatus});
   })
-};
-getAvailableData.outputs = ['success', 'error'];
-getAvailableData.async = true;
+}
+getAvailableYieldData.outputs = ['success', 'error'];
+getAvailableYieldData.async = true;
 
 function setAvailableData({input, state}) {
   Object.keys(input.data).forEach(function(crop) {
-    state.set(['app', 'model', 'yield_data_index', crop], input.data[crop]);
+    state.set(['app', 'view', 'map', 'crop_layers', crop, 'visible'], true);
+    Object.keys(input.data[crop]).forEach(function(ghLength) {
+      state.set(['app', 'model', 'yield_data_index', crop, ghLength], input.data[crop][ghLength]);
+    })
   })
-};
+}
 
 function showDomainModal({state}) {
   state.set(['app', 'view', 'domain_modal', 'visible'], true);
-};
+}
 
 function hideDomainModal({state}) {
   state.set(['app', 'view', 'domain_modal', 'visible'], false);
@@ -167,14 +362,14 @@ function getOadaDomain({state, output}) {
     }
   }).catch(function(err) {
     if (err.status !== 404) throw err;
-    output.offline({});//Don't have it yet, prompt for it. 
+    output.fail({});//Don't have it yet, prompt for it. 
   })
 };
-getOadaDomain.outputs = ['cached', 'offline'];
+getOadaDomain.outputs = ['cached', 'offline', 'fail'];
 getOadaDomain.async = true;
 
 function setOadaDomain({input, state}) {
-  state.set(['app', 'model', 'domain'], input.value);
+  state.set(['app', 'view', 'server', 'domain'], input.value);
   var db = new PouchDB('TrialsTracker');
   db.put({
     doc: {domain: input.value},
@@ -202,7 +397,7 @@ function registerGeohashes({input, state}) {
 // filter them later with filterGeohashesOnScreen when the list of available
 // geohashes becomes known.
   input.geohashes.forEach((geohash) => {
-    state.set(['app', 'model', 'geohashes_on_screen', input.crop], geohash)
+    state.set(['app', 'view', 'map', 'geohashes_on_screen', input.layer], geohash)
   })
 }
 
@@ -212,72 +407,12 @@ function unregisterGeohashes({input, state}) {
   });
 };
 
-function setNewData({input, state}) {
-  console.log('setting new data value');
-  state.set(['app', 'dummy_value'], input.value+1);
-};
-
-function sendNewData({state, output}) {
-  var token = state.get(['app', 'token']);
-  console.log('sending new data');
-  var value = state.get(['app', 'dummy_value']);
-  var domain = state.get(['model', 'domain']);
-  var url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/crop-index/';
-  return agent('PUT', url+'dp68rsz/data/bd82151e-462c-4631-9b18-8024a8aa2d5f/')
-    .set('Authorization', 'Bearer '+ token)
-    .send({value: value+1})
-    .end()
-    .then(function(response) {
-      output.success({value});
-   });
-};
-sendNewData.outputs = ['success', 'error'];
-sendNewData.async = true;
-
 function startStopTimer({input, state}) {
   if (state.get(['app', 'live_data'])) {
     state.set(['app', 'live_data'], 'false');
   } else {
     state.set(['app', 'live_data'], 'true');
   }
-};
-
-//Not currently in use until we try to get live data streaming.
-function checkRevs ({input, state}) {
-  var db = new PouchDB('TrialsTracker');
-  var token = state.get(['app', 'token']);
-  var currentGeohashes = state.get(['app', 'model', 'current_geohashes']);
-  console.log(currentGeohashes.dp68rsz);
-  var geohashesToCheck = { dp68rsz: currentGeohashes.dp68rsz}; //hard code geohashes here
-//TODO: Enable the next line eventually. current_geohashes should likely
-//      contain the set of geohashes on screen at all times. It could also
-//      be a user-specified area -> geohashes to monitor.
-//  var geohashesToCheck = state.get(['app', 'view', 'current_geohashes']);
-//  var availableGeohashes = state.get(['app', 'model', 'availableGeohashes']);
-  _.each(geohashesToCheck, function(rev, key) {
-    console.log(rev);
-    console.log(key);
-    console.log(input.revs[key]);
-    if (input.revs[key] !== rev) {
-      console.log('updating!');
-      var domain = state.get(['model', 'domain']);
-      var url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/crop-index/';
-      return agent('GET', url+key)
-      .set('Authorization', 'Bearer '+ token)
-      .end()
-      .then(function(response) {
-        console.log('setting state');
-        state.set(['app', 'model', 'current_geohashes', key], response.body._rev);
-        db.put({jsonData: response.body}, key).catch(function(err) {
-          if (err.status !== 409) throw err;
-        });
-      });   
-    }
-  });
-};
-
-function setDrawMode({input, state}) {
-  state.set(['app', 'view', 'draw_mode'], input.drawMode); 
 };
 
 function getToken({input, state, output}) {
@@ -288,14 +423,15 @@ function getToken({input, state, output}) {
   }).catch(function(err) { //not in Pouch, prompt for user sign in
     if (err.status !== 404) console.log(err);
     var options = {
-      metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI';
+      metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
       scope: 'yield-data field-notes field-boundaries',
-      params: {
+//      params: {
 //        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
-        "redirect_uri": 'http://localhost:8000/oauth2/redirect.html'
-      }
+//        "redirect_uri": 'http://10.186.153.189:8000/oauth2/redirect.html', 
+        "redirect": 'http://localhost:8000/oauth2/redirect.html',
+//      }
     };
-    var domain = state.get(['app', 'model', 'domain']);
+    var domain = state.get(['app', 'view', 'server', 'domain']);
     oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
       if (err) { console.dir(err); output.error(); } // Something went wrong  
       output.success({token:accessToken.access_token});
@@ -305,7 +441,13 @@ function getToken({input, state, output}) {
 getToken.outputs = ['success', 'error'];
 getToken.async = true;
 
-function storeToken({input, state}) {
+function storeToken({input, state, services}) {
+/*
+  console.log(services);
+  services.db.local.put({hello: 'world', _id: '1235'})
+    .then(res => output.success(res))
+    .catch(err => output.error(err))
+*/
   var db = new PouchDB('TrialsTracker');
   db.put({
     doc: {token: input.token},
@@ -313,33 +455,21 @@ function storeToken({input, state}) {
   }).catch(function(err) {
     if (err.status !== 409) throw err;
   });
-  state.set(['app', 'token'], input.token);
-  state.set('app.offline', false);
+  state.set(['app', 'view', 'server', 'token'], input.token);
+  state.set('app.view.server.offline', false);
 };
 
 function changeShowHide ({input, state}) {
-  var geometryVisible = state.get(['app', 'model', 'notes', input.id, 'geometry_visible']);
+  var geometryVisible = state.get(['app', 'model', 'notes', input.id, 'geometry', 'visible']);
   if (geometryVisible) {
-    state.set(['app', 'model', 'notes', input.id, 'geometry_visible'], false);
+    state.set(['app', 'model', 'notes', input.id, 'geometry', 'visible'], false);
   } else {
-    state.set(['app', 'model', 'notes', input.id, 'geometry_visible'], true);
+    state.set(['app', 'model', 'notes', input.id, 'geometry', 'visible'], true);
   }
 };
 
 function setSortMode ({input, state}) {
   state.set(['app', 'view', 'sort_mode'], input.newSortMode);
-};
-
-function selectNote ({input, state}) {
-  //check that the selected note isn't already selected
-  if (state.get(['app', 'model', 'selected_note']) !== input.note) {
-    // set the status of the currently selected note to "unselected"
-    if (!_.isEmpty(state.get(['app', 'model', 'selected_note']))) {
-      state.set(['app', 'model', 'notes', state.get(['app', 'model', 'selected_note']), 'selected'], false);
-    }
-    state.set(['app', 'model', 'selected_note'], input.note);
-    state.set(['app', 'model', 'notes', input.note, 'selected'], true);
-  }
 };
 
 function setTagText ({input, state}) {
@@ -354,71 +484,102 @@ function setNoteText ({input, state}) {
   state.set(['app', 'model', 'notes', input.noteId, 'text'], input.value);
 };
 
-function deselectNote ({input, state}) {
-  var note = state.get(['app', 'model', 'selected_note']);
-  if (!_.isEmpty(note)) {
-    state.set(['app', 'model', 'notes', note, 'selected'], false);
+function selectNote ({input, state}) {
+  //check that the selected note isn't already selected
+  if (state.get(['app', 'view', 'selected_note']) !== input.note) {
+    // set the status of the currently selected note to "unselected"
+    if (!_.isEmpty(state.get(['app', 'view', 'selected_note']))) {
+      state.set(['app', 'model', 'notes', state.get(['app', 'view', 'selected_note']), 'selected'], false);
+    }
+    state.set(['app', 'view', 'selected_note'], input.note);
+    state.set(['app', 'model', 'notes', input.note, 'selected'], true);
   }
-  state.set(['app', 'model', 'selected_note'], {});
+};
+
+function deselectNote ({input, state}) {
+  var note = state.get(['app', 'view', 'selected_note']);
+  if (note) state.set(['app', 'model', 'notes', note, 'selected'], false);
+  state.set(['app', 'view', 'selected_note'], {});
   state.set(['app', 'view', 'editing_note'], false);
 };
 
-function checkTags ({input, state}) {
-  _.each(state.get(['app', 'model', 'notes', input.id, 'tags']), function(tag) {
-    if (_.has(state.get(['app', 'model', 'tags']), tag) && state.get(['app', 'model', 'tags', tag, 'references']) === 1) {
-      state.unset(['app', 'model', 'tags', tag]); 
-    }
-  });
-};
+function createNote({input, state}) {
+  var notes = state.get(['app', 'model', 'notes']);
+  Object.keys(notes).forEach(function(note) {
+    state.set(['app', 'model', 'notes', note, 'order'], notes[note].order +1);
+  })
+  var note = state.get(['app', 'view', 'selected_note']);
+  if (!_.isEmpty(note)) {
+    state.set(['app', 'model', 'notes', note, 'selected'], false);
+  }
+  state.set(['app', 'view', 'selected_note'], {});
+  state.set(['app', 'view', 'editing_note'], false);
 
-function deleteNote({input, state}) {
-  state.unset(['app', 'model', 'notes', input.id]); 
-};
-
-function updateTagsList({state}) {
-  _.each(state.get(['app', 'model', 'notes']), function(note) {
-    _.each(note.tags, function(tag) {
-      if (!_.includes(state.get(['app','model', 'tags']),tag)) {
-        state.set(['app', 'model', 'tags', tag], {
-          text: tag,
-          references: 1,
-        });
-      } else {
-        var refs = state.get(['app', 'model', 'tags', tag, 'references']);
-        state.set(['app', 'model', 'tags', tag, 'references'], refs++);
-      }
-    });
-  });
-};
-
-function createNote({state, output}) {
   var newNote = {
     time: Date.now(),
     id: uuid.v4(),
     text: '',
     tags: [],
-    fields: [],
+    fields: {},
     geometry: { 
-      "type":"Polygon",
-      "coordinates": [[]],
+      geojson: {
+        "type":"Polygon",
+        "coordinates": [[]],
+      },
+      bbox: {},
+      centroid: [],
+      visible: true,
     },
-    geometry_visible: 'Show',
-    color: getColor(),
+    color: rmc.getColor(),
     completions: [],
     selected: true,
     stats: {},
+    order: 1,
   };
+
+  newNote.font_color = getFontColor(newNote.color);
   state.set(['app', 'model', 'notes', newNote.id], newNote);
-  output({note: newNote.id});
+
+  //Now select the new note
+  state.set(['app', 'view', 'selected_note'], newNote.id);
+};
+
+function getFontColor(color) {
+  var L = Color(color).luminosity();
+  if (L > 0.179) {
+    return '#000000';
+  } else {
+    return '#ffffff';
+  }
+}
+
+function checkTags ({input, state}) {
+  var allTags = state.get(['app', 'model', 'tags']);
+  var noteTags = state.get(['app', 'model', 'notes', input.id, 'tags']);
+  noteTags.forEach((tag) => {
+    if (allTags[tag].references <= 1) {
+      state.unset(['app', 'model', 'tags', tag]); 
+    }
+  })
+}
+
+function deleteNote({input, state}) {
+  state.unset(['app', 'model', 'notes', input.id]); 
+  var notes = state.get(['app', 'model', 'notes']);
+  Object.keys(notes).forEach(function(note) {
+    if (notes[note].order > input.note) {
+      state.set(['app', 'model', 'notes', note, 'order'], notes[note].order);
+    }
+  })
 };
 
 function addTagToNote({input, state}) {
-  var note = state.get(['app', 'model', 'selected_note']);
+  var note = state.get(['app', 'view', 'selected_note']);
   state.concat(['app', 'model', 'notes', note, 'tags'], input.text);
 };
 
 function removeTagFromNote({input, state}) {
-  var note = state.get(['app', 'model', 'selected_note']);
+  var note = state.get(['app', 'view', 'selected_note']);
   var tags = state.get(['app', 'model', 'notes', note, 'tags']);
   var idx = tags.indexOf(input.tag);
   state.splice(['app', 'model', 'notes', note, 'tags'], idx, 1);

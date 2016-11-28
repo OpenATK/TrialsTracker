@@ -1,25 +1,46 @@
 .menu-bar {
-  display:inline-block;
-  right:0px;
-  top:0px;
-  width:100%;
-  z-index:2;
-  border-style:solid;
-  border-radius:2px;
-  border-color:black;
-  background-color:white;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  height: 27px;
 }
-.menu-button {
-  display:inline-block;
-  float:right;
-  width:auto;
-  border-style: solid;
-  border-radius: 2px;
-  border-color: black;
+.clear-cache-button {
+  cursor: pointer;
+  background-color: lightgrey;
+  border: 1px solid #000;
+  order: 3;
+}
+.change-domain-button {
+  cursor: pointer;
+  background-color: lightgrey;
+  border: 1px solid #000;
+  order: 2;
+}
+.crop-dropdown-button {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  font-size: 12px;
+  padding: 2px;
+  cursor: pointer;
+  background-color: lightgrey;
+  border: 1px solid #000;
+  order: 1;
+}
+.hidden {
+  display:none;
+}
+.crop-dropdown-content {
   background-color: white;
 }
-.notification {
-  display:inline-block;
-  float:right;
-  width:auto;
-}
+@media screen and (max-width: 600px) {
+  .menu-bar {
+    order: 1;
+  }
+  .clear-cache-button {
+
+  }
+  .change-domain-button {
+
+  }
+} 
