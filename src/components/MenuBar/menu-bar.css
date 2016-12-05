@@ -17,14 +17,12 @@
   order: 2;
 }
 .crop-dropdown-button {
-  display: flex;
-  flex-direction: column;
   font-family: sans-serif;
-  font-size: 12px;
-  padding: 2px;
+  font-size: 11px;
   cursor: pointer;
   background-color: lightgrey;
   border: 1px solid #000;
+  padding: 7px 6px 2px;
   order: 1;
 }
 .hidden {

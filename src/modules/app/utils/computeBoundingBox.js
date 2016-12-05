@@ -1,5 +1,3 @@
-import gjArea from 'geojson-area';
-
 export default function computeBoundingBox(geojsonPolygon) {
   var bbox;
   var coords = geojsonPolygon.coordinates[0];

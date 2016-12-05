@@ -45,7 +45,6 @@ class TrialsMap extends React.Component {
   }
 
   validatePolygon(evt) {
-    console.log(evt);
     if (this.props.drawing) {
       this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
     }
@@ -81,19 +80,6 @@ class TrialsMap extends React.Component {
             draggable={true}
             onDragEnd={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
           />)
-/*
-          markerList.push(<CircleMarker
-            className={styles['selected-note-marker']}
-            key={this.props.selectedNote+'-'+i} 
-            center={[pt[1], pt[0]]}
-            color={note.color}
-            fillOpacity={1}
-            radius={6}
-            draggable={true}
-            onMouseDown={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
-            onMouseUp={(e)=>{console.log(this.refs.map)}}
-          />)
-*/
         })
       }
     }
@@ -130,8 +116,7 @@ class TrialsMap extends React.Component {
         <MenuBar/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-          onLeafletMouseup={(e)=>{this.validatePolygon(e)}} 
-          onMove={(e) => {this.move(e)}}
+          onLeafletMousedown={(e)=>{this.validatePolygon(e)}} 
           onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}}
           dragging={true}
           center={this.props.mapLocation[0] ? this.props.mapLocation : position} 

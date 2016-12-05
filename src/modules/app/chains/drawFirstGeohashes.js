@@ -1,17 +1,33 @@
+
+
 var drawFirstGeohashes = [
   getToken, {
-    success: [storeToken, getFields, {
-      success: [setFields, setNoteFields, {
-        success: [],
+    success: [
+      storeToken, 
+      getFields, {
+        success: [
+          setFields, 
+          computeFieldBoundingBoxes, {
+            success: [setFieldBoundingBoxes],
+            error: [],
+          }
+        ],
         error: [],
-      }],
-      error: [], 
-    },
-    getAvailableYieldData, {
-      success: [setAvailableData],
-      error: [],
-    }], 
+      }, 
+      getAvailableYieldData, {
+        success: [
+          setAvailableData,
+          computeFieldStats, {
+            success: [
+              setFieldStats,
+              getFieldDataForNotes,
+            ],
+            error: [],
+          }  
+        ],
+        error: [],
+      }
+    ], 
     error: [],
   },
 ];
-

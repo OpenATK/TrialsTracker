@@ -46,33 +46,27 @@ export default connect(props => ({
       var yields = [];
       if (this.props.note.stats.computing) {
         yields.push(
-          <div
-            key={'yield-waiting-div-'+this.props.note.id}
-            className={styles['yield-info']}>
-          <span
-            key={'yield-waiting-1-'+this.props.note.id}
-            className={styles[this.props.note.stats.computing ? 
-              'yield-text': 'hidden']}>
-              {'Yield: '}
-          </span>
           <span
             key={'yield-waiting-2-'+this.props.note.id}
             className={styles[this.props.note.stats.computing ? 
               'blinker': 'hidden']}>
-              {'...'}
+              {'Computing average yield...'}
           </span>
-          </div>
         )
       } else {
         Object.keys(this.props.note.stats).forEach((crop) => {
+          var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
           if (!isNaN(this.props.note.stats[crop].mean_yield)) {
             yields.push(
               <span
                 key={this.props.note.id+'-yield-text-'+crop}
                 className={styles['yield-text']}>
-                  {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
+                  {cropStr + ' Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
               </span>
             )
+            yields.push(
+              <br key={uuid.v4()}/>
+            );
           }
         })
       }
@@ -80,17 +74,16 @@ export default connect(props => ({
       var fieldComparisons = [];
       Object.keys(this.props.noteFields).forEach((field) => {
         Object.keys(this.props.note.stats).forEach((crop) => {
+          var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
           if (!isNaN(this.props.note.stats[crop].mean_yield)) {
             var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
             fieldComparisons.push(
-
               <span
                 key={this.props.note.id+'-'+field+'-comparison'}
                 className={styles['field-comparison']}>
-                {field + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
+                {field + ' ' + cropStr + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
                  ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
               </span>
-
             );
             fieldComparisons.push(
               <br key={uuid.v4()}/>
@@ -154,7 +147,6 @@ export default connect(props => ({
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
             {yields.length < 1 ? null : <br/>}
             {yields}
-            {fieldComparisons.length < 1 ? null : <br/>}
             {fieldComparisons}
           </div>
           <hr 

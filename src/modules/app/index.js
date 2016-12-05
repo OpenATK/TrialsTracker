@@ -10,8 +10,6 @@ import { removeNote } from './chains';
 import { getYieldData } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
-import { startStopLiveData } from './chains';
-//import { makeLiveDataRequest } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
 import { addTag } from './chains';
@@ -81,13 +79,9 @@ export default (module) => {
       ...clearCache,
     ],
 
-    startStopLiveDataButtonClicked: [
-      ...startStopLiveData,
-   ],
-
-   tileUnloaded: [
-     ...removeGeohashes,
-   ],
+    tileUnloaded: [
+      ...removeGeohashes,
+    ],
 
     newTileDrawn: [
       ...addGeohashes,

@@ -13,8 +13,9 @@ import rmc from 'random-material-color';
 import Color from 'color';
 import gjArea from 'geojson-area';
 import computeBoundingBox from './utils/computeBoundingBox.js';
-import yieldDataStatsForPolygon from './utils/yieldDataStatsForPolygon.js';
-import polygonContainsPolygon from './utils/polygonContainsPolygon.js';
+import polygonsIntersect from './utils/polygonsIntersect.js';
+import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
+import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 
 var drawFirstGeohashes = [
   getToken, {
@@ -36,7 +37,7 @@ var drawFirstGeohashes = [
           computeFieldStats, {
             success: [
               setFieldStats,
-              setNoteFields,
+              getFieldDataForNotes,
             ],
             error: [],
           }  
@@ -50,14 +51,19 @@ var drawFirstGeohashes = [
 
 export var initialize = [
   getOadaDomain, {
-    cached: [setOadaDomain, hideDomainModal, drawFirstGeohashes],
+    cached: [
+      setOadaDomain, 
+      set('state:app.view.domain_modal.visible', false),
+      drawFirstGeohashes
+    ],
     offline: [],
-    fail: [showDomainModal],
+    fail: [set('state:app.view.domain_modal.visible', true)],
   },
 ];
 
 export var addTag = [
-  addTagToNote, addTagToAllTagsList, clearTagText
+  addTagToNote, addTagToAllTagsList, 
+  set('state:app.model.tag_input_text', ''),
 ];
 
 export var removeTag = [
@@ -65,23 +71,29 @@ export var removeTag = [
 ];
 
 export var handleNoteListClick = [
-  deselectNote, exitEditMode,
+  deselectNote, 
+  set('state:app.view.editing_note', false),
 ];
 
 export var enterNoteEditMode = [
-  enterEditMode, set('state:app.view.map.drawing_note_polygon', true),
+  set('state:app.view.editing_note', true),
+  set('state:app.view.map.drawing_note_polygon', true),
+  set('state:app.view.map.drawing_note_polygon', true),
 ];
 
 export var exitNoteEditMode = [
-  exitEditMode,
+  set('state:app.view.editing_note', false),
 ];
 
 export var changeSortMode = [
-  setSortMode
+  set('state:app.view.sort_mode', 'input.newSortMode'),
 ];
 
 export var handleNoteClick = [
-  deselectNote, exitEditMode, selectNote, mapToNotePolygon
+  deselectNote, 
+  set('state:app.view.editing_note', false),
+  selectNote, 
+  mapToNotePolygon
 ];
 
 export var removeNote = [
@@ -96,19 +108,17 @@ export var updateNoteText = [
 ];
 
 export var updateTagText = [
-  setTagText,
+  set('state:app.model.tag_input_text', 'input.value'),
 ];
 
 export var addNewNote = [
-  createNote, set('state:app.view.map.drawing_note_polygon', true), enterEditMode,
+  createNote, 
+  set('state:app.view.map.drawing_note_polygon', true), 
+  set('state:app.view.editing_note', true),
 ];
 
 export var changeShowHideState = [
   changeShowHide, 
-];
-
-export var startStopLiveData = [
-  startStopTimer,
 ];
 
 export var removeGeohashes = [
@@ -124,19 +134,22 @@ export var clearCache = [
 ];
 
 export var updateDomainText = [
-  setDomainText,
+  set('state:app.view.domain_modal.text', 'input.value')
 ];
 
 export var submitDomainModal = [
-  setOadaDomain, hideDomainModal, drawFirstGeohashes,
+  setOadaDomain, 
+  set('state:app.view.domain_modal.visible', false),
+  drawFirstGeohashes,
 ];
 
 export var cancelDomainModal = [
-  setOadaDomain, hideDomainModal,
+  setOadaDomain,
+  set('state:app.view.domain_modal.visible', false),
 ]
 
 export var displayDomainModal = [
-  showDomainModal,
+  set('state:app.view.domain_modal.visible', true),
 ]
 
 export var toggleCropLayerVisibility = [
@@ -191,7 +204,8 @@ function computeFieldStats({input, state, output}) {
       return stats;
     })
   }).then(() => { 
-    output.success({stats});
+    var ids = Object.keys(state.get(['app', 'model', 'notes']));
+    output.success({stats, ids});
   })
 }
 computeFieldStats.outputs = ['success', 'error'];
@@ -216,7 +230,7 @@ function setNoteFields({input, state}) {
   Object.keys(notes).forEach((note) => {
     Object.keys(fields).forEach((field) => {
       if (notes[note].geometry.geojson.coordinates[0].length > 3) {
-        if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], notes[note].geometry.geojson.coordinates[0])) {
+        if (polygonsIntersect(fields[field].boundary.geojson.coordinates[0], notes[note].geometry.geojson.coordinates[0])) {
           //get the field average for each crop and compare to note average
           var obj = {};
           Object.keys(fields[field].stats).forEach((crop) => {
@@ -339,18 +353,6 @@ function setAvailableData({input, state}) {
   })
 }
 
-function showDomainModal({state}) {
-  state.set(['app', 'view', 'domain_modal', 'visible'], true);
-}
-
-function hideDomainModal({state}) {
-  state.set(['app', 'view', 'domain_modal', 'visible'], false);
-};
-
-function setDomainText({input, state}) {
-  state.set(['app', 'view', 'domain_modal', 'text'], input.value)
-};
-
 function getOadaDomain({state, output}) {
   //First, check if the domain is already in the cache;
   var db = new PouchDB('TrialsTracker');
@@ -384,14 +386,6 @@ function destroyCache() {
   db.destroy();
 };
 
-function exitEditMode({state}) {
-  state.set(['app', 'view', 'editing_note'], false);
-};
-
-function enterEditMode({state}) {
-  state.set(['app', 'view', 'editing_note'], true);
-};
-
 function registerGeohashes({input, state}) {
 // This case occurs before a token is available. Just save all geohashes and
 // filter them later with filterGeohashesOnScreen when the list of available
@@ -407,14 +401,6 @@ function unregisterGeohashes({input, state}) {
   });
 };
 
-function startStopTimer({input, state}) {
-  if (state.get(['app', 'live_data'])) {
-    state.set(['app', 'live_data'], 'false');
-  } else {
-    state.set(['app', 'live_data'], 'true');
-  }
-};
-
 function getToken({input, state, output}) {
   var self = this;
   var db = new PouchDB('TrialsTracker');
@@ -426,28 +412,22 @@ function getToken({input, state, output}) {
       metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
       scope: 'yield-data field-notes field-boundaries',
 //      params: {
-        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
+//        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
 //        "redirect_uri": 'http://10.186.153.189:8000/oauth2/redirect.html', 
-//        "redirect": 'http://localhost:8000/oauth2/redirect.html',
+        "redirect": 'http://localhost:8000/oauth2/redirect.html',
 //      }
-    };
+    }
     var domain = state.get(['app', 'view', 'server', 'domain']);
     oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
       if (err) { console.dir(err); output.error(); } // Something went wrong  
       output.success({token:accessToken.access_token});
-    });
+    })
   })
-};
+}
 getToken.outputs = ['success', 'error'];
 getToken.async = true;
 
 function storeToken({input, state, services}) {
-/*
-  console.log(services);
-  services.db.local.put({hello: 'world', _id: '1235'})
-    .then(res => output.success(res))
-    .catch(err => output.error(err))
-*/
   var db = new PouchDB('TrialsTracker');
   db.put({
     doc: {token: input.token},
@@ -468,18 +448,6 @@ function changeShowHide ({input, state}) {
   }
 };
 
-function setSortMode ({input, state}) {
-  state.set(['app', 'view', 'sort_mode'], input.newSortMode);
-};
-
-function setTagText ({input, state}) {
-  state.set(['app', 'model', 'tag_input_text'], input.value);
-};
-
-function clearTagText ({input, state}) {
-  state.set(['app', 'model', 'tag_input_text'], '');
-};
-
 function setNoteText ({input, state}) {
   state.set(['app', 'model', 'notes', input.noteId, 'text'], input.value);
 };
@@ -498,7 +466,7 @@ function selectNote ({input, state}) {
 
 function deselectNote ({input, state}) {
   var note = state.get(['app', 'view', 'selected_note']);
-  if (note) state.set(['app', 'model', 'notes', note, 'selected'], false);
+  if (!_.isEmpty(note)) state.set(['app', 'model', 'notes', note, 'selected'], false);
   state.set(['app', 'view', 'selected_note'], {});
   state.set(['app', 'view', 'editing_note'], false);
 };

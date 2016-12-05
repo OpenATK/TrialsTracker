@@ -8,7 +8,9 @@ import cache from '../Cache/cache.js';
 import gju from 'geojson-utils';
 import gjArea from 'geojson-area';
 import computeBoundingBox from './utils/computeBoundingBox.js';
-import polygonContainsPolygon from './utils/polygonContainsPolygon.js';
+import polygonsIntersect from './utils/polygonsIntersect.js';
+import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
+import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
 
 export var calculatePolygonArea = [
   recalculateArea,
@@ -23,11 +25,19 @@ export var undoDrawPoint = [
 ];
 
 export var drawComplete = [
-  set('state:app.view.map.drawing_note_polygon', false), setWaiting, getNoteBoundingBox, {
-    success: [setBoundingBox, computeStats, {
-      success: [setStats, setNoteFields],
-      error: [],
-    }],
+  set('state:app.view.map.drawing_note_polygon', false), 
+  setWaiting,
+  getNoteBoundingBox, {
+    success: [
+      setNoteBoundingBox, 
+      computeNoteStats, {
+        success: [
+          setNoteStats, 
+          getFieldDataForNotes
+        ],
+        error: [],
+      }
+    ],
     error: [],
   },
 ];
@@ -40,7 +50,7 @@ function setNoteFields({input, state}) {
   var note = state.get(['app', 'model', 'notes', input.id]);
   var fields = state.get(['app', 'model', 'fields']);
   Object.keys(fields).forEach((field) => {
-    if (polygonContainsPolygon(fields[field].boundary.geojson.coordinates[0], note.geometry.geojson.coordinates[0])) {
+    if (polygonsIntersect(fields[field].boundary.geojson.coordinates[0], note.geometry.geojson.coordinates[0])) {
       //get the field average for each crop and compare to note average
       var obj = {};
       Object.keys(fields[field].stats).forEach((crop) => {
@@ -50,11 +60,10 @@ function setNoteFields({input, state}) {
           }
         }
       })
+      state.set(['app', 'model', 'notes', input.id, 'fields', field], obj);
     }
-    state.set(['app', 'model', 'notes', input.id, 'fields', field], obj);
   })
 }
-
 
 function setWaiting({input, state}) {
   state.set(['app', 'model', 'notes', input.id, 'stats', 'computing'], true);
@@ -87,48 +96,21 @@ function longestCommonPrefix(strings) {
   return a1.substring(0, i);
 }
 
-function computeStats({input, state, output}) {
-//Get the geohashes that fall inside the bounding box to subset the
-//data points to evaluate. Create an array of promises to return the
-//data from the db, calculate the average and count, then save to state.
+function computeNoteStats({input, state, output}) {
   var token = state.get(['app', 'view', 'server', 'token']);
   var domain = state.get(['app', 'view', 'server', 'domain']);
-  //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
-  var nw = L.latLng(input.bbox.north, input.bbox.west),
-      ne = L.latLng(input.bbox.north, input.bbox.east),
-      se = L.latLng(input.bbox.south, input.bbox.east),
-      sw = L.latLng(input.bbox.south, input.bbox.west);
-  var strings = [gh.encode(input.bbox.north, input.bbox.west, 9),
-    gh.encode(input.bbox.north, input.bbox.east, 9),
-    gh.encode(input.bbox.south, input.bbox.east, 9),
-    gh.encode(input.bbox.south, input.bbox.west, 9)];
-  var commonString = longestCommonPrefix(strings);
-  var polygon = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates'])[0];
-  var stats = {};
   var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
-  Promise.map(Object.keys(availableGeohashes), function(crop) {
-    var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/';
-    stats[crop] = { 
-      area_sum: 0,
-      weight_sum: 0,
-      count: 0,
-      mean_yield: 0,
-    };
-    return recursiveGeohashSum(polygon, commonString, crop, stats[crop], availableGeohashes[crop], baseUrl, token).then(function(newStats) {
-      stats[crop].area_sum = newStats.area_sum;
-      stats[crop].weight_sum = newStats.weight_sum;
-      stats[crop].count = newStats.count;
-      stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
-      return stats;
-    })
-  }).then(function() {
-    output.success({stats});
+  var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
+  var polygon = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates'])[0];
+  yieldDataStatsForPolygon(polygon, input.bbox, availableGeohashes, baseUrl, token)
+  .then((stats) => {
+    output.success({stats, ids:[input.id]});
   })
 }
-computeStats.outputs = ['success', 'error'];
-computeStats.async = true;
+computeNoteStats.outputs = ['success', 'error'];
+computeNoteStats.async = true;
 
-function setStats({input, state}) {
+function setNoteStats({input, state}) {
   Object.keys(input.stats).forEach(function(crop) {
     if (isNaN(input.stats[crop].mean_yield)) {
       state.unset(['app', 'model', 'notes', input.id, 'stats', crop]);
@@ -139,118 +121,14 @@ function setStats({input, state}) {
   state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);
 }
 
-function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, baseUrl, token) {
-  return Promise.try(function() {
-    if (!availableGeohashes['geohash-'+geohash.length]) {
-      return stats;
-    }
-    if (!availableGeohashes['geohash-'+geohash.length][geohash]) {
-      return stats;
-    }
-
-    var ghBox = gh.decode_bbox(geohash);
-    //create an array of vertices in the order [nw, ne, se, sw]
-    var geohashPolygon = [
-      [ghBox[1], ghBox[2]],
-      [ghBox[3], ghBox[2]],
-      [ghBox[3], ghBox[0]],
-      [ghBox[1], ghBox[0]],
-      [ghBox[1], ghBox[2]],
-    ];
-//1. If the polygon and geohash intersect, get a finer geohash.
-    for (var i = 0; i < polygon.length-1; i++) {
-      for (var j = 0; j < geohashPolygon.length-1; j++) {
-        var lineA = {"type": "LineString", "coordinates": [polygon[i], polygon[i+1]]};
-        var lineB = {"type": "LineString", "coordinates": [geohashPolygon[j], geohashPolygon[j+1]]};
-        if (gju.lineStringsIntersect(lineA, lineB)) {
-          //partially contained, dig into deeper geohashes
-          if (geohash.length == 7) {
-            var url = baseUrl + 'geohash-7/geohash-index/' + geohash + '/geohash-data/';
-            return cache.get(url, token).then(function(geohashes) {
-              Object.keys(geohashes).forEach(function(g) {
-                var ghBox = gh.decode_bbox(g);
-                var pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
-                var poly = {"type":"Polygon","coordinates": [polygon]};
-                if (gju.pointInPolygon(pt, poly)) {
-                  stats.area_sum += geohashes[g].area.sum;
-                  stats.weight_sum += geohashes[g].weight.sum;
-                  stats.count += geohashes[g].count;
-                }
-                return stats;
-              })
-            })
-          } else {
-            var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
-            return Promise.each(geohashes, function(g) {
-              return recursiveGeohashSum(polygon, g, crop, stats, availableGeohashes, baseUrl, token)
-              .then(function (newStats) {
-                if (newStats == null) return stats;
-                return newStats;
-              })
-            })
-          }
-        }
-      }
-    }
-//2. If geohash is completely inside polygon, use the stats. Only one point
-//   need be tested because no lines intersect in Step 1.
-    var pt = {"type":"Point","coordinates": geohashPolygon[0]};
-    var poly = {"type":"Polygon","coordinates": [polygon]};
-    if (gju.pointInPolygon(pt, poly)) {
-      var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
-      return cache.get(url, token).then(function(data) {
-        stats.area_sum += data.area.sum;
-        stats.weight_sum += data.weight.sum;
-        stats.count += data.count;
-        return stats;
-      })
-    }
-//3. If polygon is completely inside geohash, dig deeper. Only one point
-//   need be tested because no lines intersect in Step 1.
-    pt = {"type":"Point","coordinates": polygon[0]};
-    poly = {"type":"Polygon","coordinates": [geohashPolygon]};
-    if (gju.pointInPolygon(pt, poly)) {
-      if (geohash.length == 7) {
-        var url = baseUrl + 'geohash-7/geohash-index/' + geohash + '/geohash-data/';
-        return cache.get(url, token).then(function(geohashes) {
-          Object.keys(geohashes).forEach(function(g) {
-            var ghBox = gh.decode_bbox(g);
-            var pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
-            var poly = {"type":"Polygon","coordinates": [polygon]};
-            if (gju.pointInPolygon(pt, poly)) {
-              stats.area_sum += g.area.sum;
-              stats.weight_sum += g.weight.sum;
-              stats.count += g.stats.count;
-            }
-            return stats;
-          })
-        })
-      }
-      var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
-      return Promise.each(geohashes, function(g) {
-        return recursiveGeohashSum(polygon, g, crop, stats, availableGeohashes, baseUrl, token)
-        .then(function (newStats) {
-          if (newStats == null) return stats;
-          return newStats;
-        })
-      })
-    }
-//4. The geohash and polygon are non-overlapping.
-    return stats;
-  }).then(function() {
-    return stats;
-  })
-}
-
 function getNoteBoundingBox({input, state, output}) {
-  var selectedNote = state.get(['app', 'view', 'selected_note']);
-  var note = state.get(['app', 'model', 'notes', selectedNote]);
-  var bbox = computeBoundingBox(note.geometry.geojson);
-  var area = gjArea.geometry(note.geometry.geojson)/4046.86; 
-  output.success({bbox, area, id: selectedNote});
+  var notes = state.get(['app', 'model', 'notes']);
+  var bbox = computeBoundingBox(notes[input.id].geometry.geojson);
+  var area = gjArea.geometry(notes[input.id].geometry.geojson)/4046.86; 
+  output.success({bbox, area});
 }
 
-function setBoundingBox({input, state, output}) {
+function setNoteBoundingBox({input, state, output}) {
   state.set(['app', 'model', 'notes', input.id, 'geometry', 'bbox'], input.bbox);
   state.set(['app', 'model', 'notes', input.id, 'geometry', 'centroid'], [(input.bbox.north + input.bbox.south)/2, (input.bbox.east + input.bbox.west)/2]);
   state.set(['app', 'model', 'notes', input.id, 'area'], input.area);
