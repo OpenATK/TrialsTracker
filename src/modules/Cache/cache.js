@@ -6,7 +6,7 @@ var agent = require('superagent-promise')(require('superagent'), Promise);
 module.exports = {
   
   get: function(url, token) {
-    var db = new PouchDB('TrialsTracker');
+    var db = new PouchDB('TrialsTracker', {size: 500});
     //get resource id from url
     return db.get(url).then(function(urlRes) {
       //get resource
