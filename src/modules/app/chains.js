@@ -86,7 +86,7 @@ export var exitNoteEditMode = [
 ];
 
 export var changeSortMode = [
-  set('state:app.view.sort_mode', 'input.newSortMode'),
+  copy('input:newSortMode', 'state:app.view.sort_mode'),
 ];
 
 export var handleNoteClick = [
@@ -108,7 +108,7 @@ export var updateNoteText = [
 ];
 
 export var updateTagText = [
-  set('state:app.model.tag_input_text', 'input.value'),
+  copy('input:value', 'state:app.model.tag_input_text'),
 ];
 
 export var addNewNote = [
@@ -134,7 +134,7 @@ export var clearCache = [
 ];
 
 export var updateDomainText = [
-  set('state:app.view.domain_modal.text', 'input.value')
+  copy('input:value', 'state:app.view.domain_modal.text'),
 ];
 
 export var submitDomainModal = [
@@ -144,7 +144,6 @@ export var submitDomainModal = [
 ];
 
 export var cancelDomainModal = [
-  setOadaDomain,
   set('state:app.view.domain_modal.visible', false),
 ]
 
@@ -258,9 +257,9 @@ function setMapLocation({input, state}) {
 }
 
 function setMapToCurrentLocation({input, state}) {
-  console.log(input);
   var loc = state.get(['app', 'view', 'current_location']);
-  state.set(['app', 'view', 'map', 'map_location'], loc);
+  console.log(loc);
+  if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lng, loc.lat]);
 }
 
 function getFields({state, output}) {
@@ -371,14 +370,16 @@ getOadaDomain.outputs = ['cached', 'offline', 'fail'];
 getOadaDomain.async = true;
 
 function setOadaDomain({input, state}) {
-  state.set(['app', 'view', 'server', 'domain'], input.value);
-  var db = new PouchDB('TrialsTracker');
-  db.put({
-    doc: {domain: input.value},
-    _id: 'domain',
-  }).catch(function(err) {
-    if (err.status !== 409) throw err;
-  })
+  if (input.value) {
+    state.set(['app', 'view', 'server', 'domain'], input.value);
+    var db = new PouchDB('TrialsTracker');
+    db.put({
+      doc: {domain: input.value},
+      _id: 'domain',
+    }).catch(function(err) {
+      if (err.status !== 409) throw err;
+    })
+  }
 };
 
 function destroyCache() {
@@ -467,7 +468,7 @@ function selectNote ({input, state}) {
 function deselectNote ({input, state}) {
   var note = state.get(['app', 'view', 'selected_note']);
   if (!_.isEmpty(note)) state.set(['app', 'model', 'notes', note, 'selected'], false);
-  state.set(['app', 'view', 'selected_note'], {});
+  state.unset(['app', 'view', 'selected_note']);
   state.set(['app', 'view', 'editing_note'], false);
 };
 

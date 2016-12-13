@@ -18,6 +18,7 @@ var stateTree = {
       token: {},
     },
     map: {
+      moving: false,
       geohashes_to_draw: {},
       geohashes_on_screen: {},
       current_location: {},
@@ -26,16 +27,16 @@ var stateTree = {
       crop_layers: {},
       $isLoading: true,
       drawing_note_polygon: false,
+      dragging_marker: false,
     },
     tag_input_text: '',
-    selected_note: {},
     crop_dropdown_visible: false,
     notifications: [],
     sort_mode: 'all', //'all' 'fields' 'tags'
     drag_mode: false,
     editing_note: false,
     domain_modal: {
-      text: '',
+      text: 'yield.oada-dev.com',
       visible: false,
     }, 
     legends: {

@@ -27,11 +27,16 @@ export default connect(props => ({
   mapZoom: 'app.view.map.map_zoom',
   token: 'app.view.server.token',
   domain: 'app.view.server.domain',
+  moving: 'app.view.map.moving',
+  dragging: 'app.view.map.dragging_marker',
 }), {
+  mapMoveStarted: 'app.mapMoveStarted',
   mouseDownOnMap: 'app.mouseDownOnMap',
   mouseMoveOnMap: 'app.mouseMoveOnMap',
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
   undoButtonClicked: 'app.undoButtonClicked',
+  markerDragStarted: 'app.markerDragStarted',
+  markerDragEnded: 'app.markerDragEnded',
   markerDragged: 'app.markerDragged',
   locationFound: 'app.locationFound',
   mapMoved: 'app.mapMoved',
@@ -41,12 +46,13 @@ export default connect(props => ({
 class TrialsMap extends React.Component {
 
   move(evt) {
-    console.log(evt);
   }
 
   validatePolygon(evt) {
-    if (this.props.drawing) {
-      this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+    if (typeof(evt.originalEvent.path[0].className) != 'string') {
+      if (!this.props.dragging && !this.props.moving && this.props.drawing) {
+        this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+      }
     }
   }
 
@@ -78,7 +84,9 @@ class TrialsMap extends React.Component {
             position={[pt[1], pt[0]]}
             color={note.color}
             draggable={true}
-            onDragEnd={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+            onDrag={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+            onDragStart={(e)=>{this.props.markerDragStarted({idx: i})}}
+            onDragEnd={(e)=>{this.props.markerDragEnded({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
           />)
         })
       }
@@ -110,16 +118,19 @@ class TrialsMap extends React.Component {
         )
       }
     })
+    var showUndoButton = this.props.selectedNote ?
+      (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false;
 
     return (
       <div className={styles['map-panel']}>
         <MenuBar/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-          onLeafletMousedown={(e)=>{this.validatePolygon(e)}} 
+          onMouseup={(e) => {this.validatePolygon(e)}} 
+          onMoveStart={(e) => {this.props.mapMoveStarted()}}
           onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}}
           dragging={true}
-          center={this.props.mapLocation[0] ? this.props.mapLocation : position} 
+          center={this.props.mapLocation.length > 0 ? this.props.mapLocation : position} 
           ref='map'
           zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
           <div 
@@ -131,13 +142,33 @@ class TrialsMap extends React.Component {
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
-          <FontAwesome
-            className={styles[this.props.editing ?
-              'undo-button' : 'hidden']}
-            name='undo'
-            size='2x'
-            onClick={() => this.props.undoButtonClicked({})}
-          />
+        <FontAwesome
+          name='undo'
+          className={styles[this.props.drawing ?
+            'undo-button' : 'hidden']}
+          style={showUndoButton ?
+            { color: '#000000',
+              backgroundColor: '#ffffff'
+            } : 
+            { color: '#7b7b7b',
+              backgroundColor: '#d4d4d4'
+            }
+          }
+          onClick={() => this.props.undoButtonClicked({id:this.props.selectedNote})}
+        />
+        <FontAwesome 
+          name='crosshairs'
+          className={styles['gps-button']}
+          style={this.props.currentLocation.lat ?
+            { color: '#000000',
+              backgroundColor: '#ffffff'
+            } : 
+            { color: '#7b7b7b',
+              backgroundColor: '#d4d4d4'
+            }
+          }
+          onClick={() => this.props.currentLocationButtonClicked({})}
+        />
           {markerList}
           {notePolygons}
           {fields}
@@ -157,10 +188,6 @@ class TrialsMap extends React.Component {
             fillOpacity={0.8}
             >
           </CircleMarker> : null}
-          <button
-            className={styles['gps-button']}
-            onClick={() => this.props.currentLocationButtonClicked({})}
-          />
         </Map> 
       </div>
     )

@@ -1,4 +1,4 @@
-import { set } from 'cerebral/operators';
+import { set, toggle } from 'cerebral/operators';
 import _ from 'lodash';
 import geolib from 'geolib';
 import gh from 'ngeohash';
@@ -11,6 +11,10 @@ import computeBoundingBox from './utils/computeBoundingBox.js';
 import polygonsIntersect from './utils/polygonsIntersect.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
+
+export var toggleMapMove = [
+  toggle('state:app.view.map.moving'),
+];
 
 export var calculatePolygonArea = [
   recalculateArea,
@@ -42,8 +46,17 @@ export var drawComplete = [
   },
 ];
 
-export var handleDrag = [
-  setMarkerPosition, recalculateArea
+export var endMarkerDrag = [
+  set('state:app.view.map.dragging_marker', false),
+];
+
+export var startMarkerDrag = [
+  set('state:app.view.map.dragging_marker', true),
+];
+
+export var markerDragging = [
+  setMarkerPosition, 
+  recalculateArea
 ];
 
 function setNoteFields({input, state}) {
@@ -77,12 +90,21 @@ function setMarkerPosition({input, state}) {
 function recalculateArea({state}) {
   var id = state.get(['app', 'view', 'selected_note']);
   var note = state.get(['app', 'model', 'notes', id]);
-  var area = gjArea.geometry(note.geometry.geojson)/4046.86;
-  state.set(['app', 'model', 'notes', id, 'area'], area);
+  var area;
+  if (note.geometry.geojson) {
+    area = gjArea.geometry(note.geometry.geojson)/4046.86;
+  }
+  if (area) {
+    state.set(['app', 'model', 'notes', id, 'area'], area);
+  }
 }
 
 function undo({input, state}) {
-  state.pop(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates']);
+  console.log(input.id);
+  var points = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates', 0]);
+  if (points.length > 0) {
+    state.pop(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates', 0]);
+  }
 }
 
 //http://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings

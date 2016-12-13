@@ -3,6 +3,7 @@ import polygonsIntersect from '../utils/polygonsIntersect.js';
 export default function getFieldDataForNotes({input, state}) {
   var notes = state.get(['app', 'model', 'notes']);
   var fields = state.get(['app', 'model', 'fields']);
+  console.log(input.ids);
   input.ids.forEach((note) => {
     Object.keys(fields).forEach((field) => {
       if (notes[note].geometry.geojson.coordinates[0].length > 3) {

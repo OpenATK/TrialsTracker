@@ -33,7 +33,10 @@ import { handleMouseDown } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
 import { undoDrawPoint } from './map-chains';
 import { calculatePolygonArea } from './map-chains';
-import { handleDrag } from './map-chains';
+import { endMarkerDrag } from './map-chains';
+import { startMarkerDrag } from './map-chains';
+import { markerDragging } from './map-chains';
+import { toggleMapMove } from './map-chains';
 
 export default (module) => {
   module.addState(
@@ -47,7 +50,7 @@ export default (module) => {
     ],
 
     mapMoved: [
-      ...handleMapMoved,
+      ...handleMapMoved, ...toggleMapMove,
     ],
 
     toggleCropLayer: [
@@ -58,8 +61,16 @@ export default (module) => {
       ...toggleCropDropdownVisibility,
     ],
 
+    markerDragStarted: [
+      ...startMarkerDrag,
+    ],
+
     markerDragged: [
-      ...handleDrag,
+      ...markerDragging,
+    ],
+
+    markerDragEnded: [
+      ...endMarkerDrag,
     ],
 
     domainSubmitClicked: [
@@ -161,5 +172,9 @@ export default (module) => {
       ...handleCurrentLocationButton,
     ],
  
+    mapMoveStarted: [
+      ...toggleMapMove,    
+    ]
+
   })
 }
