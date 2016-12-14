@@ -1,9 +1,9 @@
 import React, { Proptypes } from 'react';
 import { connect } from 'cerebral-view-react';
-import { CircleMarker, Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, latLngBounds} from 'react-leaflet';
+import { Popup, FeatureGroup, Circle, CircleMarker, Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, latLngBounds, LayersControl, GeoJSON } from 'react-leaflet';
+const { BaseLayer, Overlay } = LayersControl;
 import styles from './map.css';
 import uuid from 'uuid';
-var GeoJSON = require('react-leaflet').GeoJson;
 import gh from 'ngeohash';
 import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
@@ -12,6 +12,8 @@ import Legend from '../Legend';
 import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
 import MenuBar from '../MenuBar';
+import GpsControl from './GpsControl';
+import UndoControl from './UndoControl';
 
 export default connect(props => ({
   cropLayers: 'app.view.map.crop_layers',
@@ -34,13 +36,11 @@ export default connect(props => ({
   mouseDownOnMap: 'app.mouseDownOnMap',
   mouseMoveOnMap: 'app.mouseMoveOnMap',
   startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
-  undoButtonClicked: 'app.undoButtonClicked',
   markerDragStarted: 'app.markerDragStarted',
   markerDragEnded: 'app.markerDragEnded',
   markerDragged: 'app.markerDragged',
   locationFound: 'app.locationFound',
   mapMoved: 'app.mapMoved',
-  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
 },
 
 class TrialsMap extends React.Component {
@@ -49,16 +49,16 @@ class TrialsMap extends React.Component {
   }
 
   validatePolygon(evt) {
-    if (typeof(evt.originalEvent.path[0].className) != 'string') {
-      if (!this.props.dragging && !this.props.moving && this.props.drawing) {
-        this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
-      }
+    console.log(!this.props.dragging && !this.props.moving && this.props.drawing);
+    if (!this.props.dragging && !this.props.moving && this.props.drawing) {
+      this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
     }
   }
 
   render() {
     var self = this;
     var position = [40.98551896940516, -86.18823766708374];
+
     var notePolygons = [];
     Object.keys(this.props.notes).forEach(function(key) {
       if (self.props.notes[key].geometry.geojson.coordinates[0].length > 0) {
@@ -118,76 +118,55 @@ class TrialsMap extends React.Component {
         )
       }
     })
-    var showUndoButton = this.props.selectedNote ?
-      (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false;
-
+//    onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}
+   
     return (
       <div className={styles['map-panel']}>
+        <div 
+          className={styles[(this.props.drawing) ? 
+            'drawing-popup' : 'hidden']}>
+          Tap the map to draw a polygon
+        </div>
+        <Legend 
+          position={'bottomright'} 
+          key={'legend'}
+        />
+        {this.props.currentLocation.lat ? <CircleMarker
+          key={'currentLocationMarker'}
+          center={this.props.currentLocation}
+          radius={8}
+          opacity={1.0}
+          color={"white"}
+          weight={2}
+          fillColor={"#0080ff"}
+          fillOpacity={0.8}
+          >
+        </CircleMarker> : null}
         <MenuBar/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
           onMouseup={(e) => {this.validatePolygon(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
-          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}}
           dragging={true}
           center={this.props.mapLocation.length > 0 ? this.props.mapLocation : position} 
           ref='map'
           zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
-          <div 
-            className={styles[(this.props.drawing) ? 
-              'drawing-popup' : 'hidden']}>
-            Tap the map to draw a polygon
-          </div>
           <TileLayer
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
-        <FontAwesome
-          name='undo'
-          className={styles[this.props.drawing ?
-            'undo-button' : 'hidden']}
-          style={showUndoButton ?
-            { color: '#000000',
-              backgroundColor: '#ffffff'
-            } : 
-            { color: '#7b7b7b',
-              backgroundColor: '#d4d4d4'
-            }
-          }
-          onClick={() => this.props.undoButtonClicked({id:this.props.selectedNote})}
-        />
-        <FontAwesome 
-          name='crosshairs'
-          className={styles['gps-button']}
-          style={this.props.currentLocation.lat ?
-            { color: '#000000',
-              backgroundColor: '#ffffff'
-            } : 
-            { color: '#7b7b7b',
-              backgroundColor: '#d4d4d4'
-            }
-          }
-          onClick={() => this.props.currentLocationButtonClicked({})}
-        />
-          {markerList}
-          {notePolygons}
-          {fields}
-          {rasterLayers}
-          <Legend 
-            position={'bottomright'} 
-            key={'legend'}
+          <UndoControl 
+            visible={this.props.drawing}
+            disabled={this.props.selectedNote ?
+              (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false}
           />
-          {this.props.currentLocation.lat ? <CircleMarker
-            key={'currentLocationMarker'}
-            center={this.props.currentLocation}
-            radius={8}
-            opacity={1.0}
-            color={"white"}
-            weight={2}
-            fillColor={"#0080ff"}
-            fillOpacity={0.8}
-            >
-          </CircleMarker> : null}
+          <GpsControl 
+            disabled={(this.props.currentLocation.lat) ? true : false}
+          />
+          {fields}
+          {notePolygons}
+          {markerList}
+          {rasterLayers}
         </Map> 
       </div>
     )

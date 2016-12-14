@@ -11,7 +11,7 @@ import PouchDB from 'pouchdb';
 import cache from '../Cache/cache.js';
 import rmc from 'random-material-color';
 import Color from 'color';
-import gjArea from 'geojson-area';
+import gjArea from '@mapbox/geojson-area';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import polygonsIntersect from './utils/polygonsIntersect.js';
 import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
@@ -170,6 +170,14 @@ export var handleCurrentLocationButton = [
 export var handleMapMoved = [
   setMapLocation,
 ]
+
+export var itializeStateTree = [
+
+]
+
+function initializeStateTree({input, state, output}) {
+
+}
 
 function computeFieldBoundingBoxes({input, state, output}) {
   var bboxes = {};

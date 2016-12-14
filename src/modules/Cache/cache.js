@@ -55,4 +55,8 @@ module.exports = {
       } else { return null;}
     })
   },
+
+  put: function(url, body, token) {
+
+  }
 }

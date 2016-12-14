@@ -99,9 +99,9 @@ export default connect(props => ({
           onClick={(e) => this.handleNoteClick(e)}>
           <div
             className={styles['note-upper']}>
-            <TextAreaAutoSize
+            <textarea
               className={styles[this.props.note.font_color == '#ffffff' ? 
-              'note-text-input-white' : 'note-text-input-black']}
+                'note-text-input-white' : 'note-text-input-black']}
               id={this.props.id+'-input'}
               value={this.props.text} 
               onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
@@ -109,7 +109,7 @@ export default connect(props => ({
                 backgroundColor:this.props.note.color, 
                 color:this.props.note.font_color, 
               }} 
-              minRows={1} 
+              rows={1} 
               tabIndex={1}
               autoFocus={this.props.editing}
               placeholder='Type note description here...'
@@ -138,7 +138,6 @@ export default connect(props => ({
             className={styles[this.props.note.area ? 
               'hr' : 'hidden']}
             style={{backgroundColor:this.props.note.font_color}} 
-            noshade
           />
           <div
             className={styles[this.props.note.area ?
@@ -150,7 +149,6 @@ export default connect(props => ({
             {fieldComparisons}
           </div>
           <hr 
-            noshade
             style={{backgroundColor:this.props.note.font_color}} 
             className={styles[this.props.editing && this.props.selected ? 
               'hr' : 'hidden']}

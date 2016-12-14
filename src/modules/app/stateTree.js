@@ -5,7 +5,6 @@ import Color from 'color';
 var stateTree = {
 
   model: {
-    user: {},
     'yield_data_index': {},
     notes: initial_notes(),
     tags: initial_tags(),
@@ -31,9 +30,7 @@ var stateTree = {
     },
     tag_input_text: '',
     crop_dropdown_visible: false,
-    notifications: [],
     sort_mode: 'all', //'all' 'fields' 'tags'
-    drag_mode: false,
     editing_note: false,
     domain_modal: {
       text: 'yield.oada-dev.com',

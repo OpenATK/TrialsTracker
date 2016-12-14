@@ -6,7 +6,7 @@ import { Promise } from 'bluebird';
 import PouchDB from 'pouchdb';
 import cache from '../Cache/cache.js';
 import gju from 'geojson-utils';
-import gjArea from 'geojson-area';
+import gjArea from '@mapbox/geojson-area';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import polygonsIntersect from './utils/polygonsIntersect.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';

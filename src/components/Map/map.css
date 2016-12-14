@@ -26,9 +26,6 @@
 	z-index: 3;
 }
 .undo-button {
-  position: absolute;
-  left: 10px;
-  top: 98px;
   padding: 7px;
   font-size: 14px;
   cursor: pointer;
@@ -36,9 +33,6 @@
   border-radius: 5px;
 }
 .gps-button {
-  position: absolute;
-  left: 10px;
-  top: 67px;
   padding: 7px;
   font-size: 14px;
   cursor: pointer;

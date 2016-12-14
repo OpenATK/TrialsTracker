@@ -12,6 +12,7 @@ export default connect({
 }, {
 
 },
+
 class Legend extends MapComponent {
     
   blendColors(c1, c2, percent) {
@@ -63,7 +64,8 @@ class Legend extends MapComponent {
           );
         }
       }
-    });
+    })
+
     return (
       <div className={styles['map-legend']}>
         {legendPieces}
