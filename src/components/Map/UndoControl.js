@@ -5,43 +5,39 @@ import L from 'leaflet';
 import { MapControl } from 'react-leaflet';
 import FontAwesome from 'react-fontawesome';
 import styles from './map.css';
+import Control from 'react-leaflet-control';
 
 export default connect(props => ({
-  
+  drawing: 'app.view.map.drawing_note_polygon',
+  selectedNote: 'app.view.selected_note',
 }), {
   undoButtonClicked: 'app.undoButtonClicked',
 },
 
-class UndoControl extends MapControl {  
-
-  componentWillMount() {
-    const undoControl = L.control({position: 'topleft'});
-    const jsx = (
+class UndoControl extends React.Component {  
+  
+  render() {
+    return(
       <div>
-        <FontAwesome
-          name='undo'
-          className={styles[this.props.visible ?
-            'undo-button' : 'hidden']}
-          onClick={() => this.props.undoButtonClicked({})}
-          style={this.props.disabled ? 
-            { 
-              color: '#7b7b7b',
-              backgroundColor: '#d4d4d4'
-            } : { 
-              color: '#000000',
-              backgroundColor: '#ffffff'
-            } 
-          }
-        />
+        <Control
+          position={this.props.position}>
+          <FontAwesome
+            name='undo'
+            className={styles[this.props.drawing ?
+              'undo-button' : 'hidden']}
+            onClick={() => this.props.undoButtonClicked({})}
+            style={this.props.disabled ? 
+              { 
+                color: '#000000',
+                backgroundColor: '#ffffff'
+              } : { 
+                color: '#7b7b7b',
+                backgroundColor: '#d4d4d4'
+              } 
+            }
+          />
+        </Control>
       </div>
-    );
-
-    undoControl.onAdd = function (map) {
-      let div = L.DomUtil.create('div', 'undo-control');
-      ReactDOM.render(jsx, div);
-      return div;
-    };
-
-    this.leafletElement = undoControl;
+    )
   }
 })

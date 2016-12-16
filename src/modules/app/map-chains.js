@@ -25,7 +25,7 @@ export var handleMouseDown = [
 ];
 
 export var undoDrawPoint = [
-  undo,
+  undo, recalculateArea,
 ];
 
 export var drawComplete = [
@@ -100,10 +100,10 @@ function recalculateArea({state}) {
 }
 
 function undo({input, state}) {
-  console.log(input.id);
-  var points = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates', 0]);
+  var id = state.get(['app', 'view', 'selected_note']);
+  var points = state.get(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0]);
   if (points.length > 0) {
-    state.pop(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates', 0]);
+    state.pop(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0]);
   }
 }
 

@@ -1,19 +1,38 @@
-import React, { Proptypes } from 'react';
+import React from 'react';
 import { connect } from 'cerebral-view-react';
-import { Popup, FeatureGroup, Circle, CircleMarker, Polygon, Marker, Map, TileLayer, ImageOverlay, latLng, latLngBounds, LayersControl, GeoJSON } from 'react-leaflet';
-const { BaseLayer, Overlay } = LayersControl;
-import styles from './map.css';
-import uuid from 'uuid';
 import gh from 'ngeohash';
 import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
+import { 
+  Popup, 
+  FeatureGroup, 
+  Tooltip, 
+  DivIcon, 
+  Circle, 
+  CircleMarker, 
+  Polygon, 
+  Marker, 
+  Map, 
+  TileLayer, 
+  ImageOverlay, 
+  latLng, 
+  latLngBounds, 
+  LayersControl, 
+  GeoJSON ,
+  AttributionControl,
+} from 'react-leaflet';
+const { BaseLayer, Overlay } = LayersControl;
+import styles from './map.css';
+import uuid from 'uuid';
 import RasterLayer from '../RasterLayer';
-import Legend from '../Legend';
-import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
 import MenuBar from '../MenuBar';
 import GpsControl from './GpsControl';
 import UndoControl from './UndoControl';
+import LegendControl from './LegendControl';
+import DrawingMessage from './DrawingMessage';
+import { divIcon } from 'leaflet';
+import Control from 'react-leaflet-control';
 
 export default connect(props => ({
   cropLayers: 'app.view.map.crop_layers',
@@ -41,6 +60,8 @@ export default connect(props => ({
   markerDragged: 'app.markerDragged',
   locationFound: 'app.locationFound',
   mapMoved: 'app.mapMoved',
+  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
+  toggleCropLayer: 'app.toggleCropLayer',
 },
 
 class TrialsMap extends React.Component {
@@ -49,10 +70,10 @@ class TrialsMap extends React.Component {
   }
 
   validatePolygon(evt) {
-    console.log(!this.props.dragging && !this.props.moving && this.props.drawing);
-    if (!this.props.dragging && !this.props.moving && this.props.drawing) {
-      this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
-    }
+  //  if (typeof(evt.originalEvent.path[0].className) != 'string') {
+      if (!this.props.dragging && !this.props.moving && this.props.drawing) {
+        this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+      }
   }
 
   render() {
@@ -76,10 +97,15 @@ class TrialsMap extends React.Component {
     if (this.props.drawing) {
       var note = this.props.notes[this.props.selectedNote];
       if (note.geometry.geojson.coordinates[0].length > 0) {
+        var marker = divIcon({
+          className:styles['selected-note-marker'],
+          html: `<span style='color:${note.color}' class='fa fa-map-marker'></span>`
+        })
         var markerList = [];
         note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
            markerList.push(<Marker
             className={styles['selected-note-marker']}
+//            icon={marker}
             key={this.props.selectedNote+'-'+i} 
             position={[pt[1], pt[0]]}
             color={note.color}
@@ -103,35 +129,30 @@ class TrialsMap extends React.Component {
 
     var rasterLayers = [];
     Object.keys(this.props.yieldDataIndex).forEach((crop) => {
-      if (this.props.cropLayers[crop].visible) {
-        rasterLayers.push(
+      rasterLayers.push(
+        <Overlay 
+          checked={this.props.cropLayers[crop].visible}
+          onChange={()=>this.props.toggleCropLayer({crop})}
+          name={crop} key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
+            map={this.refs.map.leafletElement}
             data={'app.model.yield_data_index.'+crop}
+            icon={marker}
             layer={crop}
             url={'https://'+self.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             token={self.props.token}
-            async={true}
             geohashGridlines={false}
             tileGridlines={false}
           />
-        )
-      }
+        </Overlay>
+      )
     })
 //    onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}
    
     return (
       <div className={styles['map-panel']}>
-        <div 
-          className={styles[(this.props.drawing) ? 
-            'drawing-popup' : 'hidden']}>
-          Tap the map to draw a polygon
-        </div>
-        <Legend 
-          position={'bottomright'} 
-          key={'legend'}
-        />
-        {this.props.currentLocation.lat ? <CircleMarker
+        {this.props.currentLocation ? <CircleMarker
           key={'currentLocationMarker'}
           center={this.props.currentLocation}
           radius={8}
@@ -147,26 +168,42 @@ class TrialsMap extends React.Component {
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
           onMouseup={(e) => {this.validatePolygon(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
+          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
           dragging={true}
           center={this.props.mapLocation.length > 0 ? this.props.mapLocation : position} 
           ref='map'
           zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
+          <UndoControl 
+            position={'topleft'} 
+            disabled={this.props.selectedNote ?
+              (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false}
+          />
+          <LegendControl
+            position={'bottomright'} 
+          />
+          <GpsControl
+            position={'topleft'}
+          />
+          <DrawingMessage
+            position={'bottomleft'}
+          />
           <TileLayer
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
-          <UndoControl 
-            visible={this.props.drawing}
-            disabled={this.props.selectedNote ?
-              (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false}
-          />
-          <GpsControl 
-            disabled={(this.props.currentLocation.lat) ? true : false}
-          />
-          {fields}
           {notePolygons}
           {markerList}
-          {rasterLayers}
+          <LayersControl 
+            position='topright'>
+            <Overlay 
+              checked 
+              name='Fields'>
+              <FeatureGroup>
+                {fields}
+              </FeatureGroup>
+            </Overlay>
+            {rasterLayers}
+          </LayersControl>
         </Map> 
       </div>
     )
