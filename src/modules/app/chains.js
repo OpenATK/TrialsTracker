@@ -12,8 +12,10 @@ import cache from '../Cache/cache.js';
 import rmc from 'random-material-color';
 import Color from 'color';
 import gjArea from 'geojson-area';
+import wellknown from 'wellknown';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import polygonsIntersect from './utils/polygonsIntersect.js';
+import {getGrower} from './utils/datasilo.js';
 import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 
@@ -21,7 +23,7 @@ var drawFirstGeohashes = [
   getToken, {
     success: [
       storeToken, 
-      getFields, {
+      getFieldsFromDatasilo, {
         success: [
           setFields, 
           computeFieldBoundingBoxes, {
@@ -108,7 +110,7 @@ export var updateNoteText = [
 ];
 
 export var updateTagText = [
-  set('state:app.model.tag_input_text', 'input.value'),
+  copy('input:value', 'state:app.model.tag_input_text')
 ];
 
 export var addNewNote = [
@@ -134,7 +136,7 @@ export var clearCache = [
 ];
 
 export var updateDomainText = [
-  set('state:app.view.domain_modal.text', 'input.value')
+  copy('input:value', 'state:app.view.domain_modal.text')
 ];
 
 export var submitDomainModal = [
@@ -262,6 +264,50 @@ function setMapToCurrentLocation({input, state}) {
   var loc = state.get(['app', 'view', 'current_location']);
   state.set(['app', 'view', 'map', 'map_location'], loc);
 }
+
+function getFieldsFromDatasilo({state, output}) {
+  getGrower()
+    .then(growers => {
+      let oadaFields = {};
+
+      growers.forEach(grower => {
+        let farms = grower.farm || [];
+
+        farms.forEach(farm => {
+          let fields = farm.field || [];
+
+          fields.forEach(field => {
+            let seasons = field.season || [];
+
+            seasons.forEach(season => {
+              let name = `${field.name}-${season.season}`;
+
+              oadaFields[name] = {
+                _id: `winfield-${season.id}`,
+                name: `${field.name}-${season.season}`,
+                context: {
+                  fields: 'fields-index',
+                  'fields-index': name,
+                  [farm.name]: 'fields-index'
+                },
+                boundary: {
+                  geojson: wellknown(season.boundary)
+                }
+              };
+
+            });
+          });
+        });
+      });
+
+      output.success({fields: oadaFields});
+    })
+		.catch(function(error) {
+			output.error(error);
+		})
+}
+getFieldsFromDatasilo.outputs = ['success', 'error'];
+getFieldsFromDatasilo.async = true;
 
 function getFields({state, output}) {
   var token = state.get(['app', 'view', 'server', 'token']);
