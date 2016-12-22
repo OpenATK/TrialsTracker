@@ -20,7 +20,6 @@ var stateTree = {
       moving: false,
       geohashes_to_draw: {},
       geohashes_on_screen: {},
-      current_location: {},
       map_location: [],
       map_zoom: 15,
       crop_layers: {},

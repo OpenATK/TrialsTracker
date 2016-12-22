@@ -5,42 +5,29 @@ import L from 'leaflet';
 import { MapControl } from 'react-leaflet';
 import FontAwesome from 'react-fontawesome';
 import styles from './map.css';
+import Control from 'react-leaflet-control';
 
 export default connect(props => ({
-  
+  currentLocation: 'app.model.current_location',
 }), {
   gpsButtonClicked: 'app.currentLocationButtonClicked',
 },
 
-class GpsControl extends MapControl {  
+class GpsControl extends React.Component {  
 
-  componentWillMount() {
-    const gpsControl = L.control({position: 'topleft'});
-    const jsx = (
-      <div>
-        <FontAwesome
-          name='crosshairs'
+  render() {
+    return(
+      <Control
+        position={this.props.position}>
+        <div
           onClick={() => this.props.gpsButtonClicked({})}
-          className={styles['gps-button']}
-          style={this.props.disabled ? 
-            { 
-              color: '#7b7b7b',
-              backgroundColor: '#d4d4d4'
-            } : { 
-              color: '#000000',
-              backgroundColor: '#ffffff'
-            } 
-          }
-        />
-      </div>
-    );
-
-    gpsControl.onAdd = function (map) {
-      let div = L.DomUtil.create('div', 'gps-control');
-      ReactDOM.render(jsx, div);
-      return div;
-    };
-
-    this.leafletElement = gpsControl;
+          className={styles[this.props.currentLocation ? 
+            'gps-control' : 'gps-control-disabled']}>
+          <FontAwesome
+            name='crosshairs'
+          />
+        </div>
+      </Control>
+    )
   }
 })

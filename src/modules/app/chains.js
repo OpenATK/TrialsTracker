@@ -265,9 +265,9 @@ function setMapLocation({input, state}) {
 }
 
 function setMapToCurrentLocation({input, state}) {
-  var loc = state.get(['app', 'view', 'current_location']);
+  var loc = state.get(['app', 'model', 'current_location']);
   console.log(loc);
-  if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lng, loc.lat]);
+  if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lat, loc.lng]);
 }
 
 function getFields({state, output}) {

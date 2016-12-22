@@ -4,7 +4,6 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
-import fastyles from '../css/font-awesome.min.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
 
