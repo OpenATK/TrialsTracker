@@ -12,8 +12,12 @@ import polygonsIntersect from './utils/polygonsIntersect.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
 
-export var toggleMapMove = [
-  toggle('state:app.view.map.moving'),
+export var startMovingMap = [
+  set('state:app.view.map.moving', true)
+];
+
+export var doneMovingMap = [
+  set('state:app.view.map.moving', false)
 ];
 
 export var calculatePolygonArea = [
@@ -78,6 +82,12 @@ function setNoteFields({input, state}) {
   })
 }
 
+function toggleMapMoving({state}) {
+  var moving = state.get(['app', 'view', 'map', 'moving']);
+  console.log(moving);
+  state.set(['app', 'view', 'map', 'moving'], !moving);
+}
+
 function setWaiting({input, state}) {
   state.set(['app', 'model', 'notes', input.id, 'stats', 'computing'], true);
 }
@@ -92,10 +102,10 @@ function recalculateArea({state}) {
   var note = state.get(['app', 'model', 'notes', id]);
   var area;
   if (note.geometry.geojson) {
-    area = gjArea.geometry(note.geometry.geojson)/4046.86;
-  }
-  if (area) {
-    state.set(['app', 'model', 'notes', id, 'area'], area);
+    if (note.geometry.geojson.coordinates[0].length > 2) {
+      area = gjArea.geometry(note.geometry.geojson)/4046.86;
+      state.set(['app', 'model', 'notes', id, 'area'], area);
+    }
   }
 }
 
@@ -157,6 +167,10 @@ function setNoteBoundingBox({input, state, output}) {
 }
 
 function dropPoint ({input, state}) {
-  var id = state.get(['app', 'view', 'selected_note']);
-  state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
+  var drawing = state.get(['app', 'model', 'view', 'map', 'drawing_note_polygon']);
+  var moving = state.get(['app', 'model', 'view', 'map', 'moving']);
+  if (!drawing && !moving) {
+    var id = state.get(['app', 'view', 'selected_note']);
+    state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
+  }
 }

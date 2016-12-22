@@ -36,7 +36,8 @@ import { calculatePolygonArea } from './map-chains';
 import { endMarkerDrag } from './map-chains';
 import { startMarkerDrag } from './map-chains';
 import { markerDragging } from './map-chains';
-import { toggleMapMove } from './map-chains';
+import { doneMovingMap } from './map-chains';
+import { startMovingMap } from './map-chains';
 
 export default (module) => {
   module.addState(
@@ -50,7 +51,7 @@ export default (module) => {
     ],
 
     mapMoved: [
-      ...handleMapMoved, ...toggleMapMove,
+      ...handleMapMoved, ...doneMovingMap,
     ],
 
     toggleCropLayer: [
@@ -173,7 +174,7 @@ export default (module) => {
     ],
  
     mapMoveStarted: [
-      ...toggleMapMove,    
+      ...startMovingMap,    
     ]
 
   })

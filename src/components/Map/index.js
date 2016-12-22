@@ -43,7 +43,7 @@ export default connect(props => ({
   yieldDataIndex: 'app.model.yield_data_index',
   drawing: 'app.view.map.drawing_note_polygon',
   fields: 'app.model.fields',
-  currentLocation: 'app.view.map.current_location',
+  currentLocation: 'app.model.current_location',
   mapLocation: 'app.view.map.map_location',
   mapZoom: 'app.view.map.map_zoom',
   token: 'app.view.server.token',
@@ -60,20 +60,26 @@ export default connect(props => ({
   markerDragged: 'app.markerDragged',
   locationFound: 'app.locationFound',
   mapMoved: 'app.mapMoved',
-  currentLocationButtonClicked: 'app.currentLocationButtonClicked',
+  gpsButtonClicked: 'app.currentLocationButtonClicked',
   toggleCropLayer: 'app.toggleCropLayer',
 },
 
 class TrialsMap extends React.Component {
 
-  move(evt) {
+  validateMouseEvent(evt) {
+    if (this.props.drawing) {
+      if (!this.props.moving && !this.props.dragging) {
+        if (!evt.originalEvent.toElement.offsetParent) {
+          this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+        } else if (!evt.originalEvent.toElement.offsetParent.className.includes('control')) {
+          this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
+        }
+      }
+    }
   }
 
-  validatePolygon(evt) {
-  //  if (typeof(evt.originalEvent.path[0].className) != 'string') {
-      if (!this.props.dragging && !this.props.moving && this.props.drawing) {
-        this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
-      }
+  componentDidMount() {
+    this.refs.map.leafletElement.locate();
   }
 
   render() {
@@ -148,44 +154,45 @@ class TrialsMap extends React.Component {
         </Overlay>
       )
     })
-//    onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.getLeafletElement().getCenter(), zoom: this.refs.map.getLeafletElement().getZoom()})}
+    var undoEnabled = this.props.selectedNote ? 
+      this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
    
     return (
       <div className={styles['map-panel']}>
-        {this.props.currentLocation ? <CircleMarker
-          key={'currentLocationMarker'}
-          center={this.props.currentLocation}
-          radius={8}
-          opacity={1.0}
-          color={"white"}
-          weight={2}
-          fillColor={"#0080ff"}
-          fillOpacity={0.8}
-          >
-        </CircleMarker> : null}
         <MenuBar/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-          onMouseup={(e) => {this.validatePolygon(e)}} 
+          onMouseup={(e) => {this.validateMouseEvent(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
           onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
           dragging={true}
           center={this.props.mapLocation.length > 0 ? this.props.mapLocation : position} 
           ref='map'
           zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
-          <UndoControl 
-            position={'topleft'} 
-            disabled={this.props.selectedNote ?
-              (this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0) : false}
-          />
-          <LegendControl
-            position={'bottomright'} 
-          />
+          {this.props.currentLocation ? <CircleMarker
+            key={'currentLocationMarker'}
+            center={this.props.currentLocation}
+            radius={8}
+            opacity={1.0}
+            color={"white"}
+            weight={2}
+            fillColor={"#0080ff"}
+            fillOpacity={0.8}
+            >
+          </CircleMarker> : null}
+
           <GpsControl
             position={'topleft'}
           />
+          <UndoControl
+            position={'topleft'}
+            enabled={undoEnabled}
+          />
           <DrawingMessage
-            position={'bottomleft'}
+            position={'bottomright'}
+          />
+          <LegendControl
+            position={'bottomright'} 
           />
           <TileLayer
             url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"

@@ -9,7 +9,6 @@ import Control from 'react-leaflet-control';
 
 export default connect(props => ({
   drawing: 'app.view.map.drawing_note_polygon',
-  selectedNote: 'app.view.selected_note',
 }), {
   undoButtonClicked: 'app.undoButtonClicked',
 },
@@ -17,27 +16,19 @@ export default connect(props => ({
 class UndoControl extends React.Component {  
   
   render() {
+
     return(
-      <div>
-        <Control
-          position={this.props.position}>
+      <Control
+        position={this.props.position}>
+        <div
+          className={styles[!this.props.drawing ? 'hidden' : 
+            this.props.enabled ? 'undo-control' : 'undo-control-disabled']}
+          onClick={() => this.props.undoButtonClicked({})}>
           <FontAwesome
             name='undo'
-            className={styles[this.props.drawing ?
-              'undo-button' : 'hidden']}
-            onClick={() => this.props.undoButtonClicked({})}
-            style={this.props.disabled ? 
-              { 
-                color: '#000000',
-                backgroundColor: '#ffffff'
-              } : { 
-                color: '#7b7b7b',
-                backgroundColor: '#d4d4d4'
-              } 
-            }
           />
-        </Control>
-      </div>
+        </div>
+      </Control>
     )
   }
 })
