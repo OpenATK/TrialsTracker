@@ -2,6 +2,9 @@
   border-radius: 3px;
   margin-bottom: 5px;
   cursor: pointer;
+  padding: 4px 9px 4px 9px;
+  border: 1px solid #ddd;
+  box-shadow: 1px 1px 2px 0px rgba(0,0,0,0.55);
 }
 .selected-note {
   border-radius: 3px;
