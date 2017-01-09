@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react';
 import {connect} from 'cerebral-view-react';
 import NoteList from '../NoteList/';
 import TrialsMap from '../Map';
-import OadaDomainModal from '../OadaDomainModal';
+import OadaDomainModal from '../Settings/DataSources';
 import styles from './app.css';
 
 export default connect({

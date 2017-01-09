@@ -10,12 +10,18 @@ var stateTree = {
     tags: initial_tags(),
     fields: {}, 
   },
+  settings: {
+    data_sources: {
+      yield: {
+        oada: {
+          domain: '',
+          token: '',
+        },
+      },
+      fields_source: 'oada',
+    }
+  },
   view: {
-    server: {
-      offline: true,
-      domain: '',
-      token: {},
-    },
     map: {
       moving: false,
       geohashes_to_draw: {},
@@ -31,9 +37,10 @@ var stateTree = {
     crop_dropdown_visible: false,
     sort_mode: 'all', //'all' 'fields' 'tags'
     editing_note: false,
-    domain_modal: {
-      text: 'yield.oada-dev.com',
+    datasource_settings: {
+      oada_text: 'yield.oada-dev.com',
       visible: false,
+      field_boundary_source: 'oada', //'oada' 'data silo'
     }, 
     legends: {
       corn: [{

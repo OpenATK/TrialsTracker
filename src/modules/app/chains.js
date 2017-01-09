@@ -12,18 +12,21 @@ import cache from '../Cache/cache.js';
 import rmc from 'random-material-color';
 import Color from 'color';
 import gjArea from '@mapbox/geojson-area';
+import wellknown from 'wellknown';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import polygonsIntersect from './utils/polygonsIntersect.js';
+import {getGrower} from './utils/datasilo.js';
 import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 
+/*
 var drawFirstGeohashes = [
   getToken, {
     success: [
       storeToken, 
-      getFields, {
+      getFieldsFromDatasilo, {
         success: [
-          setFields, 
+          setFieldBoundaries, 
           computeFieldBoundingBoxes, {
             success: [setFieldBoundingBoxes],
             error: [],
@@ -31,9 +34,9 @@ var drawFirstGeohashes = [
         ],
         error: [],
       }, 
-      getAvailableYieldData, {
+      getYieldDataIndexFromOada, {
         success: [
-          setAvailableData,
+          setYieldDataIndex,
           computeFieldStats, {
             success: [
               setFieldStats,
@@ -48,19 +51,90 @@ var drawFirstGeohashes = [
     error: [],
   },
 ];
+*/
 
-export var initialize = [
-  getOadaDomain, {
-    cached: [
-      setOadaDomain, 
-      set('state:app.view.domain_modal.visible', false),
-      drawFirstGeohashes
+var computeFieldData = [
+// Compute bounding boxes and yield stats for each field
+  computeFieldBoundingBoxes, {
+    success: [
+      setFieldBoundingBoxes, 
+      computeFieldStats, {
+        success: [
+          setFieldStats,
+          getFieldDataForNotes,
+        ],
+      error: [],
+      }
     ],
-    offline: [],
-    fail: [set('state:app.view.domain_modal.visible', true)],
+    error: [],
+  },
+   
+];
+
+var getFieldBoundaries = [
+  getFieldBoundariesSource, {
+    oada: [
+      getFieldsFromOada, {
+        success: [setFieldBoundaries, computeFieldData],
+        error: [],
+      }
+    ],
+    data_silo: [
+      getFieldsFromDatasilo, {
+        success: [setFieldBoundaries, computeFieldData],
+        error: [],
+      },
+    ],
+    none: [],
   },
 ];
 
+var getYieldData = [
+  getYieldDataSource, {
+    oada: [
+      getToken, {
+        success: [
+          storeToken,
+          getYieldDataIndexFromOada, {
+            success: [setYieldDataIndex],
+            error: [],
+          },
+        ],
+        error: [],
+      },
+    ],
+    error: [set('state:app.view.datasource_settings.visible', true)],
+  },
+]
+
+export var initialize = [
+  initializeState,
+  getOadaDomainFromPouch, {//TODO: Remove this after pouch cache is worked out.  This initializes oada domain state.
+    cached: [
+      copy('input:value', 'state:app.view.datasource_settings.domain'),
+      copy('input:value', 'state:app.settings.data_sources.yield.oada.domain'),
+      set('state:app.view.datasource_settings.visible', false),
+      getYieldData,
+      getFieldBoundaries
+    ],
+    offline: [],
+    error: [set('state:app.view.datasource_settings.visible', true)],
+  },
+];
+
+/*
+export var initialize = [
+  getOadaDomain, {
+    cached: [
+      putOadaDomainInPouch, 
+      set('state:app.view.datasource_settings.visible', false),
+      drawFirstGeohashes
+    ],
+    offline: [],
+    error: [set('state:app.view.datasource_settings.visible', true)],
+  },
+];
+*/
 export var addTag = [
   addTagToNote, addTagToAllTagsList, 
   set('state:app.model.tag_input_text', ''),
@@ -134,21 +208,26 @@ export var clearCache = [
 ];
 
 export var updateDomainText = [
-  copy('input:value', 'state:app.view.domain_modal.text'),
+  copy('input:value', 'state:app.view.datasource_settings.oada_text'),
 ];
 
 export var submitDomainModal = [
-  setOadaDomain, 
-  set('state:app.view.domain_modal.visible', false),
-  drawFirstGeohashes,
+  set('state:app.view.datasource_settings.visible', false),
+  copy('state:app.view.datasource_settings.oada_text', 'state:app.settings.data_sources.yield.oada.domain'),
+  copy('state:app.view.datasource_settings.field_boundary_source', 'state:app.settings.data_sources.fields_source'),
+  putOadaDomainInPouch, 
+  getYieldData,
+  getFieldBoundaries
 ];
 
 export var cancelDomainModal = [
-  set('state:app.view.domain_modal.visible', false),
+  set('state:app.view.datasource_settings.visible', false),
+  copy('state:app.settings.data_sources.yield.oada.domain', 'state:app.view.datasource_settings.oada_text'),
+  copy('state:app.settings.data_sources.fields_source', 'state:app.view.datasource_settings.field_boundary_source'),
 ]
 
 export var displayDomainModal = [
-  set('state:app.view.domain_modal.visible', true),
+  set('state:app.view.datasource_settings.visible', true),
 ]
 
 export var toggleCropLayerVisibility = [
@@ -175,6 +254,44 @@ export var itializeStateTree = [
 
 ]
 
+export var setFieldBoundarySource = [
+  copy('input:value', 'state:app.view.datasource_settings.field_boundary_source') 
+]
+
+function initializeState({state, output}) {
+
+}
+
+function getYieldDataSource({state, output}) {
+  //I envision an eventual switch statement like getFieldBoundariesSource for multiple data sources
+  var yieldSource = state.get('app.settings.data_sources.yield.oada.domain');
+  if (yieldSource) {
+    if (yieldSource.length > 0) output.oada({});
+    output.error({});
+  }
+  output.error({});
+}
+getYieldDataSource.outputs = ['oada', 'error'];
+getYieldDataSource.async = true;
+
+function getFieldBoundariesSource({state, output}) {
+  var fieldSource = state.get('app.settings.data_sources.fields_source');
+  switch(fieldSource) {
+    case 'oada': 
+      output.oada({});
+      break;
+    case 'data_silo': 
+      output.data_silo({});
+      break;
+    case 'none': 
+      output.none({});
+      break;
+  }
+}
+getFieldBoundariesSource.outputs = ['oada', 'data_silo', 'none'];
+getFieldBoundariesSource.async = true;
+
+
 function initializeStateTree({input, state, output}) {
 
 }
@@ -192,6 +309,7 @@ computeFieldBoundingBoxes.async = true;
 computeFieldBoundingBoxes.outputs = ['success', 'error'];
 
 function setFieldBoundingBoxes({input, state}) {
+//TODO: need to check for valid data source
   Object.keys(input.bboxes).forEach((field) => {
     state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
     state.set(['app', 'model', 'fields', field, 'boundary', 'bbox'], input.bboxes[field]);
@@ -199,12 +317,15 @@ function setFieldBoundingBoxes({input, state}) {
 }
 
 function computeFieldStats({input, state, output}) {
-  var token = state.get(['app', 'view', 'server', 'token']);
-  var domain = state.get(['app', 'view', 'server', 'domain']);
+  var fields = state.get(['app', 'model', 'fields']);
   var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
+  if (!(fields && availableGeohashes && input.bboxes)) output.error({});
+
+  var token = state.get('app.settings.data_sources.yield.oada.token');
+  var domain = state.get('app.settings.data_sources.yield.oada.domain');
   var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var stats = {};
-  Promise.map(Object.keys(input.fields), function(field) {
+  Promise.map(Object.keys(fields), function(field) {
     return yieldDataStatsForPolygon(input.fields[field].boundary.geojson.coordinates[0], input.bboxes[field], availableGeohashes, baseUrl, token)
     .then((fieldStats) => {
       stats[field] = fieldStats;
@@ -219,6 +340,7 @@ computeFieldStats.outputs = ['success', 'error'];
 computeFieldStats.async = true;
 
 function setFieldStats({input, state}) {
+//TODO: need to check for NPE
   Object.keys(input.stats).forEach((field) => {
     Object.keys(input.stats[field]).forEach((crop) => {
       if (isNaN(input.stats[field][crop].mean_yield)) {
@@ -232,6 +354,7 @@ function setFieldStats({input, state}) {
 }
 
 function setNoteFields({input, state}) {
+//TODO: need to check for NPE
   var notes = state.get(['app', 'model', 'notes']);
   var fields = state.get(['app', 'model', 'fields']);
   Object.keys(notes).forEach((note) => {
@@ -266,13 +389,57 @@ function setMapLocation({input, state}) {
 
 function setMapToCurrentLocation({input, state}) {
   var loc = state.get(['app', 'model', 'current_location']);
-  console.log(loc);
   if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lat, loc.lng]);
 }
 
-function getFields({state, output}) {
-  var token = state.get(['app', 'view', 'server', 'token']);
-  var domain = state.get(['app', 'view', 'server', 'domain']);
+function getFieldsFromDatasilo({state, output}) {
+  getGrower()
+    .then(growers => {
+      let oadaFields = {};
+
+      growers.forEach(grower => {
+        let farms = grower.farm || [];
+
+        farms.forEach(farm => {
+          let fields = farm.field || [];
+
+          fields.forEach(field => {
+            let seasons = field.season || [];
+
+            seasons.forEach(season => {
+              let name = `${field.name}-${season.season}`;
+
+              oadaFields[name] = {
+                _id: `winfield-${season.id}`,
+                name: `${field.name}-${season.season}`,
+                context: {
+                  fields: 'fields-index',
+                  'fields-index': name,
+                  [farm.name]: 'fields-index'
+                },
+                boundary: {
+                  geojson: wellknown(season.boundary)
+                }
+              };
+
+            });
+          });
+        });
+      });
+
+      output.success({fields: oadaFields});
+    })
+    .catch(function(error) {
+      output.error(error);
+    })
+}
+getFieldsFromDatasilo.outputs = ['success', 'error'];
+getFieldsFromDatasilo.async = true;
+
+function getFieldsFromOada({state, output}) {
+//  var token = state.get('app.settings.data_sources.yield.oada.token');
+  var token = state.get('app.settings.data_sources.yield.oada.token');
+  var domain = state.get('app.settings.data_sources.yield.oada.domain');
   var url = 'https://' + domain + '/bookmarks/fields/fields-index/';
   var fields = {};
   cache.get(url, token).then(function(fieldsIndex) {
@@ -297,13 +464,15 @@ function getFields({state, output}) {
     output.success({fields});
   })
 }
-getFields.outputs = ['success', 'error'];
-getFields.async = true;
+getFieldsFromOada.outputs = ['success', 'error'];
+getFieldsFromOada.async = true;
 
-function setFields({input, state}) {
-  Object.keys(input.fields).forEach(function(field) {
-    state.set(['app', 'model', 'fields', field], input.fields[field]);
-  })
+function setFieldBoundaries({input, state}) {
+  if (input.fields) {
+    Object.keys(input.fields).forEach(function(field) {
+      state.set(['app', 'model', 'fields', field], input.fields[field]);
+    })
+  }
 }
 
 function setCurrentLocation({input, state}) {
@@ -324,9 +493,9 @@ function toggleCropLayer({input, state}) {
   state.set(['app', 'view', 'map', 'crop_layers', input.crop, 'visible'], !vis);
 }
 
-function getAvailableYieldData({state, output}) {
-  var token = state.get(['app', 'view', 'server', 'token']);
-  var domain = state.get(['app', 'view', 'server', 'domain']);
+function getYieldDataIndexFromOada({state, output}) {
+  var token = state.get('app.settings.data_sources.yield.oada.token');
+  var domain = state.get('app.settings.data_sources.yield.oada.domain');
   var url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var data = {};
   var cropStatus = {};
@@ -348,19 +517,21 @@ function getAvailableYieldData({state, output}) {
     output.success({data, cropStatus});
   })
 }
-getAvailableYieldData.outputs = ['success', 'error'];
-getAvailableYieldData.async = true;
+getYieldDataIndexFromOada.outputs = ['success', 'error'];
+getYieldDataIndexFromOada.async = true;
 
-function setAvailableData({input, state}) {
-  Object.keys(input.data).forEach(function(crop) {
-    state.set(['app', 'view', 'map', 'crop_layers', crop, 'visible'], true);
-    Object.keys(input.data[crop]).forEach(function(ghLength) {
-      state.set(['app', 'model', 'yield_data_index', crop, ghLength], input.data[crop][ghLength]);
+function setYieldDataIndex({input, state}) {
+  if (input.data) {
+    Object.keys(input.data).forEach(function(crop) {
+      state.set(['app', 'view', 'map', 'crop_layers', crop, 'visible'], true);
+      Object.keys(input.data[crop]).forEach(function(ghLength) {
+        state.set(['app', 'model', 'yield_data_index', crop, ghLength], input.data[crop][ghLength]);
+      })
     })
-  })
+  }
 }
 
-function getOadaDomain({state, output}) {
+function getOadaDomainFromPouch({state, output}) {
   //First, check if the domain is already in the cache;
   var db = new PouchDB('TrialsTracker');
   db.get('domain').then(function(result) {
@@ -371,18 +542,18 @@ function getOadaDomain({state, output}) {
     }
   }).catch(function(err) {
     if (err.status !== 404) throw err;
-    output.fail({});//Don't have it yet, prompt for it. 
+    output.error({});//Don't have it yet, prompt for it. 
   })
 };
-getOadaDomain.outputs = ['cached', 'offline', 'fail'];
-getOadaDomain.async = true;
+getOadaDomainFromPouch.outputs = ['cached', 'offline', 'error'];
+getOadaDomainFromPouch.async = true;
 
-function setOadaDomain({input, state}) {
-  if (input.value) {
-    state.set(['app', 'view', 'server', 'domain'], input.value);
+function putOadaDomainInPouch({input, state}) {
+  var val = state.get('app.settings.data_sources.yield.oada.domain');
+  if (val.length > 0) {
     var db = new PouchDB('TrialsTracker');
     db.put({
-      doc: {domain: input.value},
+      doc: {domain: val},
       _id: 'domain',
     }).catch(function(err) {
       if (err.status !== 409) throw err;
@@ -426,7 +597,7 @@ function getToken({input, state, output}) {
         "redirect": 'http://localhost:8000/oauth2/redirect.html',
 //      }
     }
-    var domain = state.get(['app', 'view', 'server', 'domain']);
+    var domain = state.get('app.settings.data_sources.yield.oada.domain');
     oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
       if (err) { console.dir(err); output.error(); } // Something went wrong  
       output.success({token:accessToken.access_token});
@@ -444,8 +615,7 @@ function storeToken({input, state, services}) {
   }).catch(function(err) {
     if (err.status !== 409) throw err;
   });
-  state.set(['app', 'view', 'server', 'token'], input.token);
-  state.set('app.view.server.offline', false);
+  state.set('app.settings.data_sources.yield.oada.token', input.token);
 };
 
 function changeShowHide ({input, state}) {

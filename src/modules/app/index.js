@@ -27,6 +27,7 @@ import { toggleCropDropdownVisibility } from './chains';
 import { handleLocationFound } from './chains';
 import { handleCurrentLocationButton } from './chains';
 import { handleMapMoved } from './chains';
+import { setFieldBoundarySource } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -72,6 +73,10 @@ export default (module) => {
 
     markerDragEnded: [
       ...endMarkerDrag,
+    ],
+
+    fieldBoundarySourceButtonClicked: [
+      ...setFieldBoundarySource,
     ],
 
     domainSubmitClicked: [

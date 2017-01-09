@@ -29,8 +29,10 @@
     "@mapbox/leaflet-omnivore": "^0.3.4",
     "@mapbox/togeojson": "^0.16.0",
     "autoprefixer": "^6.3.3",
+    "aws-v4-sign-small": "^1.1.1",
     "baobab": "^2.3.3",
     "bluebird": "^3.4.0",
+    "bn.js": "^4.11.6",
     "cerebral": "^0.35.7",
     "cerebral-addons": "^0.6.1",
     "cerebral-model-baobab": "^0.4.9",
@@ -66,7 +68,8 @@
     "superagent": "^2.0.0",
     "superagent-promise": "^1.1.0",
     "url-loader": "^0.5.7",
-    "uuid": "^2.0.1"
+    "uuid": "^2.0.1",
+    "wellknown": "^0.5.0"
   },
   "devDependencies": {
     "babel-core": "^6.14.0",
@@ -80,6 +83,7 @@
     "cross-env": "^1.0.7",
     "css-loader": "^0.23.1",
     "postcss-loader": "^0.8.1",
-    "style-loader": "^0.13.0"
+    "style-loader": "^0.13.0",
+    "webpack": "^1.14.0"
   }
 }

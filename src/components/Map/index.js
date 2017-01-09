@@ -46,8 +46,8 @@ export default connect(props => ({
   currentLocation: 'app.model.current_location',
   mapLocation: 'app.view.map.map_location',
   mapZoom: 'app.view.map.map_zoom',
-  token: 'app.view.server.token',
-  domain: 'app.view.server.domain',
+  token: 'app.settings.data_sources.yield.oada.token',
+  domain: 'app.settings.data_sources.yield.oada.domain',
   moving: 'app.view.map.moving',
   dragging: 'app.view.map.dragging_marker',
 }), {

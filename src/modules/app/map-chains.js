@@ -84,7 +84,6 @@ function setNoteFields({input, state}) {
 
 function toggleMapMoving({state}) {
   var moving = state.get(['app', 'view', 'map', 'moving']);
-  console.log(moving);
   state.set(['app', 'view', 'map', 'moving'], !moving);
 }
 
@@ -129,8 +128,8 @@ function longestCommonPrefix(strings) {
 }
 
 function computeNoteStats({input, state, output}) {
-  var token = state.get(['app', 'view', 'server', 'token']);
-  var domain = state.get(['app', 'view', 'server', 'domain']);
+  var token = state.get('app.settings.data_sources.yield.oada.token');
+  var domain = state.get('app.settings.data_sources.yield.oada.domain');
   var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
   var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var polygon = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates'])[0];
