@@ -5,39 +5,57 @@ import Color from 'color';
 var stateTree = {
 
   model: {
-    user: {},
     'yield_data_index': {},
     notes: initial_notes(),
     tags: initial_tags(),
     fields: {}, 
+    noteFields: {}, 
+  },
+  settings: {
+    data_sources: {
+      yield: {
+        source: 'none',
+        oada_domain: '',
+        oada_token: '',
+      },
+      fields: {
+        source: 'none',
+        oada_domain: '',
+        oada_token: '',
+      }
+    }
   },
   view: {
-    server: {
-      offline: true,
-      domain: '',
-      token: {},
-    },
     map: {
+      moving: false,
       geohashes_to_draw: {},
       geohashes_on_screen: {},
-      current_location: {},
       map_location: [],
       map_zoom: 15,
       crop_layers: {},
       $isLoading: true,
       drawing_note_polygon: false,
+      dragging_marker: false,
     },
     tag_input_text: '',
-    selected_note: {},
     crop_dropdown_visible: false,
-    notifications: [],
     sort_mode: 'all', //'all' 'fields' 'tags'
-    drag_mode: false,
     editing_note: false,
-    domain_modal: {
-      text: '',
-      visible: false,
-    }, 
+    settings: {
+      data_sources: {
+        visible: false,
+        yield: {
+          source: 'none',
+          oada_domain: '',
+          oada_token: '',
+        },
+        fields: {
+          source: 'none',
+          oada_domain: '',
+          oada_token: '',
+        }
+      }
+    },
     legends: {
       corn: [{
         value: 130,

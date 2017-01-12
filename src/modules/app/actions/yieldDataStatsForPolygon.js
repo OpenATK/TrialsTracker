@@ -1,49 +1,37 @@
-export function yieldDataStatsForPolygon({input, state, output}) {
-  if (!input.bbox) {
-    var bbox = getBbox(input.geometry);
-  } else {
-    var bbox = input.bbox;
-  }
-  var token = state.get(['app', 'view', 'server', 'token']);
-  var domain = state.get(['app', 'view', 'server', 'domain']);
+import cache from '../../Cache/cache.js';
+import gh from 'ngeohash';
+import gju from 'geojson-utils';
+import { Promise } from 'bluebird';
+
+export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohashes, baseUrl, token) {
   //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
-  var nw = L.latLng(bbox.north, bbox.west),
-      ne = L.latLng(bbox.north, bbox.east),
-      se = L.latLng(bbox.south, bbox.east),
-      sw = L.latLng(bbox.south, bbox.west);
-  var strings = [gh.encode(input.bbox.north, input.bbox.west, 9),
-    gh.encode(input.bbox.north, input.bbox.east, 9),
-    gh.encode(input.bbox.south, input.bbox.east, 9),
-    gh.encode(input.bbox.south, input.bbox.west, 9)];
+  var strings = [gh.encode(bbox.north, bbox.west, 9),
+    gh.encode(bbox.north, bbox.east, 9),
+    gh.encode(bbox.south, bbox.east, 9),
+    gh.encode(bbox.south, bbox.west, 9)];
   var commonString = longestCommonPrefix(strings);
-  var polygon = input.polyon; 
   var stats = {};
-  var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
-  Promise.map(Object.keys(availableGeohashes), function(crop) {
-    var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/';
+  return Promise.map(Object.keys(availableGeohashes), function(crop) {
     stats[crop] = { 
       area_sum: 0,
       weight_sum: 0,
       count: 0,
       mean_yield: 0,
     };
-    return recursiveGeohashSum(polygon, commonString, crop, stats[crop], availableGeohashes[crop], baseUrl, token).then(function(newStats) {
-      stats[crop].area_sum = newStats.area_sum;
-      stats[crop].weight_sum = newStats.weight_sum;
-      stats[crop].count = newStats.count;
-      stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
-      return stats;
-    })
+    return recursiveGeohashSum(polygon, commonString, stats[crop], availableGeohashes[crop], baseUrl+crop+'/geohash-length-index/', token)
+      .then(function(newStats) {
+        stats[crop].area_sum = newStats.area_sum;
+        stats[crop].weight_sum = newStats.weight_sum;
+        stats[crop].count = newStats.count;
+        stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
+        return stats;
+      })
   }).then(function() {
-    output.success({stats});
+    return stats;
   })
 }
-computeStats.outputs = ['success', 'error'];
-computeStats.async = true;
 
-
-
-function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, baseUrl, token) {
+function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUrl, token) {
   return Promise.try(function() {
     if (!availableGeohashes['geohash-'+geohash.length]) {
       return stats;
@@ -76,7 +64,6 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
                 var pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
                 var poly = {"type":"Polygon","coordinates": [polygon]};
                 if (gju.pointInPolygon(pt, poly)) {
-                  console.log(geohashes[g])
                   stats.area_sum += geohashes[g].area.sum;
                   stats.weight_sum += geohashes[g].weight.sum;
                   stats.count += geohashes[g].count;
@@ -87,7 +74,7 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
           } else {
             var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
             return Promise.each(geohashes, function(g) {
-              return recursiveGeohashSum(polygon, g, crop, stats, availableGeohashes, baseUrl, token)
+              return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
               .then(function (newStats) {
                 if (newStats == null) return stats;
                 return newStats;
@@ -133,7 +120,7 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
       }
       var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
       return Promise.each(geohashes, function(g) {
-        return recursiveGeohashSum(polygon, g, crop, stats, availableGeohashes, baseUrl, token)
+        return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
         .then(function (newStats) {
           if (newStats == null) return stats;
           return newStats;
@@ -148,3 +135,14 @@ function recursiveGeohashSum(polygon, geohash, crop, stats, availableGeohashes, 
 }
 
 
+
+//http://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings
+function longestCommonPrefix(strings) {
+  var A = strings.concat().sort(), 
+  a1= A[0], 
+  a2= A[A.length-1], 
+  L= a1.length, 
+  i= 0;
+  while(i < L && a1.charAt(i) === a2.charAt(i)) i++;
+  return a1.substring(0, i);
+}

@@ -4,7 +4,6 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
-import fastyles from '../css/font-awesome.min.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
 
@@ -15,7 +14,7 @@ export default connect(props => ({
   selected: `app.model.notes.${props.id}.selected`,
   editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
-  noteFields: `app.model.notes.${props.id}.fields`,
+  noteFields: `app.model.noteFields.${props.id}`,
   fields: 'app.model.fields',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
@@ -46,58 +45,53 @@ export default connect(props => ({
       var yields = [];
       if (this.props.note.stats.computing) {
         yields.push(
-          <div
-            key={'yield-waiting-div-'+this.props.note.id}
-            className={styles['yield-info']}>
-          <span
-            key={'yield-waiting-1-'+this.props.note.id}
-            className={styles[this.props.note.stats.computing ? 
-              'yield-text': 'hidden']}>
-              {'Yield: '}
-          </span>
           <span
             key={'yield-waiting-2-'+this.props.note.id}
             className={styles[this.props.note.stats.computing ? 
               'blinker': 'hidden']}>
-              {'...'}
+              {'Computing average yield...'}
           </span>
-          </div>
         )
       } else {
         Object.keys(this.props.note.stats).forEach((crop) => {
+          var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
           if (!isNaN(this.props.note.stats[crop].mean_yield)) {
             yields.push(
               <span
                 key={this.props.note.id+'-yield-text-'+crop}
                 className={styles['yield-text']}>
-                  {'Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
+                  {cropStr + ' Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
               </span>
             )
+            yields.push(
+              <br key={uuid.v4()}/>
+            );
           }
         })
       }
 
       var fieldComparisons = [];
-      Object.keys(this.props.noteFields).forEach((field) => {
-        Object.keys(this.props.note.stats).forEach((crop) => {
-          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
-            var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
-            fieldComparisons.push(
-
-              <span
-                key={this.props.note.id+'-'+field+'-comparison'}
-                className={styles['field-comparison']}>
-                {field + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
-                 ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
-              </span>
-
-            );
-            fieldComparisons.push(
-              <br key={uuid.v4()}/>
-            );
-          }
+      if (this.props.noteFields) {
+        Object.keys(this.props.noteFields).forEach((field) => {
+          Object.keys(this.props.note.stats).forEach((crop) => {
+            var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+            if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+              var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
+              fieldComparisons.push(
+                <span
+                  key={this.props.note.id+'-'+field+'-comparison'}
+                  className={styles['field-comparison']}>
+                  {field + ' ' + cropStr + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
+                   ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+                </span>
+              );
+              fieldComparisons.push(
+                <br key={uuid.v4()}/>
+              );
+            }
+          })
         })
-      })
+      }
 
       return (
         <div 
@@ -106,9 +100,9 @@ export default connect(props => ({
           onClick={(e) => this.handleNoteClick(e)}>
           <div
             className={styles['note-upper']}>
-            <TextAreaAutoSize
+            <textarea
               className={styles[this.props.note.font_color == '#ffffff' ? 
-              'note-text-input-white' : 'note-text-input-black']}
+                'note-text-input-white' : 'note-text-input-black']}
               id={this.props.id+'-input'}
               value={this.props.text} 
               onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
@@ -116,7 +110,7 @@ export default connect(props => ({
                 backgroundColor:this.props.note.color, 
                 color:this.props.note.font_color, 
               }} 
-              minRows={1} 
+              rows={1} 
               tabIndex={1}
               autoFocus={this.props.editing}
               placeholder='Type note description here...'
@@ -145,7 +139,6 @@ export default connect(props => ({
             className={styles[this.props.note.area ? 
               'hr' : 'hidden']}
             style={{backgroundColor:this.props.note.font_color}} 
-            noshade
           />
           <div
             className={styles[this.props.note.area ?
@@ -154,11 +147,9 @@ export default connect(props => ({
               'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
             {yields.length < 1 ? null : <br/>}
             {yields}
-            {fieldComparisons.length < 1 ? null : <br/>}
             {fieldComparisons}
           </div>
           <hr 
-            noshade
             style={{backgroundColor:this.props.note.font_color}} 
             className={styles[this.props.editing && this.props.selected ? 
               'hr' : 'hidden']}

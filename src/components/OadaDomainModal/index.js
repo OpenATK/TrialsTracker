@@ -25,7 +25,6 @@ class OadaDomainModal extends React.Component {
           <input 
             type='text' 
             value={this.props.text} 
-//            value={'yield.oada-dev.com'}
             onChange={(e) => this.props.textChanged({value: e.target.value})}
           />
           <br />
@@ -38,8 +37,8 @@ class OadaDomainModal extends React.Component {
           <button 
             className={styles['cancel-button']}
             type='button'
-            onClick={() => this.props.domainCancelClicked({value:'NotNow'})}>
-            Not Now 
+            onClick={() => this.props.domainCancelClicked({})}>
+            Cancel
           </button>
         </div>
       </div>

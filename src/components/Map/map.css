@@ -25,23 +25,88 @@
 	top: 20px;
 	z-index: 3;
 }
+:global .leaflet-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.undo-control-disabled {
+  position: relative;
+  left: 2px;
+  color: #7b7b7b;
+  background-color: #d4d4d4;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 16px;
+  cursor: default;
+  z-index: 5;
+  border-radius: 4px;
+}
+.undo-control {
+  position: relative;
+  left: 2px;
+  color: #000000;
+  background-color: #ffffff;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 5;
+  border-radius: 4px;
+}
+.gps-control-disabled {
+  position: relative;
+  left: 2px;
+  color: #7b7b7b;
+  background-color: #d4d4d4;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 16px;
+  cursor: default;
+  z-index: 5;
+  border-radius: 4px;
+}
+.gps-control {
+  position: relative;
+  left: 2px;
+  color: #000000;
+  background-color: #ffffff;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 5;
+  border-radius: 4px;
+}
 .selected-note-marker {
-
+  font-size: 25px;
+  top: -25px;
 }
 .hidden {
   display:none;
 }
-.drawing-popup {
-  position:absolute;
-  top: 0px;
-  width: 100%;
-  height: 10%;
-  box-shadow: inset 0px 40px 30px #0000FF;
-  z-index: 3;
+.drawing-message-control {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  height: 30px;
+  line-height: 30px;
+  width: 70vw;
+  box-shadow: 0px -6px 15px 4px #0000FF;
+  background-color: #0000FF;
+  font-size: 20px;
   text-align: center;
-  font-size: large;
   pointer-events: none;
   color: #FFFFFF;
+  z-index: 10000;
 }
 .field-polygon {
   stroke-width: 2.5;

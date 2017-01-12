@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react';
 import {connect} from 'cerebral-view-react';
 import NoteList from '../NoteList/';
 import TrialsMap from '../Map';
-import OadaDomainModal from '../OadaDomainModal';
+import DataSourceSettings from '../Settings/DataSources';
 import styles from './app.css';
 
 export default connect({
@@ -22,7 +22,7 @@ class App extends React.Component {
   render() {
     return (
       <div className={styles['app']}>
-        <OadaDomainModal />
+        <DataSourceSettings />
         <NoteList />
         <TrialsMap />
       </div>

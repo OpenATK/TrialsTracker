@@ -10,8 +10,6 @@ import { removeNote } from './chains';
 import { getYieldData } from './chains';
 import { initialize } from './chains';
 import { handleNoteClick } from './chains';
-import { startStopLiveData } from './chains';
-//import { makeLiveDataRequest } from './chains';
 import { addGeohashes } from './chains';
 import { removeGeohashes } from './chains';
 import { addTag } from './chains';
@@ -20,22 +18,29 @@ import { enterNoteEditMode } from './chains';
 import { exitNoteEditMode } from './chains';
 import { removeTag } from './chains';
 import { clearCache } from './chains';
-import { updateDomainText } from './chains';
-import { submitDomainModal } from './chains';
-import { cancelDomainModal } from './chains';
-import { displayDomainModal } from './chains';
+import { updateOadaYieldDomain } from './chains';
+import { updateOadaFieldsDomain } from './chains';
+import { submitDataSourceSettings } from './chains';
+import { cancelDataSourceSettings } from './chains';
+import { displayDataSourceSettings } from './chains';
 import { toggleCropLayerVisibility } from './chains';
 import { toggleCropDropdownVisibility } from './chains';
 import { handleLocationFound } from './chains';
 import { handleCurrentLocationButton } from './chains';
 import { handleMapMoved } from './chains';
+import { setFieldsSource } from './chains';
+import { setYieldSource } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
 import { handleDoneDrawing } from './map-chains';
 import { undoDrawPoint } from './map-chains';
 import { calculatePolygonArea } from './map-chains';
-import { handleDrag } from './map-chains';
+import { endMarkerDrag } from './map-chains';
+import { startMarkerDrag } from './map-chains';
+import { markerDragging } from './map-chains';
+import { doneMovingMap } from './map-chains';
+import { startMovingMap } from './map-chains';
 
 export default (module) => {
   module.addState(
@@ -49,7 +54,7 @@ export default (module) => {
     ],
 
     mapMoved: [
-      ...handleMapMoved,
+      ...handleMapMoved, ...doneMovingMap,
     ],
 
     toggleCropLayer: [
@@ -60,20 +65,41 @@ export default (module) => {
       ...toggleCropDropdownVisibility,
     ],
 
+    markerDragStarted: [
+      ...startMarkerDrag,
+    ],
+
     markerDragged: [
-      ...handleDrag,
+      ...markerDragging,
     ],
 
-    domainSubmitClicked: [
-      ...submitDomainModal,
+    markerDragEnded: [
+      ...endMarkerDrag,
     ],
 
-    domainCancelClicked: [
-      ...cancelDomainModal,
+    yieldSourceButtonClicked: [
+      ...setYieldSource,
     ],
 
-    domainTextChanged: {
-      chain: [...updateDomainText],
+    fieldsSourceButtonClicked: [
+      ...setFieldsSource,
+    ],
+
+    dataSourcesSubmitClicked: [
+      ...submitDataSourceSettings,
+    ],
+
+    dataSourcesCancelClicked: [
+      ...cancelDataSourceSettings,
+    ],
+
+    yieldOadaDomainChanged: {
+      chain: [...updateOadaYieldDomain],
+      immediate: true,
+    },
+
+    fieldsOadaDomainChanged: {
+      chain: [...updateOadaFieldsDomain],
       immediate: true,
     },
 
@@ -81,13 +107,9 @@ export default (module) => {
       ...clearCache,
     ],
 
-    startStopLiveDataButtonClicked: [
-      ...startStopLiveData,
-   ],
-
-   tileUnloaded: [
-     ...removeGeohashes,
-   ],
+    tileUnloaded: [
+      ...removeGeohashes,
+    ],
 
     newTileDrawn: [
       ...addGeohashes,
@@ -151,8 +173,8 @@ export default (module) => {
       ...handleNoteListClick,
     ],
 
-    setDomainButtonClicked: [
-      ...displayDomainModal,
+    dataSourcesButtonClicked: [
+      ...displayDataSourceSettings,
     ],
 
     undoButtonClicked: [
@@ -167,5 +189,9 @@ export default (module) => {
       ...handleCurrentLocationButton,
     ],
  
+    mapMoveStarted: [
+      ...startMovingMap,    
+    ]
+
   })
 }

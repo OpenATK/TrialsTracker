@@ -1,7 +1,8 @@
 instructions:
 
+cd TrialsTracker/node_modules/
 git clone https://github.com/OADA/oada-id-client-js.git
-cd TrialsTracker/node_modules/oada-id-client-js
+cd oada-id-client
 npm i
 npm run prepublish
 cd ..

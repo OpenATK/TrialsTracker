@@ -1,7 +1,6 @@
-.map-legend {
-  position: absolute;
-  bottom: 40px;
-  right: 15px;
+.legend-control {
+  position: relative;
+  bottom: 20px;
   padding: 5px;
   line-height: 18px;
   background-color: #FFFFFF;

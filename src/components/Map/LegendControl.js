@@ -1,19 +1,20 @@
-import React, { Proptypes } from 'react';
+import React from 'react';
 import { connect } from 'cerebral-view-react';
-import { MapComponent } from 'react-leaflet';
-import styles from './legend.css';
-import Color from 'color';
+import { MapControl } from 'react-leaflet';
+import Control from 'react-leaflet-control';
 import uuid from 'uuid';
+import Color from 'color';
+import styles from './legend.css';
 
-export default connect({
+export default connect(props => ({
   legends: 'app.view.legends',
   yieldDataIndex: 'app.model.yield_data_index',
   cropLayers: 'app.view.map.crop_layers',
-}, {
-
+}), {
 },
-class Legend extends MapComponent {
-    
+
+class LegendControl extends React.Component {  
+
   blendColors(c1, c2, percent) {
     let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
     let a2 = (typeof c1.b === 'undefined') ? 255 : c1.b;
@@ -63,11 +64,16 @@ class Legend extends MapComponent {
           );
         }
       }
-    });
-    return (
-      <div className={styles['map-legend']}>
-        {legendPieces}
-      </div>
+    })
+
+    return(
+      <Control
+        position={this.props.position}>
+        <div
+          className={styles[legendPieces.length > 0 ? 'legend-control' : 'hidden']}>
+          {legendPieces}
+        </div>
+      </Control>
     );
   }
 })

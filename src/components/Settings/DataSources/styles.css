@@ -20,7 +20,6 @@
   margin-top: 10px;
 }
 #input {
-  
 }
 .oada-domain-screen {
   position: fixed;
@@ -34,4 +33,29 @@
 }
 .subtext {
   font-size: small;
+  font-family: sans-serif;
+}
+.category-heading {
+  font-size: 18px;
+  font-family: sans-serif;
+  padding-left: 15px;
+}
+.radio-button {
+  margin-left: 30px;
+}
+.radio-button-text {
+  font-size: 12px;
+  font-family: sans-serif;
+}
+.text-input-title {
+  font-size: 14px;
+  font-family: sans-serif;
+  padding-left: 30px;
+}
+.title {
+  font-size: 28px;
+  font-family: sans-serif;
+}
+.text-input {
+  margin-left: 5px;
 }
