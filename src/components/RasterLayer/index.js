@@ -28,7 +28,6 @@ function blendColors(c1, c2, percent) {
 export default connect(props => ({
   dataIndex: `${props.data}`,
   geohashesToDraw: `app.view.map.geohashes_to_draw.${props.layer}`,
-  token: 'app.settings.data_sources.yield.oada.token',
   legend: `app.view.legends.${props.layer}`,
 }), {
   tileUnloaded: 'app.tileUnloaded',

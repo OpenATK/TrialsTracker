@@ -9,16 +9,20 @@ var stateTree = {
     notes: initial_notes(),
     tags: initial_tags(),
     fields: {}, 
+    noteFields: {}, 
   },
   settings: {
     data_sources: {
       yield: {
-        oada: {
-          domain: '',
-          token: '',
-        },
+        source: 'none',
+        oada_domain: '',
+        oada_token: '',
       },
-      fields_source: 'oada',
+      fields: {
+        source: 'none',
+        oada_domain: '',
+        oada_token: '',
+      }
     }
   },
   view: {
@@ -37,11 +41,21 @@ var stateTree = {
     crop_dropdown_visible: false,
     sort_mode: 'all', //'all' 'fields' 'tags'
     editing_note: false,
-    datasource_settings: {
-      oada_text: 'yield.oada-dev.com',
-      visible: false,
-      field_boundary_source: 'oada', //'oada' 'data silo'
-    }, 
+    settings: {
+      data_sources: {
+        visible: false,
+        yield: {
+          source: 'none',
+          oada_domain: '',
+          oada_token: '',
+        },
+        fields: {
+          source: 'none',
+          oada_domain: '',
+          oada_token: '',
+        }
+      }
+    },
     legends: {
       corn: [{
         value: 130,

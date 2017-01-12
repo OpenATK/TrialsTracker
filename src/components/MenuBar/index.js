@@ -6,7 +6,7 @@ import uuid from 'uuid';
 export default connect({
   yieldDataIndex: 'app.model.yield_data_index',
 }, {
-  setDomainButtonClicked: 'app.setDomainButtonClicked',
+  dataSourcesButtonClicked: 'app.dataSourcesButtonClicked',
   clearCacheButtonClicked: 'app.clearCacheButtonClicked',
 },
 
@@ -24,8 +24,8 @@ class MenuBar extends React.Component {
         <button 
           type="button" 
           className={styles['change-domain-button']}
-          onClick={()=>this.props.setDomainButtonClicked({})}>
-          Change Domain
+          onClick={()=>this.props.dataSourcesButtonClicked({})}>
+          Data Sources
         </button>
       </div>
     )

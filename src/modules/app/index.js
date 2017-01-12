@@ -18,16 +18,18 @@ import { enterNoteEditMode } from './chains';
 import { exitNoteEditMode } from './chains';
 import { removeTag } from './chains';
 import { clearCache } from './chains';
-import { updateDomainText } from './chains';
-import { submitDomainModal } from './chains';
-import { cancelDomainModal } from './chains';
-import { displayDomainModal } from './chains';
+import { updateOadaYieldDomain } from './chains';
+import { updateOadaFieldsDomain } from './chains';
+import { submitDataSourceSettings } from './chains';
+import { cancelDataSourceSettings } from './chains';
+import { displayDataSourceSettings } from './chains';
 import { toggleCropLayerVisibility } from './chains';
 import { toggleCropDropdownVisibility } from './chains';
 import { handleLocationFound } from './chains';
 import { handleCurrentLocationButton } from './chains';
 import { handleMapMoved } from './chains';
-import { setFieldBoundarySource } from './chains';
+import { setFieldsSource } from './chains';
+import { setYieldSource } from './chains';
 
 import { drawComplete } from './map-chains';
 import { handleMouseDown } from './map-chains';
@@ -75,20 +77,29 @@ export default (module) => {
       ...endMarkerDrag,
     ],
 
-    fieldBoundarySourceButtonClicked: [
-      ...setFieldBoundarySource,
+    yieldSourceButtonClicked: [
+      ...setYieldSource,
     ],
 
-    domainSubmitClicked: [
-      ...submitDomainModal,
+    fieldsSourceButtonClicked: [
+      ...setFieldsSource,
     ],
 
-    domainCancelClicked: [
-      ...cancelDomainModal,
+    dataSourcesSubmitClicked: [
+      ...submitDataSourceSettings,
     ],
 
-    domainTextChanged: {
-      chain: [...updateDomainText],
+    dataSourcesCancelClicked: [
+      ...cancelDataSourceSettings,
+    ],
+
+    yieldOadaDomainChanged: {
+      chain: [...updateOadaYieldDomain],
+      immediate: true,
+    },
+
+    fieldsOadaDomainChanged: {
+      chain: [...updateOadaFieldsDomain],
       immediate: true,
     },
 
@@ -162,8 +173,8 @@ export default (module) => {
       ...handleNoteListClick,
     ],
 
-    setDomainButtonClicked: [
-      ...displayDomainModal,
+    dataSourcesButtonClicked: [
+      ...displayDataSourceSettings,
     ],
 
     undoButtonClicked: [
