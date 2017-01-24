@@ -3,7 +3,7 @@ import PouchDB from 'pouchdb';
 function getFromPouch(app_state_location) {
   function action({state, output}) {
   //First, check if the domain is already in the cache;
-    var db = new PouchDB('TrialsTracker');
+    var db = new PouchDB('TrialsTracker', {size: 500});
     db.get(app_state_location).then(function(result) {
       output.success({result});
     }).catch(function(err) {

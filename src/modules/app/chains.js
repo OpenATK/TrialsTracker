@@ -654,7 +654,7 @@ function setYieldDataIndex({input, state}) {
 
 function getOadaDomainFromPouch({state, output}) {
   //First, check if the domain is already in the cache;
-  var db = new PouchDB('TrialsTracker');
+  var db = new PouchDB('TrialsTracker', {size: 500});
   db.get('domain').then(function(result) {
     if (result.doc.domain.indexOf('offline') > 0) {
       output.offline({}); //In cache, but not connected to server for now
@@ -672,7 +672,7 @@ getOadaDomainFromPouch.async = true;
 function putOadaDomainInPouch({input, state}) {
   var val = state.get('app.settings.data_sources.yield.oada_domain');
   if (val.length > 0) {
-    var db = new PouchDB('TrialsTracker');
+    var db = new PouchDB('TrialsTracker', {size: 500});
     db.put({
       doc: {domain: val},
       _id: 'domain',
@@ -738,7 +738,7 @@ getOadaToken.outputs = ['success', 'error'];
 getOadaToken.async = true;
 
 function storeToken({input, state, services}) {
-  var db = new PouchDB('TrialsTracker');
+  var db = new PouchDB('TrialsTracker', {size: 500});
   db.put({
     doc: {token: input.token},
     _id: 'token',
