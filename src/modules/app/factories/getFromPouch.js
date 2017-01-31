@@ -1,4 +1,3 @@
-import PouchDB from 'pouchdb';
 import db from '../../Pouch';
 
 function getFromPouch(app_state_location) {
@@ -16,7 +15,7 @@ function getFromPouch(app_state_location) {
   // You can set custom display names for the debugger
   action.displayName = 'getFromPouch'
 
-  return action
+  return action;
 }
 
-export default getFromPouch
+export default getFromPouch;
