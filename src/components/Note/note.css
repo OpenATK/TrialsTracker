@@ -13,6 +13,9 @@
 }
 .field-comparison {
   font-size: 15px;
+  display: flex;
+  white-space: nowrap;
+  overflow: scroll;
 }
 .note-upper {
   display: flex;
