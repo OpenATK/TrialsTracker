@@ -1,10 +1,10 @@
 import PouchDB from 'pouchdb';
+import db from '../../Pouch';
 
 function getFromPouch(app_state_location) {
   function action({state, output}) {
   //First, check if the domain is already in the cache;
-    var db = new PouchDB('TrialsTracker');
-    db.get(app_state_location).then(function(result) {
+    db().get(app_state_location).then(function(result) {
       output.success({result});
     }).catch(function(err) {
       if (err.status !== 404) throw err;
