@@ -7,7 +7,6 @@ import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import gju from 'geojson-utils';
-import PouchDB from 'pouchdb';
 import cache from '../Cache/cache.js';
 import rmc from 'random-material-color';
 import Color from 'color';
@@ -20,6 +19,7 @@ import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
 import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
 import putInPouch from './factories/putInPouch';
 import getFromPouch from './factories/getFromPouch';
+import db from '../Pouch';
 
 var computeFieldYieldData = [
   computeFieldStats, {
@@ -654,8 +654,7 @@ function setYieldDataIndex({input, state}) {
 
 function getOadaDomainFromPouch({state, output}) {
   //First, check if the domain is already in the cache;
-  var db = new PouchDB('TrialsTracker');
-  db.get('domain').then(function(result) {
+  db().get('domain').then(function(result) {
     if (result.doc.domain.indexOf('offline') > 0) {
       output.offline({}); //In cache, but not connected to server for now
     } else {
@@ -672,8 +671,7 @@ getOadaDomainFromPouch.async = true;
 function putOadaDomainInPouch({input, state}) {
   var val = state.get('app.settings.data_sources.yield.oada_domain');
   if (val.length > 0) {
-    var db = new PouchDB('TrialsTracker');
-    db.put({
+    db().put({
       doc: {domain: val},
       _id: 'domain',
     }).catch(function(err) {
@@ -683,8 +681,7 @@ function putOadaDomainInPouch({input, state}) {
 };
 
 function destroyCache() {
-  var db = new PouchDB('TrialsTracker');
-  db.destroy();
+  db().destroy();
 };
 
 function registerGeohashes({input, state}) {
@@ -738,8 +735,7 @@ getOadaToken.outputs = ['success', 'error'];
 getOadaToken.async = true;
 
 function storeToken({input, state, services}) {
-  var db = new PouchDB('TrialsTracker');
-  db.put({
+  db().put({
     doc: {token: input.token},
     _id: 'token',
   }).catch(function(err) {

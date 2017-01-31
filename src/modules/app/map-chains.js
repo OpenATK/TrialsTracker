@@ -3,7 +3,6 @@ import _ from 'lodash';
 import geolib from 'geolib';
 import gh from 'ngeohash';
 import { Promise } from 'bluebird';
-import PouchDB from 'pouchdb';
 import cache from '../Cache/cache.js';
 import gju from 'geojson-utils';
 import gjArea from '@mapbox/geojson-area';

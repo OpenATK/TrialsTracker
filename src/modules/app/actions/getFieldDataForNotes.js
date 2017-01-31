@@ -18,8 +18,8 @@ export default function getFieldDataForNotes({input, state}) {
                   }
                 }
               })
+              state.set(['app', 'model', 'noteFields', note, field], obj);
             }
-            state.set(['app', 'model', 'noteFields', note, field], obj);
           }
         }
       })
