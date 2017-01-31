@@ -5,7 +5,6 @@ import styles from './style.css';
 import gh from 'ngeohash';
 import request from 'superagent';
 import _ from 'lodash';
-import PouchDB from 'pouchdb';
 import Promise from 'bluebird';
 import cache from '../../modules/Cache/cache.js';
 import uuid from 'uuid';
