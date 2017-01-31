@@ -62,6 +62,7 @@
     "react-dom": "^15.4.1",
     "react-fontawesome": "^1.1.0",
     "react-leaflet": "^1.0.1",
+    "react-leaflet-control": "^1.2.0",
     "react-textarea-autosize": "^3.3.0",
     "readdir-recursive-promise": "0.0.1",
     "recursive-readdir": "^2.0.0",
