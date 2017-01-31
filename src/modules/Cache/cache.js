@@ -75,9 +75,6 @@ module.exports = {
   },
 
   tree: {
-    yield:
-    fields:
-    notes:
 
   }
 }

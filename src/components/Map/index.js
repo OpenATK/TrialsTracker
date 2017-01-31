@@ -139,7 +139,8 @@ class TrialsMap extends React.Component {
         <Overlay 
           checked={this.props.cropLayers[crop].visible}
           onChange={()=>this.props.toggleCropLayer({crop})}
-          name={crop} key={crop+'-overlay'}>
+          name={crop.charAt(0).toUpperCase() + crop.slice(1)}
+          key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
             map={this.refs.map.leafletElement}

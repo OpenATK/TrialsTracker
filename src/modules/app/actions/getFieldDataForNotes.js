@@ -14,7 +14,7 @@ export default function getFieldDataForNotes({input, state}) {
               Object.keys(fields[field].stats).forEach((crop) => {
                 if (notes[note].stats[crop]) {
                   obj[crop] = {
-                    difference: notes[note].stats[crop].mean_yield - fields[field].stats[crop].mean_yield
+                    difference: fields[field].stats[crop].mean_yield - notes[note].stats[crop].mean_yield
                   }
                 }
               })

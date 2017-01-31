@@ -23,6 +23,8 @@
   margin-left: 3px;
   margin-right: 3px;
   font-size: 18px;
+  white-space: nowrap;
+  overflow: scroll;
 }
 .note-lower {
   padding: 2px;
