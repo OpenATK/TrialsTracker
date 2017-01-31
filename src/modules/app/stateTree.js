@@ -26,6 +26,7 @@ var stateTree = {
     }
   },
   view: {
+    note_error: '',
     map: {
       moving: false,
       geohashes_to_draw: {},

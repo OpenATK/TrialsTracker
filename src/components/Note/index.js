@@ -34,11 +34,7 @@ export default connect(props => ({
     }
     
     validateNote() {
-      if (this.props.note.geometry.geojson.coordinates[0].length >= 3) {
-        if (this.props.note.text !== '') {
-          this.props.doneDrawingButtonClicked({id:this.props.id})
-        }
-      }
+         this.props.doneDrawingButtonClicked({id:this.props.id})
     }
 
     render() {
@@ -78,7 +74,7 @@ export default connect(props => ({
             var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
             if (!isNaN(this.props.note.stats[crop].mean_yield)) {
               if (this.props.noteFields[field][crop]) {
-                var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
+                var sign = (this.props.noteFields[field][crop].difference < 0) ? '' : '+';
                 fieldComparisons.push(
                   <span
                     key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
@@ -95,6 +91,11 @@ export default connect(props => ({
           })
         })
       }
+
+      var area = null;
+      if (this.props.note.area) {
+        area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
+      } 
 
       return (
         <div 
@@ -146,8 +147,7 @@ export default connect(props => ({
           <div
             className={styles[this.props.note.area ?
               'note-middle' : 'hidden']}>
-            {this.props.note.area ? 
-              'Area: ' + this.props.note.area.toFixed(2) + ' acres' : null}
+            {area}
             {yields.length < 1 ? null : <br/>}
             {yields}
             {fieldComparisons}

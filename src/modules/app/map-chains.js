@@ -33,6 +33,7 @@ export var undoDrawPoint = [
 
 export var drawComplete = [
   set('state:app.view.map.drawing_note_polygon', false), 
+  validateNoteText,
   setWaiting,
   getNoteBoundingBox, {
     success: [
@@ -45,7 +46,7 @@ export var drawComplete = [
         error: [],
       }
     ],
-    error: [],
+    error: [setEmptyPolygon],
   },
 ];
 
@@ -62,23 +63,9 @@ export var markerDragging = [
   recalculateArea
 ];
 
-function setNoteFields({input, state}) {
-  var note = state.get(['app', 'model', 'notes', input.id]);
-  var fields = state.get(['app', 'model', 'fields']);
-  Object.keys(fields).forEach((field) => {
-    if (polygonsIntersect(fields[field].boundary.geojson.coordinates[0], note.geometry.geojson.coordinates[0])) {
-      //get the field average for each crop and compare to note average
-      var obj = {};
-      Object.keys(fields[field].stats).forEach((crop) => {
-        if (note.stats[crop]) {
-          obj[crop] = {
-            difference: note.stats[crop].mean_yield - fields[field].stats[crop].mean_yield
-          }
-        }
-      })
-      state.set(['app', 'model', 'notes', input.id, 'fields', field], obj);
-    }
-  })
+function setEmptyPolygon({input, state}) {
+  state.set(['app', 'model', 'notes', input.id, 'area'], '(no polygon drawn)');
+  state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);
 }
 
 function toggleMapMoving({state}) {
@@ -103,6 +90,8 @@ function recalculateArea({state}) {
     if (note.geometry.geojson.coordinates[0].length > 2) {
       area = gjArea.geometry(note.geometry.geojson)/4046.86;
       state.set(['app', 'model', 'notes', id, 'area'], area);
+  //  } else {
+  //    state.set(['app', 'model', 'notes', id, 'area'], null);
     }
   }
 }
@@ -153,9 +142,13 @@ function setNoteStats({input, state}) {
 
 function getNoteBoundingBox({input, state, output}) {
   var notes = state.get(['app', 'model', 'notes']);
-  var bbox = computeBoundingBox(notes[input.id].geometry.geojson);
-  var area = gjArea.geometry(notes[input.id].geometry.geojson)/4046.86; 
-  output.success({bbox, area});
+  if (notes[input.id].geometry.geojson.coordinates[0].length < 3) {
+    output.error({});
+  } else {
+    var bbox = computeBoundingBox(notes[input.id].geometry.geojson);
+    var area = gjArea.geometry(notes[input.id].geometry.geojson)/4046.86; 
+    output.success({bbox, area});
+  }
 }
 
 function setNoteBoundingBox({input, state, output}) {
@@ -171,4 +164,7 @@ function dropPoint ({input, state}) {
     var id = state.get(['app', 'view', 'selected_note']);
     state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
   }
+}
+
+function validateNoteText({input, state}) {
 }
