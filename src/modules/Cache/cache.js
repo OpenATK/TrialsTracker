@@ -56,82 +56,28 @@ module.exports = {
     })
   },
 
-//This was called because the given url doesn't yet exist.
-  recursiveSetup: function(url, domain, token, data) {
-//TODO: Get the format and create the object.
 
-//TODO: Replace children resources with links
-
-//Create a resource.
-    var id = uuid.v4();
-    data = {};
-    data._id = id;
-    return agent('PUT', 'https://'+domain+'/resources/'+id+'/')
-    .set('Authorization', 'Bearer '+ token)
-    .send(data)
-    .end()
-    .then(() => {
-      var pieces = url.split('/');
-      var parentUrl = 'https://'+domain+'/'+pieces.join('/', 0, pieces.length-2);
-// Attempt to get parent.  
-      return agent('GET', parentUrl)
-      .set('Authorization', 'Bearer '+ token)
-      .send(body)
-      .end()
-      .then((res) => {
-// It exists. PUT to bookmarks and return the id.
-        return id;
-
-      }).catch((err) => {
-        if (err.status == 404) {
-          return recursiveSetup(domain, token, url, data)
-          .then((response) => {
-//Use the id to link to children documents
-            return agent('PUT', url)
-            .set('Authorization', 'Bearer '+ token)
-            .send(data)
-            .end()
-            .then((res) => {
-            
-            })
-          })
-        }
-      })
-    })
-  },
-
-  put: function(domain, token, url, ) {
-    //Create the resource
-    var id = uuid.v4();
-    data._id = id;
+  put: function(domain, token, url) {
     return agent('PUT', 'https://'+domain+'/resources/'+id+'/')
       .set('Authorization', 'Bearer '+ token)
       .send(data)
       .end()
     .then(function(response) {
-
-    })
-    return agent('GET', url)
-    .set('Authorization', 'Bearer '+ token)
-    .send(body)
-    .end()
-    .then((res) => {
-      console.log(res)
-      return res;
-    }).catch((err) => {
-      if (err.status == 404) {
-        return agent('PUT', 'https://'+domain+'/resources/'+id+'/')
-        .set('Authorization', 'Bearer '+ token)
-        .send(data)
-        .end()
-      }
-    })
-
-    var pieces = url.split('/');
-    var parentUrl = 'https://'+domain+'/'+pieces.join('/', 0, pieces.length-2);
-    return recursiveSetup(domain, token, parentUrl, data)
-    .then(() => {
-      
+      return agent('PUT', url)
+      .set('Authorization', 'Bearer '+ token)
+      .send(data)
+      .end()
     })
   },
+ 
+  setup: function() {
+
+  },
+
+  tree: {
+    yield:
+    fields:
+    notes:
+
+  }
 }

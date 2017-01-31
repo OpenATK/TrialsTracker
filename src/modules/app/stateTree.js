@@ -157,7 +157,7 @@ function initial_notes() {
       tags: [],//['application', 
       fields: {},
       area: 12.439745214592033,
-      color: '#E91E63',
+      color: '#ff5722',
       stats: {
         corn: { 
           area_sum: 14.017808080808045,
@@ -206,7 +206,7 @@ function initial_notes() {
         time: time,
         tags: ['low area'],
         area: 0.9776069561840566,
-        color: '#8BC34A',
+        color: '#607d8b',
         stats: {
           corn: {
             area_sum: 0.9599224747474746,
