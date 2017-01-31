@@ -16,6 +16,7 @@ export default connect(props => ({
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
   noteFields: `app.model.noteFields.${props.id}`,
   fields: 'app.model.fields',
+  drawing: 'app.view.map.drawing_note_polygon',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
@@ -27,7 +28,7 @@ export default connect(props => ({
   class Note extends React.Component {
 
     handleNoteClick(evt) {
-      if (!this.props.drawMode) {
+      if (!this.props.drawing) {
         if (!this.props.selected) this.props.noteClicked({note:this.props.id})
       }
     }
@@ -76,18 +77,20 @@ export default connect(props => ({
           Object.keys(this.props.note.stats).forEach((crop) => {
             var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
             if (!isNaN(this.props.note.stats[crop].mean_yield)) {
-              var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
-              fieldComparisons.push(
-                <span
-                  key={this.props.note.id+'-'+field+'-comparison'}
-                  className={styles['field-comparison']}>
-                  {field + ' ' + cropStr + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
-                   ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
-                </span>
-              );
-              fieldComparisons.push(
-                <br key={uuid.v4()}/>
-              );
+              if (this.props.noteFields[field][crop]) {
+                var sign = (this.props.noteFields[field][crop].difference > 0) ? '+' : '';
+                fieldComparisons.push(
+                  <span
+                    key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
+                    className={styles['field-comparison']}>
+                    {field + ' ' + cropStr + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
+                     ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+                  </span>
+                );
+                fieldComparisons.push(
+                  <br key={uuid.v4()}/>
+                );
+              }
             }
           })
         })
