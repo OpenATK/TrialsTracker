@@ -21,6 +21,7 @@ class UndoControl extends React.Component {
       <Control
         position={this.props.position}>
         <div
+          disabled
           className={styles[!this.props.drawing ? 'hidden' : 
             this.props.enabled ? 'undo-control' : 'undo-control-disabled']}
           onClick={() => this.props.undoButtonClicked({})}>

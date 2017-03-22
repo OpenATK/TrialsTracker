@@ -50,12 +50,9 @@ export default connect(props => ({
           </datalist>
           <input 
             className={styles[this.props.editing && this.props.selected ? 
-              (this.props.note.font_color == '#ffffff' ? 'input-white' : 'input-black')
-              : 'hidden'
-            ]}
+              'input' : 'hidden']}
             placeholder='Add a new tag...'
             style={{
-              backgroundColor: this.props.note.color, 
               border: 'none', 
             }}
             list={id}

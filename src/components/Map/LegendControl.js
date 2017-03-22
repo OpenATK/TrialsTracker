@@ -10,6 +10,7 @@ export default connect(props => ({
   legends: 'app.view.legends',
   yieldDataIndex: 'app.model.yield_data_index',
   cropLayers: 'app.view.map.crop_layers',
+  isMobile: 'app.is_mobile',
 }), {
 },
 
@@ -70,7 +71,7 @@ class LegendControl extends React.Component {
       <Control
         position={this.props.position}>
         <div
-          className={styles[legendPieces.length > 0 ? 'legend-control' : 'hidden']}>
+          className={styles[(legendPieces.length > 0) ? 'legend-control' : 'hidden']}>
           {legendPieces}
         </div>
       </Control>

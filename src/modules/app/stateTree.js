@@ -11,6 +11,7 @@ var stateTree = {
     fields: {}, 
     noteFields: {}, 
   },
+  is_mobile: false,
   settings: {
     data_sources: {
       yield: {
@@ -26,6 +27,11 @@ var stateTree = {
     }
   },
   view: {
+    menu_dropdown_visible: false,
+    note_dropdown: {
+      visible: false,
+      note: '',
+    },
     note_error: '',
     map: {
       moving: false,
@@ -34,7 +40,7 @@ var stateTree = {
       map_location: [],
       map_zoom: 15,
       crop_layers: {},
-      $isLoading: true,
+      isLoading: false,
       drawing_note_polygon: false,
       dragging_marker: false,
     },
@@ -56,6 +62,9 @@ var stateTree = {
           oada_token: '',
         }
       }
+    },
+    legend: {
+      visible: false,
     },
     legends: {
       corn: [{

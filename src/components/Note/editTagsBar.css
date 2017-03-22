@@ -2,31 +2,18 @@
   flex: 1;
   color: black;
 }
-.input-black::-webkit-input-placeholder {
-  color: black;
-}
-.input-black {
+.input {
   min-width: 250px;
-  color: black;
+  color: #212121;
   display: block;
   border: none;
-  font-size: 18px;
-  outline: none;
-}
-.input-white::-webkit-input-placeholder {
-  color: white;
-}
-.input-white {
-  min-width: 250px;
-  color: white;
-  display: block;
-  border: none;
-  font-size: 18px;
+  font-size: 16px;
   outline: none;
 }
 .tag {
   position: relative;
-  background-color: white;
+  background-color: #00bcd4;
+  color: white;
   border-radius: 2px;
   display: inline-block;
   font-family: sans-serif;
@@ -40,7 +27,7 @@
   background-color: transparent;
   border-color: transparent;
   margin-right: 3px;
-  color: #FF0000;
+  color: #212121;
 }
 .hidden {
   display: none;

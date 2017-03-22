@@ -1,4 +1,5 @@
 import uuid from 'uuid';
+import db from '../../Pouch';
 
 function putInPouch(app_state_location) {
   function action({state}) {

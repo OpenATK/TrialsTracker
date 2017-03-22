@@ -40,6 +40,7 @@ export default connect(props => ({
   selectedNote: 'app.view.selected_note',
   editing: 'app.view.editing',
   legends: 'app.view.legends',
+  legendVisible: 'app.view.legend.visible',
   yieldDataIndex: 'app.model.yield_data_index',
   drawing: 'app.view.map.drawing_note_polygon',
   fields: 'app.model.fields',
@@ -50,6 +51,8 @@ export default connect(props => ({
   domain: 'app.settings.data_sources.yield.oada_domain',
   moving: 'app.view.map.moving',
   dragging: 'app.view.map.dragging_marker',
+  isLoading: 'app.view.map.isLoading',
+  isMobile: 'app.is_mobile',
 }), {
   mapMoveStarted: 'app.mapMoveStarted',
   mouseDownOnMap: 'app.mouseDownOnMap',
@@ -68,7 +71,9 @@ class TrialsMap extends React.Component {
 
   validateMouseEvent(evt) {
     if (this.props.drawing) {
+      // Don't fire a click event when panning the map or when dragging a point.
       if (!this.props.moving && !this.props.dragging) {
+        // Don't add a point if a control was clicked.
         if (!evt.originalEvent.toElement.offsetParent) {
           this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
         } else if (!evt.originalEvent.toElement.offsetParent.className.includes('control')) {
@@ -93,6 +98,7 @@ class TrialsMap extends React.Component {
           className={styles['note-polygon']}
           data={self.props.notes[key].geometry.geojson} 
           color={self.props.notes[key].color} 
+          style={{fillOpacity:0.4}}
           dragging={true} 
           key={uuid.v4()}
         />)
@@ -157,18 +163,21 @@ class TrialsMap extends React.Component {
     })
     var undoEnabled = this.props.selectedNote ? 
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
-   
+
     return (
       <div className={styles['map-panel']}>
         <MenuBar/>
+        <div className={styles[this.props.isLoading ? 'loading-screen' : 'hidden']}/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-          onMouseup={(e) => {this.validateMouseEvent(e)}} 
+          onClick={(e) => {this.validateMouseEvent(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
           onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
           dragging={true}
           center={this.props.mapLocation.length > 0 ? this.props.mapLocation : position} 
           ref='map'
+          zoomControl={this.props.isMobile}
+          attributionControl={this.props.isMobile}
           zoom={this.props.mapZoom ? this.props.mapZoom : 15}>
           {this.props.currentLocation ? <CircleMarker
             key={'currentLocationMarker'}
@@ -182,19 +191,19 @@ class TrialsMap extends React.Component {
             >
           </CircleMarker> : null}
 
-          <GpsControl
+          {this.props.isMobile ? null : <GpsControl
             position={'topleft'}
-          />
-          <UndoControl
+          />}
+          {this.props.isMobile ? null : <UndoControl
             position={'topleft'}
             enabled={undoEnabled}
-          />
+          />}
           <DrawingMessage
             position={'bottomright'}
           />
-          <LegendControl
+          {this.props.legendVisible ? <LegendControl
             position={'bottomright'} 
-          />
+          /> : null}
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'

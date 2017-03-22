@@ -1,46 +1,59 @@
 import stateTree from './stateTree.js';
 
-import { selectNote } from './chains';
-import { updateNoteText } from './chains';
-import { updateTagText } from './chains';
-import { changeSortMode } from './chains';
-import { changeShowHideState } from './chains';
-import { addNewNote } from './chains';
-import { removeNote } from './chains';
-import { getYieldData } from './chains';
-import { initialize } from './chains';
-import { handleNoteClick } from './chains';
-import { addGeohashes } from './chains';
-import { removeGeohashes } from './chains';
-import { addTag } from './chains';
-import { handleNoteListClick } from './chains';
-import { enterNoteEditMode } from './chains';
-import { exitNoteEditMode } from './chains';
-import { removeTag } from './chains';
-import { clearCache } from './chains';
-import { updateOadaYieldDomain } from './chains';
-import { updateOadaFieldsDomain } from './chains';
-import { submitDataSourceSettings } from './chains';
-import { cancelDataSourceSettings } from './chains';
-import { displayDataSourceSettings } from './chains';
-import { toggleCropLayerVisibility } from './chains';
-import { toggleCropDropdownVisibility } from './chains';
-import { handleLocationFound } from './chains';
-import { handleCurrentLocationButton } from './chains';
-import { handleMapMoved } from './chains';
-import { setFieldsSource } from './chains';
-import { setYieldSource } from './chains';
+import { 
+  selectNote,
+  updateNoteText,
+  updateTagText,
+  changeSortMode,
+  changeShowHideState,
+  addNewNote,
+  removeNote,
+  handleNoteClick,
+  addTag,
+  handleNoteListClick,
+  enterNoteEditMode,
+  exitNoteEditMode,
+  removeTag,
+  toggleNoteDropdown,
+ } from '../Note/chains';
 
-import { drawComplete } from './map-chains';
-import { handleMouseDown } from './map-chains';
-import { handleDoneDrawing } from './map-chains';
-import { undoDrawPoint } from './map-chains';
-import { calculatePolygonArea } from './map-chains';
-import { endMarkerDrag } from './map-chains';
-import { startMarkerDrag } from './map-chains';
-import { markerDragging } from './map-chains';
-import { doneMovingMap } from './map-chains';
-import { startMovingMap } from './map-chains';
+import { 
+  addGeohashes,
+  getYieldData,
+  initialize,
+  removeGeohashes,
+  clearCache,
+  updateOadaYieldDomain,
+  updateOadaFieldsDomain,
+  submitDataSourceSettings,
+  cancelDataSourceSettings,
+  displayDataSourceSettings,
+  toggleCropLayerVisibility,
+  toggleCropDropdownVisibility,
+  handleLocationFound,
+  handleCurrentLocationButton,
+  handleMapMoved,
+  setFieldsSource,
+  setYieldSource,
+} from './chains';
+
+import { 
+  drawComplete,
+  handleMapClick,
+  handleDoneDrawing,
+  undoDrawPoint,
+  endMarkerDrag,
+  startMarkerDrag,
+  markerDragging,
+  doneMovingMap,
+  startMovingMap,
+} from '../Map/chains';
+
+import { 
+  toggleMenuDropdown,
+  downloadNotes,
+  toggleMapLegend,
+} from '../MenuBar/chains';
 
 export default (module) => {
   module.addState(
@@ -115,10 +128,6 @@ export default (module) => {
       ...addGeohashes,
     ],
 
-    mapDoubleClicked: [
-      ...handleMouseDown, drawComplete,
-    ],
-
     doneDrawingButtonClicked: [
       ...drawComplete, ...exitNoteEditMode
     ],
@@ -136,7 +145,7 @@ export default (module) => {
     ],
 
     editNoteButtonClicked: [
-      ...enterNoteEditMode,
+      ...enterNoteEditMode, ...toggleNoteDropdown,
     ],
 
     noteTextChanged: {
@@ -150,7 +159,7 @@ export default (module) => {
     },
 
     mouseDownOnMap: [
-      ...handleMouseDown, ...calculatePolygonArea,
+      ...handleMapClick,
     ],
 
     showHideButtonClicked: [
@@ -191,7 +200,30 @@ export default (module) => {
  
     mapMoveStarted: [
       ...startMovingMap,    
-    ]
+    ],
 
+    noteBackgroundClicked: [
+      ...toggleNoteDropdown,
+    ],
+    
+    menuBackgroundClicked: [
+      ...toggleMenuDropdown,
+    ],
+
+    showNoteDropdown: [
+      ...toggleNoteDropdown,
+    ],
+
+    showMenuDropdown: [
+      ...toggleMenuDropdown,
+    ],
+
+    downloadNotesButtonClicked: [
+      ...downloadNotes,
+    ],
+
+    mapLegendButtonClicked: [
+      ...toggleMapLegend,
+    ],
   })
 }

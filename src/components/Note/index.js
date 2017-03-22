@@ -12,32 +12,29 @@ export default connect(props => ({
   text: `app.model.notes.${props.id}.text`,
   tags: `app.model.notes.${props.id}.tags`,
   selected: `app.model.notes.${props.id}.selected`,
-  editing: 'app.view.editing_note',
+  editingNote: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
+  drawing: 'app.view.map.drawing_note_polygon',
   noteFields: `app.model.noteFields.${props.id}`,
   fields: 'app.model.fields',
-  drawing: 'app.view.map.drawing_note_polygon',
+  isMobile: 'app.is_mobile',
+  noteDropdownVisible: 'app.view.note_dropdown.visible',
+  noteDropdown: 'app.view.note_dropdown.note',
 }), {
   deleteNoteButtonClicked: 'app.deleteNoteButtonClicked',
   doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
   editNoteButtonClicked: 'app.editNoteButtonClicked',
   noteClicked: 'app.noteClicked',
   noteTextChanged: 'app.noteTextChanged',
+  backgroundClicked: 'app.noteBackgroundClicked',
+  showNoteDropdown: 'app.showNoteDropdown',
 },
 
   class Note extends React.Component {
 
-    handleNoteClick(evt) {
-      if (!this.props.drawing) {
-        if (!this.props.selected) this.props.noteClicked({note:this.props.id})
-      }
-    }
-    
-    validateNote() {
-         this.props.doneDrawingButtonClicked({id:this.props.id})
-    }
-
     render() {
+      var editing = this.props.editingNote ?
+        (this.props.selected ? true:false) : false
       if (!this.props.note) return null;
       var yields = [];
       if (this.props.note.stats.computing) {
@@ -54,11 +51,20 @@ export default connect(props => ({
           var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
           if (!isNaN(this.props.note.stats[crop].mean_yield)) {
             yields.push(
-              <span
+              <div
                 key={this.props.note.id+'-yield-text-'+crop}
                 className={styles['yield-text']}>
-                  {cropStr + ' Yield: ' + this.props.note.stats[crop].mean_yield.toFixed(2) + ' bu/ac'}
-              </span>
+                <span
+                  key={this.props.note.id+'-yield-text-'+crop+'-header'}
+                  className={styles['yield-text-header']}>
+                    {cropStr + ' Yield'}
+                </span>
+                <span
+                  key={this.props.note.id+'-yield-text-'+crop+'-value'}
+                  className={styles['yield-text-value']}>
+                    {this.props.note.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
+                </span>
+              </div>
             )
             yields.push(
               <br key={uuid.v4()}/>
@@ -67,24 +73,50 @@ export default connect(props => ({
         })
       }
 
+      var area = null;
+      var areaContent = null;
+      if (this.props.note.area) {
+        area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
+        areaContent = 
+          <div
+            key={'area'}
+            className={styles['area']}>
+            <span 
+              className={styles['area-header']}>
+              Area
+            </span>
+            <span 
+              className={styles['area-value']}>
+              {this.props.note.area.toFixed(2) + ' acres'}
+            </span>
+          </div>
+      }
+
       var fieldComparisons = [];
       if (this.props.noteFields) {
         Object.keys(this.props.noteFields).forEach((field) => {
-          Object.keys(this.props.note.stats).forEach((crop) => {
-            var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+          Object.keys(this.props.note.stats).forEach((crop, idx) => {
             if (!isNaN(this.props.note.stats[crop].mean_yield)) {
               if (this.props.noteFields[field][crop]) {
+                var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
                 var sign = (this.props.noteFields[field][crop].difference < 0) ? '' : '+';
                 fieldComparisons.push(
-                  <span
+                  <div
                     key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
+                    style={{order:idx}}
                     className={styles['field-comparison']}>
-                    {field + ' ' + cropStr + ': '+ this.props.fields[field].stats[crop].mean_yield.toFixed(2) +
-                     ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
-                  </span>
-                );
-                fieldComparisons.push(
-                  <br key={uuid.v4()}/>
+                    <span
+                      key={this.props.note.id+'-'+field+'-'+crop+'-field'}
+                      className={styles['field-comparison-header']}>
+                      {field + ' ' +cropStr}
+                    </span>
+                    <span
+                      key={this.props.note.id+'-'+field+'-'+crop+'-value'}
+                      className={styles['field-comparison-value']}>
+                      {this.props.fields[field].stats[crop].mean_yield.toFixed(1) +
+                      ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+                    </span>
+                  </div>
                 );
               }
             }
@@ -92,84 +124,101 @@ export default connect(props => ({
         })
       }
 
-      var area = null;
-      if (this.props.note.area) {
-        area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
-      } 
-
       return (
         <div 
-          style={{backgroundColor:this.props.note.color, borderColor:this.props.note.color, color:this.props.note.font_color, order: this.props.note.order}} 
+          style={{order: this.props.note.order, }} 
           className={styles[this.props.selected ? 'selected-note' : 'note']} 
-          onClick={(e) => this.handleNoteClick(e)}>
+          onClick={(e) => this.props.noteClicked({id:this.props.id})}>
           <div
+            style={{backgroundColor: this.props.note.color}}
             className={styles['note-upper']}>
             <textarea
-              className={styles[this.props.note.font_color == '#ffffff' ? 
-                'note-text-input-white' : 'note-text-input-black']}
+              className={styles['note-text-input']}
               id={this.props.id+'-input'}
+              style={{color: this.props.note.font_color}}
+              type='text'
               value={this.props.text} 
-              onChange={(e) => this.props.noteTextChanged({value: e.target.value, noteId:this.props.id})}
-              style={{
-                backgroundColor:this.props.note.color, 
-                color:this.props.note.font_color, 
-              }} 
+              onChange={(e) => this.props.noteTextChanged({value: e.target.value, id:this.props.id})}
               rows={1} 
               tabIndex={1}
-              autoFocus={this.props.editing}
+              autoFocus={editing}
               placeholder='Type note description here...'
-              readOnly={this.props.editing ? false : "readonly"}
+              readOnly={editing ? false : "readonly"}
             />
-            <FontAwesome 
-              name='pencil'
-              style={{
-                color:this.props.note.font_color, 
-              }}
-              className={styles[this.props.selected && !this.props.editing ? 
-                'edit-note-button' : 'hidden']}
-              onClick={() => this.props.editNoteButtonClicked({})}
-            />
-            <FontAwesome 
-              name='trash'
-              style={{
-                color:this.props.note.font_color, 
-              }}
-              className={styles[this.props.selected && this.props.editing ? 
+            <div 
+              className={styles['edit-note-button']}
+              onClick={(e)=>{e.stopPropagation();this.props.showNoteDropdown({id:this.props.id})}}>
+              <FontAwesome 
+                name='ellipsis-v'
+                style={{color: this.props.note.font_color}}
+                className={styles['edit-note-icon']}
+              />
+              {(this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id) ? 
+              <div
+                className={styles['note-dropdown']}>
+                <span
+                  onClick={(e)=>{e.stopPropagation();this.props.editNoteButtonClicked({id:this.props.id})}}>
+                  Edit 
+                </span>
+                <br/>
+                <span
+                  onClick={(e) => {e.stopPropagation(); this.props.deleteNoteButtonClicked({id:this.props.id})}}>
+                  Delete
+                </span>
+              </div> : null}
+              {(this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id) ? 
+              <div className={styles['note-dropdown-container']} /> : null }
+            </div>
+            <div 
+              className={styles[this.props.selected && editing ? 
                'delete-note-button' : 'hidden']}
-              onClick={() => this.props.deleteNoteButtonClicked({id:this.props.id})}
-            />
+              onClick={(e) => {e.stopPropagation(); this.props.deleteNoteButtonClicked({id:this.props.id})}}>
+              <FontAwesome 
+                name='trash'
+                style={{color: this.props.note.font_color}}
+                className={styles[this.props.selected && editing ? 
+                'delete-note-icon' : 'hidden']}
+              />
+            </div>
           </div>
-          <hr 
-            className={styles[this.props.note.area ? 
-              'hr' : 'hidden']}
-            style={{backgroundColor:this.props.note.font_color}} 
-          />
           <div
             className={styles[this.props.note.area ?
-              'note-middle' : 'hidden']}>
-            {area}
+              'note-main-info' : 'hidden']}>
+            {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
-            {fieldComparisons}
+            {fieldComparisons.length === 1 ? 
+            <div
+              className={styles['field-comparisons']}>
+              {fieldComparisons}
+            </div> : null}
+          </div>
+          <div 
+            className={styles['field-comparisons-section']}>
+            {fieldComparisons.length > 1 ? <hr/> : null}
+            {fieldComparisons.length > 1 ? 
+            <div
+              className={styles['field-comparisons']}>
+              {fieldComparisons}
+            </div> : null}
           </div>
           <hr 
-            style={{backgroundColor:this.props.note.font_color}} 
-            className={styles[this.props.editing && this.props.selected ? 
+            className={styles[editing && this.props.selected ? 
               'hr' : 'hidden']}
           />
+          {this.props.isMobile ? null :
           <div
-            className={styles['note-lower']}>
-            <EditTagsBar 
-              id={this.props.id} 
-            />
+            tabIndex={2}
+            className={styles[this.props.selected && editing ?
+              'done-editing-button' : 'hidden']}
+            onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.id})}}>
             <FontAwesome 
-              tabIndex={2}
-              className={styles[this.props.selected && this.props.editing ?
-                'done-editing-button' : 'hidden']}
               name='check'
-              onClick={() => this.validateNote()}
+              className={styles[this.props.selected && editing ?
+                'done-editing-icon' : 'hidden']}
             />
-          </div>
+          </div>}
+          <EditTagsBar id={this.props.id}/>
         </div>
       )
     }

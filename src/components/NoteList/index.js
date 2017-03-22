@@ -1,20 +1,25 @@
 import React, { PropTypes } from 'react'
 import {connect} from 'cerebral-view-react'
-import SortingTabs from '../SortingTabs/';
+import NoteListMenu from '../NoteListMenu/';
 import Note from '../Note/'
 import _ from 'lodash'
 import uuid from 'uuid'
 import styles from './note-list.css'
+import FontAwesome from 'react-fontawesome'
 
 export default connect({
   notes: 'app.model.notes', 
   tags: 'app.model.tags',
   sortMode: 'app.view.sort_mode', 
-  drawMode: 'app.view.draw_mode',
+  drawing: 'app.view.map.drawing_note_polygon',
+  isMobile: 'app.is_mobile',
+  editing: 'app.view.editing_note',
+  selectedNote: 'app.view.selected_note',
 }, {
   noteListClicked: 'app.noteListClicked',
   addNoteButtonClicked: 'app.addNoteButtonClicked',
   noteRemoved: 'app.noteRemoved',
+  doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
 },
 
 class NoteList extends React.Component {
@@ -83,23 +88,42 @@ class NoteList extends React.Component {
   
   handleClick(evt) {
     // call only for note-list element, not children note elements;
-    if (!this.props.drawMode) {
+    if (!this.props.drawing) {
       if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
         this.props.noteListClicked({});
       }
     }
   }
+
   
+
   render() {
     var notes_array = this.getNotes();
+
     return (
       <div 
         className={styles['note-list']}>
-        <SortingTabs />
+        <NoteListMenu />
+        {this.props.isMobile ? 
+        <span 
+          tabIndex={2}
+          className={styles[this.props.editing ?
+          'done-editing-bar': 'hidden']}
+          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}}>
+          DONE
+        </span> : null}
         <div
-          className={styles['add-note']}
+          className={styles[this.props.drawing ? 'hidden' : 'add-note']}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           Create a new note...
+        </div>
+        <div
+          className={styles[this.props.drawing ? 'hidden' : 'add-note-button']}
+          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          <FontAwesome
+            className={styles['add-note-button-icon']}
+            name='plus'
+          />
         </div>
         <div 
           className={styles['notes-container']}

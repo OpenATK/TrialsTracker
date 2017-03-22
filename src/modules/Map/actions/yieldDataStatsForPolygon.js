@@ -1,4 +1,4 @@
-import cache from '../../Cache/cache.js';
+import cache from '../../Cache';
 import gh from 'ngeohash';
 import gju from 'geojson-utils';
 import { Promise } from 'bluebird';

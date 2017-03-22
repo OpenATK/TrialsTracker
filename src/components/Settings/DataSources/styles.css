@@ -1,13 +1,3 @@
-.oada-domain-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  background-color: white;
-  font-size: x-large;
-  padding: 10px;
-  border-radius: 2px;
-  z-index: 1002;
-}
 .hidden {
   display: none;
 }
@@ -23,13 +13,20 @@
 }
 .oada-domain-screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.4);
-  z-index: 1001;
+  z-index: 1003;
+}
+.oada-domain-modal {
+  background-color: white;
+  font-size: x-large;
+  padding: 10px;
+  border-radius: 2px;
+  z-index: 1004;
 }
 .subtext {
   font-size: small;

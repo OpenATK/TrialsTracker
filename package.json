@@ -56,6 +56,7 @@
     "md5": "^2.1.0",
     "ngeohash": "^0.6.0",
     "oada-id-client": "github:oada/oada-id-client-js",
+    "paralleljs": "^0.2.1",
     "pouchdb": "^5.4.0",
     "random-material-color": "^1.0.2",
     "react": "^15.4.1",

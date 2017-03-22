@@ -5,6 +5,21 @@
     flex-grow: 1;
     order: 2;
   }
+  .drawing-message-control {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    height: 30px;
+    line-height: 30px;
+    width: 70vw;
+    box-shadow: 0px -6px 15px 4px #0000FF;
+    background-color: #0000FF;
+    font-size: 20px;
+    text-align: center;
+    pointer-events: none;
+    color: #FFFFFF;
+    z-index: 10000;
+  }
 }
 
 :global #draw-polygon {
@@ -17,6 +32,7 @@
 :global .leaflet-container {
   width: 100%;
   flex-grow: 1;
+  order: 2;
 }
 
 :global #drag-button {
@@ -93,21 +109,7 @@
 .hidden {
   display:none;
 }
-.drawing-message-control {
-  position: absolute;
-  bottom: -10px;
-  right: -10px;
-  height: 30px;
-  line-height: 30px;
-  width: 70vw;
-  box-shadow: 0px -6px 15px 4px #0000FF;
-  background-color: #0000FF;
-  font-size: 20px;
-  text-align: center;
-  pointer-events: none;
-  color: #FFFFFF;
-  z-index: 10000;
-}
+
 .field-polygon {
   stroke-width: 2.5;
   stroke: #000000;
@@ -117,7 +119,6 @@
 .note-polygon {
   stroke-width: 4;
   stroke-opacity: 1;
-  fill-opacity: 0;
 }
 
 @media screen and (max-width: 600px) {
@@ -133,5 +134,17 @@
   }
   :global .leaflet-control-container .leaflet-control-attribution {
     font-size: xx-small;
+  }
+  .drawing-message-control {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 100vw;
+    background-color: #0000FF;
+    font-size: 18px;
+    text-align: center;
+    pointer-events: none;
+    color: #FFFFFF;
+    z-index: 10000;
   }
 }

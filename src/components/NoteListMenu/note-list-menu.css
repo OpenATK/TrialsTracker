@@ -1,0 +1,42 @@
+.sorting-tabs {
+  display: flex;
+  flex-direction: row;
+  background-color: #0097a7;
+  color: #BDBDBD;
+}
+.sorting-tab:disabled {
+  color: #BDBDBD;
+  background-color: #0097a7;
+  border: none;
+}
+.sorting-tab {
+  font-size: 16px;
+  flex-grow: 1;
+  cursor: pointer;
+}
+.selected-sorting-tab {
+  font-size: 16px;
+  flex-grow: 1;
+  cursor: pointer;
+  border-bottom: 4px solid #212121;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #fff;
+  background-color: transparent;
+}
+.search-button {
+  font-size: 20px;
+  color: #fff;
+  margin: 3px 10px 5px 2px;
+}
+@media screen and (min-width: 601px) {
+  .sorting-tabs {
+    height: 34px;
+  }
+  .search-button {
+    font-size: 24px;
+    color: #fff;
+    margin: 2px 5px 5px 5px;
+  }
+}

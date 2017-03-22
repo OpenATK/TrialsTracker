@@ -3,13 +3,13 @@ import _ from 'lodash';
 import geolib from 'geolib';
 import gh from 'ngeohash';
 import { Promise } from 'bluebird';
-import cache from '../Cache/cache.js';
+import cache from '../../Cache';
 import gju from 'geojson-utils';
 import gjArea from '@mapbox/geojson-area';
-import computeBoundingBox from './utils/computeBoundingBox.js';
-import polygonsIntersect from './utils/polygonsIntersect.js';
-import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
-import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
+import computeBoundingBox from '../utils/computeBoundingBox.js';
+import polygonsIntersect from '../utils/polygonsIntersect.js';
+import getFieldDataForNotes from '../actions/getFieldDataForNotes.js';
+import yieldDataStatsForPolygon from '../actions/yieldDataStatsForPolygon.js';
 
 export var startMovingMap = [
   set('state:app.view.map.moving', true)
@@ -19,32 +19,26 @@ export var doneMovingMap = [
   set('state:app.view.map.moving', false)
 ];
 
-export var calculatePolygonArea = [
-  recalculateArea,
-];
-
-export var handleMouseDown = [
- dropPoint
+export var handleMapClick = [
+  dropPoint, 
+  recalculateArea, 
+  getNoteBoundingBox, 
 ];
 
 export var undoDrawPoint = [
-  undo, recalculateArea,
+  undo, 
+  recalculateArea,
+  getNoteBoundingBox
 ];
 
 export var drawComplete = [
   set('state:app.view.map.drawing_note_polygon', false), 
   validateNoteText,
   setWaiting,
-  getNoteBoundingBox, {
+  computeNoteStats, {
     success: [
-      setNoteBoundingBox, 
-      computeNoteStats, {
-        success: [
-          setNoteStats, 
-          getFieldDataForNotes
-        ],
-        error: [],
-      }
+      setNoteStats, 
+      getFieldDataForNotes
     ],
     error: [setEmptyPolygon],
   },
@@ -64,7 +58,6 @@ export var markerDragging = [
 ];
 
 function setEmptyPolygon({input, state}) {
-  state.set(['app', 'model', 'notes', input.id, 'area'], '(no polygon drawn)');
   state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);
 }
 
@@ -80,6 +73,17 @@ function setWaiting({input, state}) {
 function setMarkerPosition({input, state}) {
   var id = state.get('app.view.selected_note');
   state.set(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0, input.idx], [input.lng, input.lat])
+}
+
+function recalculateCentroid({input, state}) {
+  var id = state.get(['app', 'view', 'selected_note']);
+  var note = state.get(['app', 'model', 'notes', id]);
+  if (note.geometry.geojson) {
+    if (note.geometry.geojson.coordinates[0].length > 2) {
+      area = gjArea.geometry(note.geometry.geojson)/4046.86;
+      state.set(['app', 'model', 'notes', id, 'area'], area);
+    }
+  }
 }
 
 function recalculateArea({state}) {
@@ -120,8 +124,8 @@ function computeNoteStats({input, state, output}) {
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
   var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
   var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
-  var polygon = state.get(['app', 'model', 'notes', input.id, 'geometry', 'geojson', 'coordinates'])[0];
-  yieldDataStatsForPolygon(polygon, input.bbox, availableGeohashes, baseUrl, token)
+  var geometry = state.get(['app', 'model', 'notes', input.id, 'geometry']);
+  yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
   .then((stats) => {
     output.success({stats, ids:[input.id]});
   })
@@ -141,29 +145,16 @@ function setNoteStats({input, state}) {
 }
 
 function getNoteBoundingBox({input, state, output}) {
+  var selectedNote = state.get('app.view.selected_note');
   var notes = state.get(['app', 'model', 'notes']);
-  if (notes[input.id].geometry.geojson.coordinates[0].length < 3) {
-    output.error({});
-  } else {
-    var bbox = computeBoundingBox(notes[input.id].geometry.geojson);
-    var area = gjArea.geometry(notes[input.id].geometry.geojson)/4046.86; 
-    output.success({bbox, area});
-  }
-}
-
-function setNoteBoundingBox({input, state, output}) {
-  state.set(['app', 'model', 'notes', input.id, 'geometry', 'bbox'], input.bbox);
-  state.set(['app', 'model', 'notes', input.id, 'geometry', 'centroid'], [(input.bbox.north + input.bbox.south)/2, (input.bbox.east + input.bbox.west)/2]);
-  state.set(['app', 'model', 'notes', input.id, 'area'], input.area);
+  var bbox = computeBoundingBox(notes[selectedNote].geometry.geojson);
+  state.set(['app', 'model', 'notes', selectedNote, 'geometry', 'bbox'], bbox);
+  state.set(['app', 'model', 'notes', selectedNote, 'geometry', 'centroid'], [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
 }
 
 function dropPoint ({input, state}) {
-  var drawing = state.get(['app', 'model', 'view', 'map', 'drawing_note_polygon']);
-  var moving = state.get(['app', 'model', 'view', 'map', 'moving']);
-  if (!drawing && !moving) {
-    var id = state.get(['app', 'view', 'selected_note']);
-    state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
-  }
+  var id = state.get(['app', 'view', 'selected_note']);
+  state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
 }
 
 function validateNoteText({input, state}) {

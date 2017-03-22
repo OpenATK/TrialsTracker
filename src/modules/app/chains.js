@@ -7,19 +7,18 @@ import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
 import gju from 'geojson-utils';
-import cache from '../Cache/cache.js';
-import rmc from 'random-material-color';
-import Color from 'color';
+import cache from '../Cache';
 import gjArea from '@mapbox/geojson-area';
 import wellknown from 'wellknown';
-import computeBoundingBox from './utils/computeBoundingBox.js';
-import polygonsIntersect from './utils/polygonsIntersect.js';
-import {getGrower} from './utils/datasilo.js';
-import yieldDataStatsForPolygon from './actions/yieldDataStatsForPolygon.js';
-import getFieldDataForNotes from './actions/getFieldDataForNotes.js';
+import computeBoundingBox from '../Map/utils/computeBoundingBox.js';
+import polygonsIntersect from '../Map/utils/polygonsIntersect.js';
+import {getGrower} from '../Map/utils/datasilo.js';
+import getFieldDataForNotes from '../Map/actions/getFieldDataForNotes.js';
 import putInPouch from './factories/putInPouch';
 import getFromPouch from './factories/getFromPouch';
 import db from '../Pouch';
+import MobileDetect from 'mobile-detect';
+import computeFieldStats from './actions/computeFieldStats.js';
 
 var computeFieldYieldData = [
   computeFieldStats, {
@@ -37,7 +36,6 @@ var handleFields = [
     error: [],
   },
 ]
-        
 
 var getFieldBoundaries = [
   handleFieldsSource, {
@@ -102,6 +100,7 @@ var getOadaYieldData = [
 ]
 
 export var initialize = [
+  setMobile,
   getFromPouch('app.settings.data_sources.yield.source'), {
     success: [  
       copy('input:result.doc.val', 'app.settings.data_sources.yield.source'), 
@@ -141,66 +140,6 @@ export var initialize = [
       set('state:app.view.settings.data_sources.visible', true),
     ],
   },
-];
-
-export var addTag = [
-  addTagToNote, addTagToAllTagsList, 
-  set('state:app.model.tag_input_text', ''),
-];
-
-export var removeTag = [
-  removeTagFromNote, removeTagFromAllTagsList,
-];
-
-export var handleNoteListClick = [
-  deselectNote, 
-  set('state:app.view.editing_note', false),
-];
-
-export var enterNoteEditMode = [
-  set('state:app.view.editing_note', true),
-  set('state:app.view.map.drawing_note_polygon', true),
-  set('state:app.view.map.drawing_note_polygon', true),
-];
-
-export var exitNoteEditMode = [
-  set('state:app.view.editing_note', false),
-];
-
-export var changeSortMode = [
-  copy('input:newSortMode', 'state:app.view.sort_mode'),
-];
-
-export var handleNoteClick = [
-  deselectNote, 
-  set('state:app.view.editing_note', false),
-  selectNote, 
-  mapToNotePolygon
-];
-
-export var removeNote = [
- set('state:app.view.map.drawing_note_polygon', false), 
- deselectNote,
- checkTags, 
- deleteNote, 
-];
-
-export var updateNoteText = [
-  setNoteText,
-];
-
-export var updateTagText = [
-  copy('input:value', 'state:app.model.tag_input_text'),
-];
-
-export var addNewNote = [
-  createNote, 
-  set('state:app.view.map.drawing_note_polygon', true), 
-  set('state:app.view.editing_note', true),
-];
-
-export var changeShowHideState = [
-  changeShowHide, 
 ];
 
 export var removeGeohashes = [
@@ -317,6 +256,11 @@ export var setYieldSource = [
 export var setFieldsSource = [
   copy('input:value', 'state:app.view.settings.data_sources.fields.source') 
 ]
+
+function setMobile({input, state, output}) {
+  var md = new MobileDetect(window.navigator.userAgent);
+  state.set('app.is_mobile', (md.mobile() !== null));
+}
 
 function getNewFieldsSource({state, output}) {
   var currentSource = state.get('app.settings.data_sources.fields.source');
@@ -437,29 +381,6 @@ function setFieldBoundingBoxes({input, state}) {
   })
 }
 
-function computeFieldStats({input, state, output}) {
-  var fields = state.get(['app', 'model', 'fields']);
-  var availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
-  if (!(fields && availableGeohashes)) output.error({});
-
-  var token = state.get('app.settings.data_sources.yield.oada_token');
-  var domain = state.get('app.settings.data_sources.yield.oada_domain');
-  var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
-  var stats = {};
-  Promise.map(Object.keys(fields), function(field) {
-    return yieldDataStatsForPolygon(fields[field].boundary.geojson.coordinates[0], fields[field].boundary.bbox, availableGeohashes, baseUrl, token)
-    .then((fieldStats) => {
-      stats[field] = fieldStats;
-      return stats;
-    })
-  }).then(() => { 
-    var ids = Object.keys(state.get(['app', 'model', 'notes']));
-    output.success({stats, ids});
-  })
-}
-computeFieldStats.outputs = ['success', 'error'];
-computeFieldStats.async = true;
-
 function setFieldStats({input, state}) {
 //TODO: need to check for NPE
   Object.keys(input.stats).forEach((field) => {
@@ -472,11 +393,6 @@ function setFieldStats({input, state}) {
     })
     state.unset(['app', 'model', 'fields', field, 'stats', 'computing']);
   })
-}
-
-function mapToNotePolygon({input, state}) {
-  var note = state.get(['app', 'model', 'notes', input.note]);
-  state.set(['app', 'view', 'map', 'map_location'], note.geometry.centroid);
 }
 
 function setMapLocation({input, state}) {
@@ -556,7 +472,7 @@ function getFieldsFromOada({state, output}) {
           })
         }
       })
-    })
+    }) 
   }).then(function() {
     output.success({fields});
   })
@@ -621,6 +537,7 @@ function setYieldDataIndex({input, state}) {
   if (input.data) {
     Object.keys(input.data).forEach(function(crop) {
       state.set(['app', 'view', 'map', 'crop_layers', crop, 'visible'], true);
+      state.set(['app', 'view', 'map', 'geohashes_to_draw', crop], {});
       Object.keys(input.data[crop]).forEach(function(ghLength) {
         state.set(['app', 'model', 'yield_data_index', crop, ghLength], input.data[crop][ghLength]);
       })
@@ -662,18 +579,15 @@ function destroyCache() {
 
 function registerGeohashes({input, state}) {
 // This case occurs before a token is available. Just save all geohashes and
-// filter them later with filterGeohashesOnScreen when the list of available
-// geohashes becomes known.
-  input.geohashes.forEach((geohash) => {
-    state.set(['app', 'view', 'map', 'geohashes_on_screen', input.layer], geohash)
-  })
+// filter them later when the list of available geohashes becomes known.
+  var coordsIndex = input.coords.z.toString() + '-' + input.coords.x.toString() + '-' + input.coords.y.toString();
+  state.set(['app', 'view', 'map', 'geohashes_on_screen', input.layer, coordsIndex], input.geohashes)
 }
 
 function unregisterGeohashes({input, state}) {
-  input.geohashesToRemove.forEach((geohash) => {
-    state.unset(['app', 'model', 'geohashes_on_screen', geohash]);
-  });
-};
+  var coordsIndex = input.coords.z.toString() + '-' + input.coords.x.toString() + '-' + input.coords.y.toString();
+  state.unset(['app', 'view', 'map', 'geohashes_on_screen', input.layer, coordsIndex]);
+}
 
 function testOadaConnection({state, output}) {
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
@@ -696,9 +610,9 @@ function getOadaToken({input, state, output}) {
     metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
     scope: 'yield-data field-notes field-boundaries',
 //      params: {
-        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
+//        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
 //        "redirect_uri": 'http://10.186.153.189:8000/oauth2/redirect.html', 
-//      "redirect": 'http://localhost:8000/oauth2/redirect.html',
+      "redirect": 'http://localhost:8000/oauth2/redirect.html',
 //      }
   }
   var domain = state.get('app.settings.data_sources.yield.oada_domain'); //TODO: don't hard code this as the source of the domain
@@ -719,145 +633,3 @@ function storeToken({input, state, services}) {
   });
   state.set('app.settings.data_sources.yield.oada_token', input.token);
 };
-
-function changeShowHide ({input, state}) {
-  var geometryVisible = state.get(['app', 'model', 'notes', input.id, 'geometry', 'visible']);
-  if (geometryVisible) {
-    state.set(['app', 'model', 'notes', input.id, 'geometry', 'visible'], false);
-  } else {
-    state.set(['app', 'model', 'notes', input.id, 'geometry', 'visible'], true);
-  }
-};
-
-function setNoteText ({input, state}) {
-  state.set(['app', 'model', 'notes', input.noteId, 'text'], input.value);
-};
-
-function selectNote ({input, state}) {
-  //check that the selected note isn't already selected
-  if (state.get(['app', 'view', 'selected_note']) !== input.note) {
-    // set the status of the currently selected note to "unselected"
-    if (!_.isEmpty(state.get(['app', 'view', 'selected_note']))) {
-      state.set(['app', 'model', 'notes', state.get(['app', 'view', 'selected_note']), 'selected'], false);
-    }
-    state.set(['app', 'view', 'selected_note'], input.note);
-    state.set(['app', 'model', 'notes', input.note, 'selected'], true);
-  }
-};
-
-function deselectNote ({input, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  if (!_.isEmpty(note)) state.set(['app', 'model', 'notes', note, 'selected'], false);
-  state.unset(['app', 'view', 'selected_note']);
-  state.set(['app', 'view', 'editing_note'], false);
-};
-
-function createNote({input, state}) {
-  var notes = state.get(['app', 'model', 'notes']);
-  Object.keys(notes).forEach(function(note) {
-    state.set(['app', 'model', 'notes', note, 'order'], notes[note].order +1);
-  })
-  var note = state.get(['app', 'view', 'selected_note']);
-  if (!_.isEmpty(note)) {
-    state.set(['app', 'model', 'notes', note, 'selected'], false);
-  }
-  state.set(['app', 'view', 'selected_note'], {});
-  state.set(['app', 'view', 'editing_note'], false);
-
-  var newNote = {
-    time: Date.now(),
-    id: uuid.v4(),
-    text: '',
-    tags: [],
-    fields: {},
-    geometry: { 
-      geojson: {
-        "type":"Polygon",
-        "coordinates": [[]],
-      },
-      bbox: {},
-      centroid: [],
-      visible: true,
-    },
-    color: rmc.getColor(),
-    completions: [],
-    selected: true,
-    stats: {},
-    order: 1,
-  };
-
-  newNote.font_color = getFontColor(newNote.color);
-  state.set(['app', 'model', 'notes', newNote.id], newNote);
-
-  //Now select the new note
-  state.set(['app', 'view', 'selected_note'], newNote.id);
-};
-
-function getFontColor(color) {
-  var L = Color(color).luminosity();
-  if (L > 0.179) {
-    return '#000000';
-  } else {
-    return '#ffffff';
-  }
-}
-
-function checkTags ({input, state}) {
-  var allTags = state.get(['app', 'model', 'tags']);
-  var noteTags = state.get(['app', 'model', 'notes', input.id, 'tags']);
-  noteTags.forEach((tag) => {
-    if (allTags[tag].references <= 1) {
-      state.unset(['app', 'model', 'tags', tag]); 
-    }
-  })
-}
-
-function deleteNote({input, state}) {
-  state.unset(['app', 'model', 'notes', input.id]); 
-  var notes = state.get(['app', 'model', 'notes']);
-  Object.keys(notes).forEach(function(note) {
-    if (notes[note].order > input.note) {
-      state.set(['app', 'model', 'notes', note, 'order'], notes[note].order);
-    }
-  })
-};
-
-function addTagToNote({input, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  state.concat(['app', 'model', 'notes', note, 'tags'], input.text);
-};
-
-function removeTagFromNote({input, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  var tags = state.get(['app', 'model', 'notes', note, 'tags']);
-  var idx = tags.indexOf(input.tag);
-  state.splice(['app', 'model', 'notes', note, 'tags'], idx, 1);
-};
-
-function addTagToAllTagsList({input, state}) {
-  var allTags = state.get(['app', 'model', 'tags']);
-  if (!allTags[input.text]) {
-    state.set(['app', 'model', 'tags', input.text], { 
-      text: input.text,
-      references: 1
-    });
-  } else {
-    state.set(['app', 'model', 'tags', input.text, 'references'], allTags[input.text].references+1);
-  }
-};
-
-function removeTagFromAllTagsList({input, state}) {
-  var refs = state.get(['app', 'model', 'tags', input.tag, 'references']);
-  if (refs == 0) {
-    state.unset(['app', 'model', 'tags', input.tag]);
-  } else {
-    state.set(['app', 'model', 'tags', input.tag, 'references'], refs - 1);
-  }
-};
-
-function getColor() {
-  var r = (Math.round(Math.random()*127) + 127).toString(16);
-  var g = (Math.round(Math.random()*127) + 127).toString(16);
-  var b = (Math.round(Math.random()*127) + 127).toString(16);
-  return '#' + r.toString() + g.toString() + b.toString();
-}
