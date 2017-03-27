@@ -57,7 +57,7 @@ module.exports = function(yield_data_directory, domain, token) {
       var jsonCsvData = csvjson.toObject(data, options);
       return this.processRawData(jsonCsvData, file);
     }).then(function() {
-      return this.createAggregates([2, 3, 4, 5, 6, 7]);
+      return this.createAggregates([1, 2, 3, 4, 5, 6, 7]);
     }).then(function() {
       return _Setup.putLinkedTree(tree, []);
     });

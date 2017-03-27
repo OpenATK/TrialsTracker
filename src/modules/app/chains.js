@@ -344,7 +344,6 @@ handleFieldsSource.async = true;
 
 
 function computeFieldBoundingBoxes({input, state, output}) {
-  console.log('computing bounding boxes');
   var bboxes = {};
   var areas = {};
   Promise.map(Object.keys(input.fields), (field) => {
@@ -361,7 +360,6 @@ computeFieldBoundingBoxes.async = true;
 computeFieldBoundingBoxes.outputs = ['success', 'error'];
 
 function setFieldBoundingBoxes({input, state}) {
-  console.log('setting bounding boxes');
 //TODO: need to check for valid data source
   Object.keys(input.bboxes).forEach((field) => {
     state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
@@ -467,7 +465,6 @@ getFieldsFromOada.outputs = ['success', 'error'];
 getFieldsFromOada.async = true;
 
 function setFieldBoundaries({input, state}) {
-  console.log('setting field boundaries')
   if (input.fields) {
     Object.keys(input.fields).forEach(function(field) {
       state.set(['app', 'model', 'fields', field], input.fields[field]);

@@ -2,7 +2,6 @@ import polygonsIntersect from '../utils/polygonsIntersect.js';
 import { Promise } from 'bluebird';  
 
 export default function getFieldDataForNotes({input, state, output}) {
-  console.log('getFieldDataForNotes');
   var notes = state.get(['app', 'model', 'notes']);
   var fields = state.get(['app', 'model', 'fields']);
   if (fields && input.ids) {
@@ -27,7 +26,6 @@ export default function getFieldDataForNotes({input, state, output}) {
         } else return false;
       })
     }).then((result) => {
-      console.log('DONE getFieldDataForNotes');
       output.success({noteFields});
     })
   } else output.error({});

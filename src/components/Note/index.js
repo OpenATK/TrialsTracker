@@ -16,7 +16,7 @@ export default connect(props => ({
   editingNote: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
   drawing: 'app.view.map.drawing_note_polygon',
-  noteFields: `app.model.note.${props.id}.fields`,
+  noteFields: `app.model.notes.${props.id}.fields`,
   fields: 'app.model.fields',
   isMobile: 'app.is_mobile',
   noteDropdownVisible: 'app.view.note_dropdown.visible',
@@ -94,6 +94,7 @@ export default connect(props => ({
       }
 
       var fieldComparisons = [];
+      console.log(this.props.noteFields);
       if (this.props.noteFields) {
         Object.keys(this.props.noteFields).forEach((field) => {
           Object.keys(this.props.note.stats).forEach((crop, idx) => {
