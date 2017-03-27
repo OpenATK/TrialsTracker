@@ -104,14 +104,6 @@ class NoteList extends React.Component {
       <div 
         className={styles['note-list']}>
         <NoteListMenu />
-        {this.props.isMobile ? 
-        <span 
-          tabIndex={2}
-          className={styles[this.props.editing ?
-          'done-editing-bar': 'hidden']}
-          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}}>
-          DONE
-        </span> : null}
         <div
           className={styles[this.props.drawing ? 'hidden' : 'add-note']}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>

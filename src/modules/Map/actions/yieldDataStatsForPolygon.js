@@ -19,14 +19,15 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
       mean_yield: 0,
     };
     return recursiveGeohashSum(polygon, commonString, stats[crop], availableGeohashes[crop], baseUrl+crop+'/geohash-length-index/', token)
-      .then(function(newStats) {
-        stats[crop].area_sum = newStats.area_sum;
-        stats[crop].weight_sum = newStats.weight_sum;
-        stats[crop].count = newStats.count;
-        stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
-        return stats;
-      })
+    .then(function(newStats) {
+      stats[crop].area_sum = newStats.area_sum;
+      stats[crop].weight_sum = newStats.weight_sum;
+      stats[crop].count = newStats.count;
+      stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
+      return stats;
+    })
   }).then(function() {
+    console.log('finished a yieldDataStats');
     return stats;
   })
 }
@@ -73,7 +74,7 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
             })
           } else {
             var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
-            return Promise.each(geohashes, function(g) {
+            return Promise.map(geohashes, function(g) {
               return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
               .then(function (newStats) {
                 if (newStats == null) return stats;
@@ -81,7 +82,7 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
               })
             })
           }
-        }
+        } return false;
       }
     }
 //2. If geohash is completely inside polygon, use the stats. Only one point
@@ -119,7 +120,7 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
         })
       }
       var geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
-      return Promise.each(geohashes, function(g) {
+      return Promise.map(geohashes, function(g) {
         return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
         .then(function (newStats) {
           if (newStats == null) return stats;

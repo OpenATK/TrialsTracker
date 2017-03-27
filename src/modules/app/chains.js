@@ -14,6 +14,7 @@ import computeBoundingBox from '../Map/utils/computeBoundingBox.js';
 import polygonsIntersect from '../Map/utils/polygonsIntersect.js';
 import {getGrower} from '../Map/utils/datasilo.js';
 import getFieldDataForNotes from '../Map/actions/getFieldDataForNotes.js';
+import setFieldDataForNotes from '../Map/actions/setFieldDataForNotes.js';
 import putInPouch from './factories/putInPouch';
 import getFromPouch from './factories/getFromPouch';
 import db from '../Pouch';
@@ -24,7 +25,10 @@ var computeFieldYieldData = [
   computeFieldStats, {
     success: [
       setFieldStats,
-      getFieldDataForNotes,
+      getFieldDataForNotes, {
+        success: [setFieldDataForNotes],
+        error: [],
+      }
     ],
     error: [],
   },
@@ -105,7 +109,6 @@ export var initialize = [
     success: [  
       copy('input:result.doc.val', 'app.settings.data_sources.yield.source'), 
       copy('input:result.doc.val', 'app.view.settings.data_sources.yield.source'), 
-// handle different yield sources, and break this out into seperate function      handleYieldDataSource,
       getFromPouch('app.settings.data_sources.yield.oada_domain'), {
         success: [
           copy('input:result.doc.val', 'state:app.settings.data_sources.yield.oada_domain'),
@@ -171,7 +174,6 @@ export var submitDataSourceSettings = [
       copy('state:app.view.settings.data_sources.yield.source', 'state:app.settings.data_sources.yield.source'),
       putInPouch('app.settings.data_sources.yield.source'),
       set('state:app.model.yield_data_index', {}),
-      set('state:app.model.noteFields', {}),
       getOadaYieldData,
     ],
     none: [
@@ -180,7 +182,6 @@ export var submitDataSourceSettings = [
       copy('state:app.view.settings.data_sources.yield.source', 'state:app.settings.data_sources.yield.source'),
       putInPouch('app.settings.data_sources.yield.source'),
       set('state:app.model.yield_data_index', {}),
-      set('state:app.model.noteFields', {}),
     ],
     no_change: [],
     error: [], //not really an error; data source didn't change.
@@ -192,7 +193,6 @@ export var submitDataSourceSettings = [
       copy('state:app.view.settings.data_sources.fields.source', 'state:app.settings.data_sources.fields.source'),
       putInPouch('app.settings.data_sources.fields.source'),
       set('state:app.model.fields', {}),
-      set('state:app.model.noteFields', {}),
       getFieldsFromOada, {
         success: [setFieldBoundaries, handleFields],
         error: [],
@@ -202,7 +202,6 @@ export var submitDataSourceSettings = [
       copy('state:app.view.settings.data_sources.fields.source', 'state:app.settings.data_sources.fields.source'),
       putInPouch('app.settings.data_sources.fields.source'),
       set('state:app.model.fields', {}),
-      set('state:app.model.noteFields', {}),
       getFieldsFromDatasilo, {
         success: [setFieldBoundaries, handleFields],
         error: [],
@@ -212,7 +211,6 @@ export var submitDataSourceSettings = [
       copy('state:app.view.settings.data_sources.fields.source', 'state:app.settings.data_sources.fields.source'),
       putInPouch('app.settings.data_sources.fields.source'),
       set('state:app.model.fields', {}),
-      set('state:app.model.noteFields', {}),
     ],
     no_change: [],
     error: [], //not really an error; data source didn't change.
@@ -231,22 +229,6 @@ export var displayDataSourceSettings = [
 
 export var toggleCropLayerVisibility = [
   toggleCropLayer,
-]
-
-export var toggleCropDropdownVisibility = [
-  toggleCropDropdown,
-]
-
-export var handleLocationFound = [
-  setCurrentLocation,
-]
-
-export var handleCurrentLocationButton = [
-  setMapToCurrentLocation,
-]
-
-export var handleMapMoved = [
-  setMapLocation,
 ]
 
 export var setYieldSource = [
@@ -362,18 +344,24 @@ handleFieldsSource.async = true;
 
 
 function computeFieldBoundingBoxes({input, state, output}) {
+  console.log('computing bounding boxes');
   var bboxes = {};
   var areas = {};
-  Object.keys(input.fields).forEach((field) => {
+  Promise.map(Object.keys(input.fields), (field) => {
     bboxes[field] = computeBoundingBox(input.fields[field].boundary.geojson);
     areas[field] = gjArea.geometry(input.fields[field].boundary.geojson)/4046.86;
+    return true;
+  }).then((result) => {
+    output.success({bboxes, areas})
+  }).catch((err) => {
+    output.error({err});
   })
-  output.success({bboxes, areas})
 }
 computeFieldBoundingBoxes.async = true;
 computeFieldBoundingBoxes.outputs = ['success', 'error'];
 
 function setFieldBoundingBoxes({input, state}) {
+  console.log('setting bounding boxes');
 //TODO: need to check for valid data source
   Object.keys(input.bboxes).forEach((field) => {
     state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
@@ -395,14 +383,9 @@ function setFieldStats({input, state}) {
   })
 }
 
-function setMapLocation({input, state}) {
-  state.set(['app', 'view', 'map', 'map_location'], [input.latlng.lat, input.latlng.lng]);
-  state.set(['app', 'view', 'map', 'map_zoom'], input.zoom);
-}
-
-function setMapToCurrentLocation({input, state}) {
-  var loc = state.get(['app', 'model', 'current_location']);
-  if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lat, loc.lng]);
+function toggleCropLayer({input, state}) {
+  var vis = state.get(['app', 'view', 'map', 'crop_layers', input.crop, 'visible']);
+  state.set(['app', 'view', 'map', 'crop_layers', input.crop, 'visible'], !vis);
 }
 
 function getFieldsFromDatasilo({state, output}) {
@@ -450,37 +433,41 @@ getFieldsFromDatasilo.outputs = ['success', 'error'];
 getFieldsFromDatasilo.async = true;
 
 function getFieldsFromOada({state, output}) {
-//  var token = state.get('app.settings.data_sources.yield.oada_token');
   var token = state.get('app.settings.data_sources.yield.oada_token');
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
   var url = 'https://' + domain + '/bookmarks/fields/fields-index/';
   var fields = {};
   cache.get(url, token).then(function(fieldsIndex) {
-    return Promise.each(Object.keys(fieldsIndex), function(item) {
+    return Promise.map(Object.keys(fieldsIndex), function(item) {
       return cache.get(url + item, token).then(function(fieldItem) {
         if (fieldItem['fields-index']) {
           return cache.get(url + item + '/fields-index/', token).then(function(fieldKeys) {
-            return Promise.each(Object.keys(fieldKeys), function(key) {
+            return Promise.map(Object.keys(fieldKeys), function(key) {
               return cache.get(url + item + '/fields-index/'+key, token).then(function(field) {
-                return fields[key] = field;
+                fields[key] = field;
+                return true;
               })
             })
           })
         } else {
           return cache.get(url + item, token).then(function(field) {
-            return fields[item] = field;
+            fields[item] = field;
+            return true;
           })
         }
       })
     }) 
   }).then(function() {
     output.success({fields});
+  }).catch(() => {
+    output.error({fields});
   })
 }
 getFieldsFromOada.outputs = ['success', 'error'];
 getFieldsFromOada.async = true;
 
 function setFieldBoundaries({input, state}) {
+  console.log('setting field boundaries')
   if (input.fields) {
     Object.keys(input.fields).forEach(function(field) {
       state.set(['app', 'model', 'fields', field], input.fields[field]);
@@ -488,23 +475,6 @@ function setFieldBoundaries({input, state}) {
   }
 }
 
-function setCurrentLocation({input, state}) {
-  var obj = {
-    lat: input.lat,
-    lng: input.lng,
-  }
-  state.set(['app', 'model', 'current_location'], obj);
-}
-
-function toggleCropDropdown({input, state}) {
-  var vis = state.get(['app', 'view', 'crop_dropdown_visible']);
-  state.set(['app', 'view', 'crop_dropdown_visible'], !vis);
-}
-
-function toggleCropLayer({input, state}) {
-  var vis = state.get(['app', 'view', 'map', 'crop_layers', input.crop, 'visible']);
-  state.set(['app', 'view', 'map', 'crop_layers', input.crop, 'visible'], !vis);
-}
 
 function getYieldDataIndexFromOada({state, output}) {
   var token = state.get('app.settings.data_sources.yield.oada_token');

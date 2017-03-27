@@ -29,16 +29,14 @@ import {
   cancelDataSourceSettings,
   displayDataSourceSettings,
   toggleCropLayerVisibility,
-  toggleCropDropdownVisibility,
-  handleLocationFound,
-  handleCurrentLocationButton,
-  handleMapMoved,
   setFieldsSource,
   setYieldSource,
 } from './chains';
 
 import { 
   drawComplete,
+  handleCurrentLocationButton,
+  handleLocationFound,
   handleMapClick,
   handleDoneDrawing,
   undoDrawPoint,
@@ -46,6 +44,7 @@ import {
   startMarkerDrag,
   markerDragging,
   doneMovingMap,
+  handleMapMoved,
   startMovingMap,
 } from '../Map/chains';
 
@@ -72,10 +71,6 @@ export default (module) => {
 
     toggleCropLayer: [
       ...toggleCropLayerVisibility,
-    ],
-
-    cropDropdownClicked: [
-      ...toggleCropDropdownVisibility,
     ],
 
     markerDragStarted: [

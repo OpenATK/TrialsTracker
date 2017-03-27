@@ -25,6 +25,10 @@ export var handleMapClick = [
   getNoteBoundingBox, 
 ];
 
+export var handleLocationFound = [
+  setCurrentLocation,
+];
+
 export var undoDrawPoint = [
   undo, 
   recalculateArea,
@@ -56,6 +60,32 @@ export var markerDragging = [
   setMarkerPosition, 
   recalculateArea
 ];
+
+export var handleCurrentLocationButton = [
+  setMapToCurrentLocation,
+]
+
+export var handleMapMoved = [
+  setMapLocation,
+];
+
+function setMapToCurrentLocation({input, state}) {
+  var loc = state.get(['app', 'model', 'current_location']);
+  if (loc) state.set(['app', 'view', 'map', 'map_location'], [loc.lat, loc.lng]);
+}
+
+function setMapLocation({input, state}) {
+  state.set(['app', 'view', 'map', 'map_location'], [input.latlng.lat, input.latlng.lng]);
+  state.set(['app', 'view', 'map', 'map_zoom'], input.zoom);
+}
+
+function setCurrentLocation({input, state}) {
+  var obj = {
+    lat: input.lat,
+    lng: input.lng,
+  }
+  state.set(['app', 'model', 'current_location'], obj);
+}
 
 function setEmptyPolygon({input, state}) {
   state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);

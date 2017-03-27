@@ -6,6 +6,7 @@ import uuid from 'uuid';
 import styles from './note.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
+import NewNoteScreen from '../NewNoteScreen';
 
 export default connect(props => ({
   note: `app.model.notes.${props.id}`,
@@ -15,7 +16,7 @@ export default connect(props => ({
   editingNote: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
   drawing: 'app.view.map.drawing_note_polygon',
-  noteFields: `app.model.noteFields.${props.id}`,
+  noteFields: `app.model.note.${props.id}.fields`,
   fields: 'app.model.fields',
   isMobile: 'app.is_mobile',
   noteDropdownVisible: 'app.view.note_dropdown.visible',
@@ -169,17 +170,6 @@ export default connect(props => ({
               {(this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id) ? 
               <div className={styles['note-dropdown-container']} /> : null }
             </div>
-            <div 
-              className={styles[this.props.selected && editing ? 
-               'delete-note-button' : 'hidden']}
-              onClick={(e) => {e.stopPropagation(); this.props.deleteNoteButtonClicked({id:this.props.id})}}>
-              <FontAwesome 
-                name='trash'
-                style={{color: this.props.note.font_color}}
-                className={styles[this.props.selected && editing ? 
-                'delete-note-icon' : 'hidden']}
-              />
-            </div>
           </div>
           <div
             className={styles[this.props.note.area ?
@@ -206,19 +196,25 @@ export default connect(props => ({
             className={styles[editing && this.props.selected ? 
               'hr' : 'hidden']}
           />
-          {this.props.isMobile ? null :
-          <div
-            tabIndex={2}
-            className={styles[this.props.selected && editing ?
-              'done-editing-button' : 'hidden']}
-            onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.id})}}>
-            <FontAwesome 
-              name='check'
-              className={styles[this.props.selected && editing ?
-                'done-editing-icon' : 'hidden']}
-            />
-          </div>}
-          <EditTagsBar id={this.props.id}/>
+        {this.props.isMobile ? 
+        <span 
+          tabIndex={2}
+          className={styles[this.props.editing ?
+          'done-editing-bar': 'hidden']}
+          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}}>
+          DONE
+        </span> : null}
+        <div 
+          tabIndex={2}
+          className={styles[this.props.selected && editing ?
+            'done-editing-button' : 'hidden']}
+          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.id})}}>
+          <FontAwesome 
+            name='check'
+            className={styles['done-editing-icon']}
+          />
+        </div>
+        <EditTagsBar id={this.props.id}/>
         </div>
       )
     }

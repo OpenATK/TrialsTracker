@@ -199,7 +199,7 @@ class TrialsMap extends React.Component {
             enabled={undoEnabled}
           />}
           <DrawingMessage
-            position={'bottomright'}
+            position={'topright'}
           />
           {this.props.legendVisible ? <LegendControl
             position={'bottomright'} 

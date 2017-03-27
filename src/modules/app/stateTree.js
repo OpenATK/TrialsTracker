@@ -9,7 +9,6 @@ var stateTree = {
     notes: initial_notes(),
     tags: initial_tags(),
     fields: {}, 
-    noteFields: {}, 
   },
   is_mobile: false,
   settings: {
