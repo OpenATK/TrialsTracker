@@ -2,6 +2,7 @@ import React, { PropTypes } from 'react'
 import {connect} from 'cerebral-view-react'
 import NoteListMenu from '../NoteListMenu/';
 import Note from '../Note/'
+import FieldNote from '../FieldNote/'
 import _ from 'lodash'
 import uuid from 'uuid'
 import styles from './note-list.css'
@@ -15,11 +16,11 @@ export default connect({
   isMobile: 'app.is_mobile',
   editing: 'app.view.editing_note',
   selectedNote: 'app.view.selected_note',
+  fields: 'app.model.fields',
 }, {
   noteListClicked: 'app.noteListClicked',
   addNoteButtonClicked: 'app.addNoteButtonClicked',
   noteRemoved: 'app.noteRemoved',
-  doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
 },
 
 class NoteList extends React.Component {
@@ -43,17 +44,12 @@ class NoteList extends React.Component {
         break;
 
       case 'fields':
-        var note_groups = _.groupBy(this.props.notes, 'fields');
-        _.each(note_groups, function(group, key) {
-          notes_array.push(<h1 key={uuid.v4()}>{key}</h1>);
-          notes_array.push(<hr key={uuid.v4()}/>);
-          _.each(group, function(note) {
-            notes_array.push(<Note 
-              id={note.id} 
-              key={note.id} />
-            );  
-          });
-        });
+        Object.keys(self.props.fields).forEach((field) => {
+          notes_array.push(<FieldNote 
+            id={field} 
+            key={field} />
+          )  
+        })
         break;
 
       case 'tags':

@@ -9,6 +9,7 @@ import {
   addNewNote,
   removeNote,
   handleNoteClick,
+  handleFieldNoteClick,
   addTag,
   handleNoteListClick,
   enterNoteEditMode,
@@ -130,6 +131,10 @@ export default (module) => {
     sortingTabClicked: [
       ...changeSortMode
     ],
+
+    fieldNoteClicked: [
+      ...handleFieldNoteClick
+    ], 
 
     noteClicked: [
       ...handleNoteClick

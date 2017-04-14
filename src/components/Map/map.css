@@ -137,7 +137,7 @@
   }
   .drawing-message-control {
     position: absolute;
-    bottom: -10px;
+    top: -10px;
     right: -10px;
     width: 100vw;
     background-color: #0000FF;

@@ -9,43 +9,43 @@ import FontAwesome from 'react-fontawesome';
 import NewNoteScreen from '../NewNoteScreen';
 
 export default connect(props => ({
-  fieldNote: `app.model.fields.${props.id}`,
+  tagNote: `app.model.tags.${props.id}`,
   notes: 'app.model.notes',
   isMobile: 'app.is_mobile',
 }), {
   fieldClicked: 'app.fieldNoteClicked',
 },
 
-  class FieldNote extends React.Component {
+  class TagNote extends React.Component {
 
     render() {
       if (!this.props.fieldNote) return null;
       var yields = [];
       if (this.props.fieldNote.stats) {
-      Object.keys(this.props.fieldNote.stats).forEach((crop) => {
-        var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-        if (!isNaN(this.props.fieldNote.stats[crop].mean_yield)) {
-          yields.push(
-            <div
-              key={this.props.fieldNote.id+'-yield-text-'+crop}
-              className={styles['yield-text']}>
-              <span
-                key={this.props.fieldNote.id+'-yield-text-'+crop+'-header'}
-                className={styles['yield-text-header']}>
-                  {cropStr + ' Yield'}
-              </span>
-              <span
-                key={this.props.fieldNote.id+'-yield-text-'+crop+'-value'}
-                className={styles['yield-text-value']}>
-                  {this.props.fieldNote.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
-              </span>
-            </div>
-          )
-          yields.push(
-            <br key={uuid.v4()}/>
-          );
-        }
-      })
+        Object.keys(this.props.fieldNote.stats).forEach((crop) => {
+          var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+          if (!isNaN(this.props.fieldNote.stats[crop].mean_yield)) {
+            yields.push(
+              <div
+                key={this.props.fieldNote.id+'-yield-text-'+crop}
+                className={styles['yield-text']}>
+                <span
+                  key={this.props.fieldNote.id+'-yield-text-'+crop+'-header'}
+                  className={styles['yield-text-header']}>
+                    {cropStr + ' Yield'}
+                </span>
+                <span
+                  key={this.props.fieldNote.id+'-yield-text-'+crop+'-value'}
+                  className={styles['yield-text-value']}>
+                    {this.props.fieldNote.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
+                </span>
+              </div>
+            )
+            yields.push(
+              <br key={uuid.v4()}/>
+            );
+          }
+        })
       }
 
       var area = null;

@@ -364,6 +364,7 @@ function setFieldBoundingBoxes({input, state}) {
   Object.keys(input.bboxes).forEach((field) => {
     state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
     state.set(['app', 'model', 'fields', field, 'boundary', 'bbox'], input.bboxes[field]);
+    state.set(['app', 'model', 'fields', field, 'boundary', 'centroid'], [(input.bboxes[field].north + input.bboxes[field].south)/2, (input.bboxes[field].east + input.bboxes[field].west)/2]);
   })
 }
 

@@ -79,12 +79,7 @@
   white-space: nowrap;
   overflow: scroll;
 }
-.note-area-box {
-  height: 11px;
-  width: 11px;
-  display: inline-flex;
-  border: 3px solid;
-  border-radius: 5px;
+.area-value {
 }
 .area-header {
   color: #757575

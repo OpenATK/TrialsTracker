@@ -47,10 +47,11 @@ module.exports = function(yield_data_directory, domain, token) {
   DOMAIN = domain;
   console.log("Started import.");
   rr('./' + yield_data_directory, function(err,files) {
+    console.log(files);
     files = files.filter(function(file) {
       return (file.substr(-3) == 'csv');
     })
-    return Promise.map(files, function(file) {
+    return Promise.each(files, function(file) {
       console.log('Processing ' + file);
       var options = { delimiter : ','};
       var data = fs.readFileSync(file, { encoding : 'utf8'});
@@ -109,6 +110,7 @@ processRawData = function(csvJson, filename) {
   return Promise.map(csvJson, function(row, i) {
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
     var cropType = csvJson[i]['Product - Name'];
+    if (cropType === undefined) cropType = csvJson[i]['Product'];
     cropType = cropType.replace(/\w\S*/g, function(txt){return txt.toLowerCase();});
 
     //Handle new crop types

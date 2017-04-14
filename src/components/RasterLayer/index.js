@@ -3,6 +3,7 @@ import { connect } from 'cerebral-view-react'
 import { GridLayer, Point } from 'react-leaflet'
 import styles from './style.css'
 import gh from 'ngeohash'
+//import gh from '../geohash/main'
 import request from 'superagent'
 import _ from 'lodash'
 import Promise from 'bluebird'
@@ -43,6 +44,7 @@ class RasterLayer extends GridLayer {
 //when the map is panned/zoomed and new tiles are revealed (not render). 
 //Compute the geohashes needed for this tile and save the canvas reference. 
   createTile(coords, done) {
+    console.log('new tile', coords.y, coords.x, coords.z);
     var self = this;
 
     var tileSwPt = new L.Point(coords.x*256, (coords.y*256)+256);
@@ -52,6 +54,7 @@ class RasterLayer extends GridLayer {
     var ne = this.props.map.unproject(tileNePt, coords.z);
     var precision = this.getGeohashLevel(coords.z, sw, ne);
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
+    console.log(geohashes.length)
     this.props.newTileDrawn({geohashes, coords, layer: this.props.layer});
 
     var coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();

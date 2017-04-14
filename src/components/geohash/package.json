@@ -1,0 +1,106 @@
+{
+  "_args": [
+    [
+      {
+        "name": "ngeohash",
+        "raw": "ngeohash@^0.6.0",
+        "rawSpec": "^0.6.0",
+        "scope": null,
+        "spec": ">=0.6.0 <0.7.0",
+        "type": "range"
+      },
+      "/Users/Samuel/Documents/workspace/TrialsTracker"
+    ]
+  ],
+  "_from": "ngeohash@>=0.6.0 <0.7.0",
+  "_id": "ngeohash@0.6.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/ngeohash",
+  "_npmUser": {
+    "email": "sunng@about.me",
+    "name": "sunng"
+  },
+  "_npmVersion": "1.4.3",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "ngeohash",
+    "raw": "ngeohash@^0.6.0",
+    "rawSpec": "^0.6.0",
+    "scope": null,
+    "spec": ">=0.6.0 <0.7.0",
+    "type": "range"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/ngeohash/-/ngeohash-0.6.0.tgz",
+  "_shasum": "329713e9e73d1f1a46d92aab0b94adb94533f687",
+  "_shrinkwrap": null,
+  "_spec": "ngeohash@^0.6.0",
+  "_where": "/Users/Samuel/Documents/workspace/TrialsTracker",
+  "author": {
+    "email": "classicning@gmail.com",
+    "name": "Sun Ning",
+    "url": "http://sunng.info/"
+  },
+  "bugs": {
+    "url": "https://github.com/sunng87/node-geohash/issues"
+  },
+  "contributors": [
+    {
+      "email": "arjunmeht@gmail.com",
+      "name": "Arjun Mehta",
+      "url": "http://www.arjunmehta.net/"
+    },
+    {
+      "email": "seth@four43.com",
+      "name": "Seth Miller",
+      "url": "http://www.four43.com"
+    },
+    {
+      "email": "zhuzhe1983@gmail.com",
+      "name": "Zhu Zhe"
+    }
+  ],
+  "dependencies": {},
+  "description": "geohash library for nodejs",
+  "devDependencies": {
+    "assert": ">=1.0",
+    "nodeunit": ">=0.8"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "329713e9e73d1f1a46d92aab0b94adb94533f687",
+    "tarball": "https://registry.npmjs.org/ngeohash/-/ngeohash-0.6.0.tgz"
+  },
+  "engines": {
+    "node": ">=v0.2.0"
+  },
+  "homepage": "https://github.com/sunng87/node-geohash",
+  "keywords": [
+    "geohash",
+    "uint64",
+    "geohasher",
+    "geocode",
+    "geolocation"
+  ],
+  "license": "MIT",
+  "main": "./main",
+  "maintainers": [
+    {
+      "email": "classicning@gmail.com",
+      "name": "sunng"
+    }
+  ],
+  "name": "ngeohash",
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "url": "git+https://github.com/sunng87/node-geohash.git"
+  },
+  "scripts": {
+    "test": "nodeunit tests/test.js"
+  },
+  "version": "0.6.0"
+}

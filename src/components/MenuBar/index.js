@@ -37,7 +37,7 @@ class MenuBar extends React.Component {
             className={styles['menu-dropdown']}>
             <span
               onClick={()=>this.props.clearCacheButtonClicked({})}>
-              Sign Out
+              Clear Cache 
             </span>
             <br/>
             <span

@@ -34,6 +34,7 @@ export default connect(props => ({
   class Note extends React.Component {
 
     render() {
+      var color = Color(this.props.note.color).alpha(0.4).rgb();
       var editing = this.props.editingNote ?
         (this.props.selected ? true:false) : false
       if (!this.props.note) return null;
@@ -84,7 +85,10 @@ export default connect(props => ({
             className={styles['area']}>
             <span 
               className={styles['area-header']}>
-              Area
+              Area  <div
+                style={{color: this.props.note.color, backgroundColor:`rgba(${color.r},${color.g},${color.b},${color.a})`}}
+                className={styles['note-area-box']}
+              />
             </span>
             <span 
               className={styles['area-value']}>
@@ -94,7 +98,6 @@ export default connect(props => ({
       }
 
       var fieldComparisons = [];
-      console.log(this.props.noteFields);
       if (this.props.noteFields) {
         Object.keys(this.props.noteFields).forEach((field) => {
           Object.keys(this.props.note.stats).forEach((crop, idx) => {
@@ -205,16 +208,6 @@ export default connect(props => ({
           onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}}>
           DONE
         </span> : null}
-        <div 
-          tabIndex={2}
-          className={styles[this.props.selected && editing ?
-            'done-editing-button' : 'hidden']}
-          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.id})}}>
-          <FontAwesome 
-            name='check'
-            className={styles['done-editing-icon']}
-          />
-        </div>
         <EditTagsBar id={this.props.id}/>
         </div>
       )
