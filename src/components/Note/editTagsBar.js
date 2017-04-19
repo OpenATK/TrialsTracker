@@ -1,8 +1,7 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
 import { connect } from 'cerebral/react';
 import uuid from 'uuid';
 import styles from './editTagsBar.css'
-import fastyles from '../css/font-awesome.min.css';
 import FontAwesome from 'react-fontawesome';
 
 export default connect(props => ({
@@ -25,13 +24,12 @@ export default connect(props => ({
     }
   
     handleKeyDown(evt) {
-      if (evt.keyCode == 13 || evt.keyCode == 9) {
+      if (evt.keyCode === 13 || evt.keyCode === 9) {
         this.props.tagAdded({text: evt.target.value});
       }
     }
   
     render() {
-      var tags = [];
       var self = this;
       var options = [];
       Object.keys(this.props.allTags).forEach((tag) => {

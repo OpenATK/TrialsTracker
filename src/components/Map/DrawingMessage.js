@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import { MapControl } from 'react-leaflet';
 import styles from './map.css';
 import Control from 'react-leaflet-control';
 

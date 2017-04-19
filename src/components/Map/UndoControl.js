@@ -1,8 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'cerebral/react';
-import L from 'leaflet';
-import { MapControl } from 'react-leaflet';
 import FontAwesome from 'react-fontawesome';
 import styles from './map.css';
 import Control from 'react-leaflet-control';

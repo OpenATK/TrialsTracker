@@ -1,29 +1,25 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
 import {connect} from 'cerebral/react'
-import TextAreaAutoSize from 'react-textarea-autosize';
-import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
-import Color from 'color'; 
-import FontAwesome from 'react-fontawesome';
-import NewNoteScreen from '../NewNoteScreen';
+import {state, signal, props} from 'cerebral/tags'
 
-export default connect(props => ({
-  fieldNote: `app.model.fields.${props.id}`,
-  notes: 'app.model.notes',
-  isMobile: 'app.is_mobile',
-}), {
-  fieldClicked: 'app.fieldNoteClicked',
+export default connect({
+  fieldNote: state`app.model.fields.${props.id}`,
+  notes: state`app.model.notes`,
+  isMobile: state`app.is_mobile`,
+
+  fieldClicked: signal`app.fieldNoteClicked`,
 },
 
   class FieldNote extends React.Component {
 
     render() {
       if (!this.props.fieldNote) return null;
-      var yields = [];
+      let yields = [];
       if (this.props.fieldNote.stats) {
       Object.keys(this.props.fieldNote.stats).forEach((crop) => {
-        var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+        let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
         if (!isNaN(this.props.fieldNote.stats[crop].mean_yield)) {
           yields.push(
             <div
@@ -48,10 +44,9 @@ export default connect(props => ({
       })
       }
 
-      var area = null;
-      var areaContent = null;
+      let areaContent = null;
       if (this.props.fieldNote.boundary.area) {
-        area = 'Area: ' + this.props.fieldNote.boundary.area.toFixed(2) + ' acres';
+//        let area = 'Area: ' + this.props.fieldNote.boundary.area.toFixed(2) + ' acres';
         areaContent = 
           <div
             key={'area'}
@@ -67,26 +62,26 @@ export default connect(props => ({
           </div>
       }
 
-      var noteComparisons = [];
+      let noteComparisons = [];
       if (this.props.noteFields) {
         Object.keys(this.props.notes).forEach((id) => {
-          var noteFields = this.props.notes[id].fields;
+          let noteFields = this.props.notes[id].fields;
           if (noteFields[this.props.id]) {
             Object.keys(noteFields[this.props.id]).forEach((crop, idx) => {
-              var cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-              var sign = (noteFields[this.props.id][crop].difference < 0) ? '' : '+';
+              let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+              let sign = (noteFields[this.props.id][crop].difference < 0) ? '' : '+';
               noteComparisons.push(
                 <div
-                  key={this.props.id+'-'+field+'-'+crop+'-comparison'}
+                  key={this.props.id+'-field-'+crop+'-comparison'}
                   style={{order:idx}}
                   className={styles['field-comparison']}>
                   <span
-                    key={this.props.id+'-'+field+'-'+crop+'-field'}
+                    key={this.props.id+'-'+crop+'-field'}
                     className={styles['field-comparison-header']}>
                     {this.props.notes[id].text+ ' - ' +cropStr}
                   </span>
                   <span
-                    key={this.props.id+'-'+field+'-'+crop+'-value'}
+                    key={this.props.id+'-'+crop+'-value'}
                     className={styles['field-comparison-value']}>
                     {noteFields[this.props.id].stats[crop].mean_yield.toFixed(1) +
                     ' (' + sign + (this.props.notes[id][crop].difference).toFixed(2) + ') bu/ac' }

@@ -1,4 +1,4 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
 import { connect } from 'cerebral/react';
 import styles from './note-list-menu.css';
 import FontAwesome from 'react-fontawesome';

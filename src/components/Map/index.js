@@ -1,38 +1,23 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import gh from 'ngeohash';
-import oadaIdClient from 'oada-id-client';
-import { request } from 'superagent';
 import { 
-  Popup, 
   FeatureGroup, 
-  Tooltip, 
-  DivIcon, 
-  Circle, 
   CircleMarker, 
-  Polygon, 
   Marker, 
   Map, 
   TileLayer, 
-  ImageOverlay, 
-  latLng, 
-  latLngBounds, 
   LayersControl, 
   GeoJSON ,
-  AttributionControl,
 } from 'react-leaflet';
-const { BaseLayer, Overlay } = LayersControl;
+const { Overlay } = LayersControl;
 import styles from './map.css';
 import uuid from 'uuid';
 import RasterLayer from '../RasterLayer';
-import FontAwesome from 'react-fontawesome';
 import MenuBar from '../MenuBar';
 import GpsControl from './GpsControl';
 import UndoControl from './UndoControl';
 import LegendControl from './LegendControl';
 import DrawingMessage from './DrawingMessage';
-import { divIcon } from 'leaflet';
-import Control from 'react-leaflet-control';
 import {state, signal} from 'cerebral/tags'
 
 export default connect({
@@ -88,10 +73,10 @@ class TrialsMap extends React.Component {
   }
 
   render() {
-    var self = this;
-    var position = [40.98551896940516, -86.18823766708374];
+    let self = this;
+    let position = [40.98551896940516, -86.18823766708374];
 
-    var notePolygons = [];
+    let notePolygons = [];
     Object.keys(this.props.notes).forEach(function(key) {
       if (self.props.notes[key].geometry.geojson.coordinates[0].length > 0) {
         notePolygons.push(<GeoJSON 
@@ -105,15 +90,11 @@ class TrialsMap extends React.Component {
       }
     })
 
-    var markerList = [];
+    let markerList = [];
     if (this.props.editing) {
-      var note = this.props.notes[this.props.selectedNote];
+      let note = this.props.notes[this.props.selectedNote];
       if (note.geometry.geojson.coordinates[0].length > 0) {
-        var marker = divIcon({
-          className:styles['selected-note-marker'],
-          html: `<span style='color:${note.color}' class='fa fa-map-marker'></span>`
-        })
-        var markerList = [];
+        markerList = [];
         note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
            markerList.push(<Marker
             className={styles['selected-note-marker']}
@@ -130,7 +111,7 @@ class TrialsMap extends React.Component {
       }
     }
 
-    var fields = [];
+    let fields = [];
     Object.keys(this.props.fields).forEach(function(key) {
       fields.push(<GeoJSON 
         className={styles['field-polygon']}
@@ -139,7 +120,7 @@ class TrialsMap extends React.Component {
       />)
     })
 
-    var rasterLayers = [];
+    let rasterLayers = [];
     Object.keys(this.props.yieldDataIndex).forEach((crop) => {
       rasterLayers.push(
         <Overlay 
@@ -151,7 +132,6 @@ class TrialsMap extends React.Component {
             key={'RasterLayer-'+crop}
             map={this.refs.map.leafletElement}
             data={'app.model.yield_data_index.'+crop}
-            icon={marker}
             layer={crop}
             url={'https://'+self.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             token={self.props.token}
@@ -161,7 +141,7 @@ class TrialsMap extends React.Component {
         </Overlay>
       )
     })
-    var undoEnabled = this.props.selectedNote ? 
+    let undoEnabled = this.props.selectedNote ? 
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
 
     return (

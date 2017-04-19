@@ -67,10 +67,6 @@ export var changeShowHideState = [
   changeShowHide, 
 ];
 
-export var handleFieldNoteClick = [
-  mapToFieldPolygon,
-];
-
 export var handleNoteClick = [
   mapToNotePolygon,
   isDrawing, {
@@ -93,11 +89,6 @@ isDrawing.outputs = ['true', 'false'];
 function mapToNotePolygon({input, state}) {
   var note = state.get(['app', 'model', 'notes', input.id]);
   if (note) state.set(['app', 'view', 'map', 'map_location'], note.geometry.centroid);
-}
-
-function mapToFieldPolygon({input, state}) {
-  var field = state.get(['app', 'model', 'fields', input.id]);
-  if (field) state.set(['app', 'view', 'map', 'map_location'], field.boundary.centroid);
 }
 
 function deselectNote ({input, state}) {
@@ -218,7 +209,7 @@ function addTagToAllTagsList({input, state}) {
 
 function removeTagFromAllTagsList({input, state}) {
   var refs = state.get(['app', 'model', 'tags', input.tag, 'references']);
-  if (refs == 0) {
+  if (refs === 0) {
     state.unset(['app', 'model', 'tags', input.tag]);
   } else {
     state.set(['app', 'model', 'tags', input.tag, 'references'], refs - 1);

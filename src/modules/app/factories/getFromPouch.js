@@ -1,9 +1,9 @@
 import db from '../../Pouch';
 
-function getFromPouch(app_state_location) {
+export function getFromPouch(app_state_location) {
   function action({state, output}) {
   //First, check if the domain is already in the cache;
-    db().get(app_state_location).then(function(result) {
+    return db().get(app_state_location).then(function(result) {
       output.success({result});
     }).catch(function(err) {
       if (err.status !== 404) throw err;
@@ -11,11 +11,9 @@ function getFromPouch(app_state_location) {
     })
   }
   action.async = true;
-  action.outputs = ['success', 'error'],
+  action.outputs = ['success', 'error']
   // You can set custom display names for the debugger
   action.displayName = 'getFromPouch'
 
   return action;
 }
-
-export default getFromPouch;

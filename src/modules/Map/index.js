@@ -2,7 +2,6 @@ import {
   handleCurrentLocationButton,
   handleLocationFound,
   handleMapClick,
-  handleDoneDrawing,
   undoDrawPoint,
   endMarkerDrag,
   startMarkerDrag,
@@ -10,6 +9,7 @@ import {
   doneMovingMap,
   handleMapMoved,
   startMovingMap,
+  handleFieldNoteClick,
 } from './chains';
 
 export default {
@@ -17,6 +17,8 @@ export default {
   signals: {
 
     currentLocationButtonClicked: handleCurrentLocationButton,
+
+    fieldNoteClicked: handleFieldNoteClick,
 
     locationFound: handleLocationFound,
 
@@ -27,6 +29,8 @@ export default {
     mapMoveStarted: startMovingMap,    
 
     markerDragEnded: endMarkerDrag,
+
+    markerDragStarted: startMarkerDrag,
 
     markerDragged: markerDragging,
 

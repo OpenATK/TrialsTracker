@@ -1,16 +1,10 @@
-import React from 'react'
 import { connect } from 'cerebral/react'
-import { GridLayer, Point } from 'react-leaflet'
-import styles from './style.css'
+import { GridLayer} from 'react-leaflet'
 import gh from 'ngeohash'
-import request from 'superagent'
 import _ from 'lodash'
 import Promise from 'bluebird'
 import cache from '../../modules/Cache'
-import db from '../../modules/Pouch'
-import uuid from 'uuid'
 import Color from 'color'
-var agent = require('superagent-promise')(require('superagent'), Promise)
 import L from 'leaflet'
 
 export default connect(props => ({
@@ -47,7 +41,6 @@ class RasterLayer extends GridLayer {
 
     var tileSwPt = new L.Point(coords.x*256, (coords.y*256)+256);
     var tileNePt = new L.Point((coords.x*256)+256, coords.y*256);
-    var projectFunc = this.props.map.project;
     var sw = this.props.map.unproject(tileSwPt, coords.z);
     var ne = this.props.map.unproject(tileNePt, coords.z);
     var precision = this.getGeohashLevel(coords.z, sw, ne);
@@ -77,9 +70,8 @@ class RasterLayer extends GridLayer {
     geohashes = geohashes.filter((geohash) => {
       return typeof(self.props.dataIndex['geohash-'+precision][geohash]) !== 'undefined';
     })
-    var obj = {};
     return Promise.map(geohashes, (geohash) => {
-      var url = this.props.url+'/geohash-length-index/'+'geohash-'+(geohash.length)+'/geohash-index/'+geohash.substring(0,geohash.length)+'/geohash-data/';
+      var url = this.props.url+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash.substring(0,geohash.length)+'/geohash-data/';
       return cache.get(url, this.props.token)
       .then((data) => {
         return self.recursiveDrawOnCanvas(coords, data, 0, canvas);
@@ -123,7 +115,7 @@ class RasterLayer extends GridLayer {
         }
         return canvas;
       })
-      if (stopIndex != keys.length) {
+      if (stopIndex !== keys.length) {
         return self.recursiveDrawOnCanvas(coords, data, stopIndex, canvas);
       } 
       return canvas;
@@ -180,7 +172,6 @@ class RasterLayer extends GridLayer {
       
 //Render is only called when state is changed; not on map pan/zoom
   render() {
-    var self = this;
 //    if (this.props.geohashesToDraw) {
 /*      Promise.each(this.props.geohashesToDraw, function(geohash) {
         if (self.canvas[geohash].drawn) { //TODO: This won't work for real-time data. It will already be drawn, but we'll need to redraw it with new data!

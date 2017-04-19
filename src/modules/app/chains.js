@@ -1,17 +1,12 @@
-import {set, unset, copy, toggle } from 'cerebral/operators';
-import uuid from 'uuid';
-import gh from 'ngeohash';
-import request from 'superagent';
+import {set, copy } from 'cerebral/operators';
 import _ from 'lodash';
 import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
 var agent = require('superagent-promise')(require('superagent'), Promise);
-import gju from 'geojson-utils';
 import cache from '../Cache';
 import gjArea from '@mapbox/geojson-area';
 import wellknown from 'wellknown';
 import computeBoundingBox from '../Map/utils/computeBoundingBox.js';
-import polygonsIntersect from '../Map/utils/polygonsIntersect.js';
 import {getGrower} from '../Map/utils/datasilo.js';
 import getFieldDataForNotes from '../Map/actions/getFieldDataForNotes.js';
 import setFieldDataForNotes from '../Map/actions/setFieldDataForNotes.js';
@@ -530,18 +525,6 @@ function getOadaDomainFromPouch({state, output}) {
 getOadaDomainFromPouch.outputs = ['cached', 'offline', 'error'];
 getOadaDomainFromPouch.async = true;
 
-function putOadaDomainInPouch({input, state}) {
-  var val = state.get('app.settings.data_sources.yield.oada_domain');
-  if (val.length > 0) {
-    db().put({
-      doc: {domain: val},
-      _id: 'domain',
-    }).catch(function(err) {
-      if (err.status !== 409) throw err;
-    })
-  }
-};
-
 function destroyCache() {
   db().destroy();
 };
@@ -591,13 +574,3 @@ function getOadaToken({input, state, output}) {
 }
 getOadaToken.outputs = ['success', 'error'];
 getOadaToken.async = true;
-
-function storeToken({input, state, services}) {
-  db().put({
-    doc: {token: input.token},
-    _id: 'token',
-  }).catch(function(err) {
-    if (err.status !== 409) throw err;
-  });
-  state.set('app.settings.data_sources.yield.oada_token', input.token);
-};

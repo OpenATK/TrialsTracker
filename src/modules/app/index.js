@@ -2,7 +2,6 @@ import stateTree from './stateTree.js';
 
 import { 
   addGeohashes,
-  getYieldData,
   initialize,
   removeGeohashes,
   clearCache,
@@ -32,8 +31,6 @@ export default {
 
     toggleCropLayer: toggleCropLayerVisibility,
 
-    markerDragStarted: startMarkerDrag,
-
     yieldSourceButtonClicked: setYieldSource,
 
     fieldsSourceButtonClicked: setFieldsSource,
@@ -58,8 +55,6 @@ export default {
 
     newTileDrawn: addGeohashes,
   
-    fieldNoteClicked: handleFieldNoteClick,
-
     dataSourcesButtonClicked: displayDataSourceSettings,
 
     menuBackgroundClicked: toggleMenuDropdown,

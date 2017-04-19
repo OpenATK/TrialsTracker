@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import { MapControl } from 'react-leaflet';
 import Control from 'react-leaflet-control';
 import uuid from 'uuid';
 import Color from 'color';
@@ -28,34 +27,29 @@ class LegendControl extends React.Component {
   }
 
   render() {
-    var self = this;
-    var legendPieces = [];
+    let self = this;
+    let legendPieces = [];
  
     Object.keys(this.props.yieldDataIndex).forEach(function(crop) {
       if (self.props.cropLayers[crop].visible) {
-        var levels = self.props.legends[crop];
-        var title = crop.charAt(0).toUpperCase() + crop.slice(1);
+        let levels = self.props.legends[crop];
+        let title = crop.charAt(0).toUpperCase() + crop.slice(1);
         legendPieces.push(title + ' (bu/ac)');
         legendPieces.push(<br key={uuid.v4()}/>);
         // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < levels.length-1; i++) {
-          var startVal = levels[i].value;
-          var endVal = levels[i+1].value;
-          //find the percent of overall range that it occupies
-          var rangePercent = (endVal - startVal)/(levels[levels.length-1].value - levels[0].value);
+        for (let i = 0; i < levels.length-1; i++) {
           //get colors at each end
-          var startColor = levels[i].color;
-          var endColor = levels[i+1].color;
-          var st = {background: 'linear-gradient(to bottom,'+ Color(levels[i].color).hexString()+','+ Color(levels[i+1].color).hexString()+')'};
-          //var label = levels[i].value.toFixed(2).toString() + (levels[i + 1] ? '-' + levels[i + 1].value.toFixed(2).toString() : '+');
-          if (i == 0) {
-            var label = levels[i].value.toFixed(2).toString();
-          } else if (i == levels.length-2) {
-            var label = levels[i+1].value.toFixed(2).toString();
+          let st = {background: 'linear-gradient(to bottom,'+ Color(levels[i].color).hexString()+','+ Color(levels[i+1].color).hexString()+')'};
+          //let label = levels[i].value.toFixed(2).toString() + (levels[i + 1] ? '-' + levels[i + 1].value.toFixed(2).toString() : '+');
+          let label;
+          if (i === 0) {
+            label = levels[i].value.toFixed(2).toString();
+          } else if (i === levels.length-2) {
+            label = levels[i+1].value.toFixed(2).toString();
           } else {
-            var label = null;
+            label = null;
           }
-          var brk = levels[i+1] ? <br/> : {};
+          let brk = levels[i+1] ? <br/> : {};
           legendPieces.push(
             <span key={uuid.v4()}>
               <i style={st} key={uuid.v4()}></i>

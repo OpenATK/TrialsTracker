@@ -1,12 +1,10 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
 import {connect} from 'cerebral/react'
-import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import styles from './note.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
-import NewNoteScreen from '../NewNoteScreen';
 
 export default connect(props => ({
   note: `app.model.notes.${props.id}`,
@@ -72,10 +70,9 @@ export default connect(props => ({
         })
       }
 
-      var area = null;
       var areaContent = null;
       if (this.props.note.area) {
-        area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
+      //  let area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
         areaContent = 
           <div
             key={'area'}

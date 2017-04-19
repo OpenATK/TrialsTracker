@@ -1,4 +1,4 @@
-import React, { PropTypes } from 'react'
+import React from 'react'
 import {connect} from 'cerebral/react'
 import NoteListMenu from '../NoteListMenu/';
 import Note from '../Note/'
@@ -24,15 +24,11 @@ export default connect({
 
 class NoteList extends React.Component {
 
-  constructor(props) {
-    super(props)
-  }
-
   getNotes () {
     var notes_array = [];
     var self = this;
     switch (this.props.sortMode){
-      case 'all':
+      default: //'all'
         Object.keys(self.props.notes).forEach(function(key) {
           var note = self.props.notes[key];
           notes_array.push(<Note 

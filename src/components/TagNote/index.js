@@ -6,7 +6,6 @@ import uuid from 'uuid';
 import styles from './note.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
-import NewNoteScreen from '../NewNoteScreen';
 
 export default connect(props => ({
   tagNote: `app.model.tags.${props.id}`,

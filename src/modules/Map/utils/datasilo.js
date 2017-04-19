@@ -1,5 +1,4 @@
 import {sign as awsSign} from 'aws-v4-sign-small';
-import request from 'superagent';
 var agent = require('superagent-promise')(require('superagent'), Promise);
 
 // Config of datasilo -- much is fixed / or should be protected

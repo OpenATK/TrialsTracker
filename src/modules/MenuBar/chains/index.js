@@ -1,4 +1,5 @@
-import { set, unset, copy, toggle } from 'cerebral/operators';
+import { toggle } from 'cerebral/operators'
+import {state} from 'cerebral/tags'
 
 export var toggleMenuDropdown = [
   toggle(state`app.view.menu_dropdown_visible`)

@@ -1,83 +1,35 @@
 {
   "name": "TrialsTracker",
   "version": "0.1.0",
-  "description": "An app used to track farm yield trials",
-  "main": "app/main.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/openatk/trialstracker"
-  },
-  "keywords": [
-    "trial",
-    "tracker"
-  ],
-  "contributors": [
-    "Sam Noel <sanoel@purdue.edu>",
-    "Yang Wang <wang701@purdue.edu>",
-    "Andrew Balmos <abalmos@purdue.edu>"
-  ],
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/openatk/trailstracker/issues"
-  },
-  "homepage": "https://github.com/openatk/trailstracker",
-  "scripts": {
-    "start": "node server.js"
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "0.9.5"
   },
   "dependencies": {
-    "@mapbox/geojson-area": "^0.2.1",
-    "@mapbox/leaflet-omnivore": "^0.3.4",
-    "@mapbox/togeojson": "^0.16.0",
-    "autoprefixer": "^6.3.3",
+    "@mapbox/geojson-area": "^0.2.2",
     "aws-v4-sign-small": "^1.1.1",
-    "baobab": "^2.3.3",
-    "bluebird": "^3.4.0",
-    "bn.js": "^4.11.6",
     "cerebral": "2.0.0-b-alpha.a54303bb",
-    "color": "^0.11.3",
-    "csvjson": "^2.1.0",
-    "express": "^4.14.0",
-    "file-loader": "^0.8.5",
-    "font-awesome": "^4.6.3",
     "geojson-utils": "^1.1.0",
-    "geolib": "^2.0.21",
-    "jsdom": "^9.8.3",
     "leaflet": "^1.0.3",
-    "lodash": "^4.14.1",
-    "md5": "^2.1.0",
     "mobile-detect": "^1.3.6",
     "ngeohash": "^0.6.0",
     "oada-id-client": "github:oada/oada-id-client-js",
-    "paralleljs": "^0.2.1",
-    "pouchdb": "^5.4.0",
-    "random-material-color": "^1.0.2",
+    "pouchdb": "^6.1.2",
+    "random-material-color": "^1.0.3",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
-    "react-fontawesome": "^1.1.0",
+    "react-fontawesome": "^1.5.0",
     "react-leaflet": "^1.1.6",
     "react-leaflet-control": "^1.3.0",
     "react-textarea-autosize": "^4.0.5",
-    "readdir-recursive-promise": "0.0.1",
-    "recursive-readdir": "^2.0.0",
-    "superagent": "^2.0.0",
+    "superagent": "^3.5.2",
     "superagent-promise": "^1.1.0",
-    "url-loader": "^0.5.7",
-    "uuid": "^2.0.1",
-    "webpack": "^2.4.1",
     "wellknown": "^0.5.0"
   },
-  "devDependencies": {
-    "babel-core": "^6.14.0",
-    "babel-loader": "^6.2.5",
-    "babel-plugin-transform-decorators-legacy": "^1.3.4",
-    "babel-preset-es2015": "^6.14.0",
-    "babel-preset-react": "^6.5.0",
-    "babel-preset-react-hmre": "^1.1.0",
-    "babel-preset-stage-0": "^6.5.0",
-    "concurrently": "^2.0.0",
-    "cross-env": "^1.0.7",
-    "css-loader": "^0.23.1",
-    "postcss-loader": "^0.8.1",
-    "style-loader": "^0.13.0"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
   }
 }

@@ -1,4 +1,3 @@
-import PouchDB from 'pouchdb';
 import { Promise } from 'bluebird';
 import uuid from 'uuid';
 import db from '../Pouch';
@@ -48,7 +47,7 @@ module.exports = {
 //        }, function onError(err) {
         }).catch(function(err) {
           console.log(err);
-          if (err.status == 404) {
+          if (err.status === 404) {
             return null;
           }
         })
@@ -56,25 +55,4 @@ module.exports = {
     })
   },
 
-
-  put: function(domain, token, url) {
-    return agent('PUT', 'https://'+domain+'/resources/'+id+'/')
-      .set('Authorization', 'Bearer '+ token)
-      .send(data)
-      .end()
-    .then(function(response) {
-      return agent('PUT', url)
-      .set('Authorization', 'Bearer '+ token)
-      .send(data)
-      .end()
-    })
-  },
- 
-  setup: function() {
-
-  },
-
-  tree: {
-
-  }
 }

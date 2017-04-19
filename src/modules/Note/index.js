@@ -6,7 +6,6 @@ import {
   addNewNote,
   removeNote,
   handleNoteClick,
-  handleFieldNoteClick,
   addTag,
   handleNoteListClick,
   enterNoteEditMode,
@@ -14,7 +13,8 @@ import {
   removeTag,
   toggleNoteDropdown,
   cancelNote,
- } from './chains';
+} from './chains';
+import drawComplete from '../Map/chains'
 
 export default {
 

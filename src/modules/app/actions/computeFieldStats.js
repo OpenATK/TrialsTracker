@@ -1,5 +1,4 @@
 import { Promise } from 'bluebird';  
-var agent = require('superagent-promise')(require('superagent'), Promise);
 import yieldDataStatsForPolygon from '../../Map/actions/yieldDataStatsForPolygon.js';
 
 export default function computeFieldStats({input, state, output}) {
@@ -10,7 +9,7 @@ export default function computeFieldStats({input, state, output}) {
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
   var baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var stats = {};
-  Promise.each(Object.keys(fields), function(field) {
+  return Promise.each(Object.keys(fields), function(field) {
     return yieldDataStatsForPolygon(fields[field].boundary.geojson.coordinates[0], fields[field].boundary.bbox, availableGeohashes, baseUrl, token)
     .then((fieldStats) => {
       stats[field] = fieldStats;

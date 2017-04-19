@@ -1,8 +1,7 @@
 import uuid from 'uuid';
-import rmc from 'random-material-color';
 import Color from 'color';
 
-var stateTree = {
+let stateTree = {
 
   model: {
     'yield_data_index': {},
@@ -146,20 +145,19 @@ var stateTree = {
 }; 
 
 function initial_tags() {
-  var text1 = 'herbicide';
-  var text2 = 'low area';
-  var tags_list = {};
+  let text1 = 'herbicide';
+  let text2 = 'low area';
+  let tags_list = {};
   tags_list[text1] = {text: text1, references: 1};
   tags_list[text2] = {text: text2, references: 1};
   return tags_list;
 }
 
 function initial_notes() { 
-  var notes_list = {};
-  for (var i = 1; i<3;i++) {
-    var time = new Date(2015, 5, 17, 15);
-    var col = '#'+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16)+(Math.round(Math.random()* 127) + 127).toString(16);
-    var note = {
+  let notes_list = {};
+  for (let i = 1; i<3;i++) {
+    let time = new Date(2015, 5, 17, 15);
+    let note = {
       time: time,
       text: 'n-serve test',
       tags: [],//['application', 
@@ -206,9 +204,7 @@ function initial_notes() {
       selected: false,
     };
     if (i === 2) {
-      var time = new Date(2015, 9, 22, 18);
-      var col = '#cce6ff';
-      var text = 'low area';
+      let time = new Date(2015, 9, 22, 18);
       note = {
         text: 'rootworm damage',
         time: time,
@@ -260,7 +256,7 @@ function initial_notes() {
 }
 
 function getFontColor(color) {
-  var L = Color(color).luminosity();
+  let L = Color(color).luminosity();
   if (L > 0.179) {
     return '#000000';
   } else {
