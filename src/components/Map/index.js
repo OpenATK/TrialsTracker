@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import gh from 'ngeohash';
 import oadaIdClient from 'oada-id-client';
 import { request } from 'superagent';
@@ -33,44 +33,44 @@ import LegendControl from './LegendControl';
 import DrawingMessage from './DrawingMessage';
 import { divIcon } from 'leaflet';
 import Control from 'react-leaflet-control';
+import {state, signal} from 'cerebral/tags'
 
-export default connect(props => ({
-  cropLayers: 'app.view.map.crop_layers',
-  notes: 'app.model.notes',
-  selectedNote: 'app.view.selected_note',
-  editing: 'app.view.editing',
-  legends: 'app.view.legends',
-  legendVisible: 'app.view.legend.visible',
-  yieldDataIndex: 'app.model.yield_data_index',
-  drawing: 'app.view.map.drawing_note_polygon',
-  fields: 'app.model.fields',
-  currentLocation: 'app.model.current_location',
-  mapLocation: 'app.view.map.map_location',
-  mapZoom: 'app.view.map.map_zoom',
-  token: 'app.settings.data_sources.yield.oada_token',
-  domain: 'app.settings.data_sources.yield.oada_domain',
-  moving: 'app.view.map.moving',
-  dragging: 'app.view.map.dragging_marker',
-  isLoading: 'app.view.map.isLoading',
-  isMobile: 'app.is_mobile',
-}), {
-  mapMoveStarted: 'app.mapMoveStarted',
-  mouseDownOnMap: 'app.mouseDownOnMap',
-  mouseMoveOnMap: 'app.mouseMoveOnMap',
-  startStopLiveDataButtonClicked: 'app.startStopLiveDataButtonClicked',
-  markerDragStarted: 'app.markerDragStarted',
-  markerDragEnded: 'app.markerDragEnded',
-  markerDragged: 'app.markerDragged',
-  locationFound: 'app.locationFound',
-  mapMoved: 'app.mapMoved',
-  gpsButtonClicked: 'app.currentLocationButtonClicked',
-  toggleCropLayer: 'app.toggleCropLayer',
+export default connect({
+  cropLayers: state`app.view.map.crop_layers`,
+  notes: state`app.model.notes`,
+  selectedNote: state`app.view.selected_note`,
+  editing: state`app.view.editing`,
+  legends: state`app.view.legends`,
+  legendVisible: state`app.view.legend.visible`,
+  yieldDataIndex: state`app.model.yield_data_index`,
+  fields: state`app.model.fields`,
+  currentLocation: state`app.model.current_location`,
+  mapLocation: state`app.view.map.map_location`,
+  mapZoom: state`app.view.map.map_zoom`,
+  token: state`app.settings.data_sources.yield.oada_token`,
+  domain: state`app.settings.data_sources.yield.oada_domain`,
+  moving: state`app.view.map.moving`,
+  dragging: state`app.view.map.dragging_marker`,
+  isLoading: state`app.view.map.isLoading`,
+  isMobile: state`app.is_mobile`,
+
+  mapMoveStarted: signal`app.mapMoveStarted`,
+  mouseDownOnMap: signal`app.mouseDownOnMap`,
+  mouseMoveOnMap: signal`app.mouseMoveOnMap`,
+  startStopLiveDataButtonClicked: signal`app.startStopLiveDataButtonClicked`,
+  markerDragStarted: signal`app.markerDragStarted`,
+  markerDragEnded: signal`app.markerDragEnded`,
+  markerDragged: signal`app.markerDragged`,
+  locationFound: signal`app.locationFound`,
+  mapMoved: signal`app.mapMoved`,
+  gpsButtonClicked: signal`app.currentLocationButtonClicked`,
+  toggleCropLayer: signal`app.toggleCropLayer`,
 },
 
 class TrialsMap extends React.Component {
 
   validateMouseEvent(evt) {
-    if (this.props.drawing) {
+    if (this.props.editing) {
       // Don't fire a click event when panning the map or when dragging a point.
       if (!this.props.moving && !this.props.dragging) {
         // Don't add a point if a control was clicked.
@@ -106,7 +106,7 @@ class TrialsMap extends React.Component {
     })
 
     var markerList = [];
-    if (this.props.drawing) {
+    if (this.props.editing) {
       var note = this.props.notes[this.props.selectedNote];
       if (note.geometry.geojson.coordinates[0].length > 0) {
         var marker = divIcon({

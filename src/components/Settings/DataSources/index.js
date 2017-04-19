@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import styles from './styles.css';
 
 export default connect({

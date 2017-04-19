@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import uuid from 'uuid';
 import styles from './editTagsBar.css'
 import fastyles from '../css/font-awesome.min.css';

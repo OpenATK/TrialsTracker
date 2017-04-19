@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import {connect} from 'cerebral-view-react';
+import {connect} from 'cerebral/react';
 import NoteList from '../NoteList/';
 import TrialsMap from '../Map';
 import DataSourceSettings from '../Settings/DataSources';

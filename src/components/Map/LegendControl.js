@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import { MapControl } from 'react-leaflet';
 import Control from 'react-leaflet-control';
 import uuid from 'uuid';

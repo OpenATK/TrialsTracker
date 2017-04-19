@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import {connect} from 'cerebral-view-react'
+import {connect} from 'cerebral/react'
 import TextAreaAutoSize from 'react-textarea-autosize';
 import styles from './add-note-button.css';
 import rmc from 'random-material-color';

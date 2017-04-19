@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import styles from './note-list-menu.css';
 import FontAwesome from 'react-fontawesome';
 
@@ -9,8 +9,8 @@ export default connect(props => ({
   selectedNote: 'app.view.selected_note',
 }), {
   sortingTabClicked: 'app.sortingTabClicked',
-  addNoteButtonClicked: 'app.addNoteButtonClicked',
-  doneDrawingButtonClicked: 'app.doneDrawingButtonClicked',
+  doneClicked: 'app.doneEditingButtonClicked',
+  cancelClicked: 'app.cancelEditingButtonClicked',
 },
 
   class NoteListMenu extends React.Component {
@@ -22,34 +22,40 @@ export default connect(props => ({
             type="button" 
             tabIndex={2}
             className={styles[this.props.editing ? 'done-editing-button' : 'hidden']} 
-            onClick={() => this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}>
+            onClick={() => this.props.doneClicked({id:this.props.selectedNote})}>
             DONE 
           </button>
           <button 
             type="button" 
-            className={styles[this.props.sortMode==='all' ? 
-              'selected-sorting-tab' : 'sorting-tab']} 
+            className={styles[this.props.editing ? 'cancel-editing-button' : 'hidden']} 
+            onClick={() => this.props.cancelClicked({id:this.props.selectedNote})}>
+            CANCEL
+          </button>
+          <button 
+            type="button" 
+            className={styles[this.props.editing ? 'hidden' : 
+              (this.props.sortMode==='all' ? 'selected-sorting-tab' : 'sorting-tab')]} 
             onClick={() => this.props.sortingTabClicked({newSortMode: 'all'})}>
-            ALL
+            NOTES 
           </button>
           <button 
             type="button"
-            className={styles[this.props.sortMode==='fields' ? 
-              'selected-sorting-tab' : 'sorting-tab']} 
+            className={styles[this.props.editing ? 'hidden' : 
+              (this.props.sortMode==='fields' ? 'selected-sorting-tab' : 'sorting-tab')]} 
             onClick={() => this.props.sortingTabClicked({newSortMode: 'fields'})}>
             FIELDS
           </button>
           <button 
             type="button" 
             disabled={true}
-            className={styles[this.props.sortMode==='tags' ? 
-              'selected-sorting-tab' : 'sorting-tab']} 
+            className={styles[this.props.editing ? 'hidden' :
+              (this.props.sortMode==='tags' ? 'selected-sorting-tab' : 'sorting-tab')]} 
             onClick={() => this.props.sortingTabClicked({newSortMode: 'tags'})}>
             TAGS
           </button> 
           <FontAwesome
             name='search'
-            className={styles['search-button']}
+            className={styles[this.props.editing ? 'hidden' : 'search-button']}
             onClick={() => {}}
           />
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import styles from './menu-bar.css';
 import FontAwesome from 'react-fontawesome';
 
@@ -8,7 +8,7 @@ export default connect({
   currentLocation: 'app.model.current_location',
   selectedNote: 'app.view.selected_note',
   menuDropdownVisible: 'app.view.menu_dropdown_visible',
-  drawing: 'app.view.map.drawing_note_polygon',
+  editing: 'app.view.editing_note',
   isMobile: 'app.is_mobile',
   notes: 'app.model.notes',
   legendVisible: 'app.view.legend.visible',
@@ -70,7 +70,7 @@ class MenuBar extends React.Component {
         /> : null }
         {this.props.isMobile ? <FontAwesome
           name='undo'
-          className={styles[this.props.drawing ? 
+          className={styles[this.props.editing ? 
             (undoEnabled ? 'undo-control' : 'undo-control-disabled') : 'hidden']}
           onClick={() => this.props.undoButtonClicked({})}
         /> : null }

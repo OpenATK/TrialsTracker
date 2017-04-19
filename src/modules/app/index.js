@@ -1,24 +1,6 @@
 import stateTree from './stateTree.js';
 
 import { 
-  selectNote,
-  updateNoteText,
-  updateTagText,
-  changeSortMode,
-  changeShowHideState,
-  addNewNote,
-  removeNote,
-  handleNoteClick,
-  handleFieldNoteClick,
-  addTag,
-  handleNoteListClick,
-  enterNoteEditMode,
-  exitNoteEditMode,
-  removeTag,
-  toggleNoteDropdown,
- } from '../Note/chains';
-
-import { 
   addGeohashes,
   getYieldData,
   initialize,
@@ -35,72 +17,30 @@ import {
 } from './chains';
 
 import { 
-  drawComplete,
-  handleCurrentLocationButton,
-  handleLocationFound,
-  handleMapClick,
-  handleDoneDrawing,
-  undoDrawPoint,
-  endMarkerDrag,
-  startMarkerDrag,
-  markerDragging,
-  doneMovingMap,
-  handleMapMoved,
-  startMovingMap,
-} from '../Map/chains';
-
-import { 
   toggleMenuDropdown,
   downloadNotes,
   toggleMapLegend,
 } from '../MenuBar/chains';
 
-export default (module) => {
-  module.addState(
-    stateTree
-  )
+export default {
 
-  module.addSignals({
+  state : stateTree,
 
-    init: [
-      ...initialize
-    ],
+  signals: {
 
-    mapMoved: [
-      ...handleMapMoved, ...doneMovingMap,
-    ],
+    init: initialize,
 
-    toggleCropLayer: [
-      ...toggleCropLayerVisibility,
-    ],
+    toggleCropLayer: toggleCropLayerVisibility,
 
-    markerDragStarted: [
-      ...startMarkerDrag,
-    ],
+    markerDragStarted: startMarkerDrag,
 
-    markerDragged: [
-      ...markerDragging,
-    ],
+    yieldSourceButtonClicked: setYieldSource,
 
-    markerDragEnded: [
-      ...endMarkerDrag,
-    ],
+    fieldsSourceButtonClicked: setFieldsSource,
 
-    yieldSourceButtonClicked: [
-      ...setYieldSource,
-    ],
+    dataSourcesSubmitClicked: submitDataSourceSettings,
 
-    fieldsSourceButtonClicked: [
-      ...setFieldsSource,
-    ],
-
-    dataSourcesSubmitClicked: [
-      ...submitDataSourceSettings,
-    ],
-
-    dataSourcesCancelClicked: [
-      ...cancelDataSourceSettings,
-    ],
+    dataSourcesCancelClicked: cancelDataSourceSettings,
 
     yieldOadaDomainChanged: {
       chain: [...updateOadaYieldDomain],
@@ -112,118 +52,22 @@ export default (module) => {
       immediate: true,
     },
 
-    clearCacheButtonClicked: [
-      ...clearCache,
-    ],
+    clearCacheButtonClicked: clearCache,
 
-    tileUnloaded: [
-      ...removeGeohashes,
-    ],
+    tileUnloaded: removeGeohashes,
 
-    newTileDrawn: [
-      ...addGeohashes,
-    ],
-
-    doneDrawingButtonClicked: [
-      ...drawComplete, ...exitNoteEditMode
-    ],
+    newTileDrawn: addGeohashes,
   
-    sortingTabClicked: [
-      ...changeSortMode
-    ],
+    fieldNoteClicked: handleFieldNoteClick,
 
-    fieldNoteClicked: [
-      ...handleFieldNoteClick
-    ], 
+    dataSourcesButtonClicked: displayDataSourceSettings,
 
-    noteClicked: [
-      ...handleNoteClick
-    ], 
+    menuBackgroundClicked: toggleMenuDropdown,
 
-    deleteNoteButtonClicked: [
-      ...removeNote
-    ],
+    showMenuDropdown: toggleMenuDropdown,
 
-    editNoteButtonClicked: [
-      ...enterNoteEditMode, ...toggleNoteDropdown,
-    ],
+    downloadNotesButtonClicked: downloadNotes,
 
-    noteTextChanged: {
-      chain: [...updateNoteText],
-      immediate: true,
-    },
-
-    tagInputTextChanged: {
-      chain: [...updateTagText],
-      immediate: true,
-    },
-
-    mouseDownOnMap: [
-      ...handleMapClick,
-    ],
-
-    showHideButtonClicked: [
-      ...changeShowHideState
-    ],
-
-    addNoteButtonClicked: [
-      ...addNewNote,
-    ],
-
-    tagRemoved: [
-      ...removeTag,
-    ],
-
-    tagAdded: [
-      ...addTag, 
-    ],
-
-    noteListClicked: [
-      ...handleNoteListClick,
-    ],
-
-    dataSourcesButtonClicked: [
-      ...displayDataSourceSettings,
-    ],
-
-    undoButtonClicked: [
-      ...undoDrawPoint,
-    ],
-
-    locationFound: [
-      ...handleLocationFound,
-    ],
-
-    currentLocationButtonClicked: [
-      ...handleCurrentLocationButton,
-    ],
- 
-    mapMoveStarted: [
-      ...startMovingMap,    
-    ],
-
-    noteBackgroundClicked: [
-      ...toggleNoteDropdown,
-    ],
-    
-    menuBackgroundClicked: [
-      ...toggleMenuDropdown,
-    ],
-
-    showNoteDropdown: [
-      ...toggleNoteDropdown,
-    ],
-
-    showMenuDropdown: [
-      ...toggleMenuDropdown,
-    ],
-
-    downloadNotesButtonClicked: [
-      ...downloadNotes,
-    ],
-
-    mapLegendButtonClicked: [
-      ...toggleMapLegend,
-    ],
-  })
+    mapLegendButtonClicked: toggleMapLegend,
+  }
 }

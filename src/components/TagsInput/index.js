@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import { Decorator as Cerebral, Link } from 'cerebral-view-react';
+import { Decorator as Cerebral, Link } from 'cerebral/react';
 import uuid from 'uuid';
 require('./tags-input.css');
 

@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import {connect} from 'cerebral-view-react'
+import {connect} from 'cerebral/react'
 import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
@@ -13,9 +13,8 @@ export default connect(props => ({
   text: `app.model.notes.${props.id}.text`,
   tags: `app.model.notes.${props.id}.tags`,
   selected: `app.model.notes.${props.id}.selected`,
-  editingNote: 'app.view.editing_note',
+  editing: 'app.view.editing_note',
   geometryVisible: `app.model.notes.${props.id}.geometry_visible`,
-  drawing: 'app.view.map.drawing_note_polygon',
   noteFields: `app.model.notes.${props.id}.fields`,
   fields: 'app.model.fields',
   isMobile: 'app.is_mobile',
@@ -35,8 +34,6 @@ export default connect(props => ({
 
     render() {
       var color = Color(this.props.note.color).alpha(0.4).rgb();
-      var editing = this.props.editingNote ?
-        (this.props.selected ? true:false) : false
       if (!this.props.note) return null;
       var yields = [];
       if (this.props.note.stats.computing) {
@@ -146,9 +143,9 @@ export default connect(props => ({
               onChange={(e) => this.props.noteTextChanged({value: e.target.value, id:this.props.id})}
               rows={1} 
               tabIndex={1}
-              autoFocus={editing}
+              autoFocus={this.props.editing && this.props.selected}
               placeholder='Type note description here...'
-              readOnly={editing ? false : "readonly"}
+              readOnly={this.props.editing && this.props.selected ? false : "readonly"}
             />
             <div 
               className={styles['edit-note-button']}
@@ -197,18 +194,10 @@ export default connect(props => ({
             </div> : null}
           </div>
           <hr 
-            className={styles[editing && this.props.selected ? 
+            className={styles[this.props.editing && this.props.selected ? 
               'hr' : 'hidden']}
           />
-        {this.props.isMobile ? 
-        <span 
-          tabIndex={2}
-          className={styles[this.props.editing ?
-          'done-editing-bar': 'hidden']}
-          onClick={(e) => {e.stopPropagation(); this.props.doneDrawingButtonClicked({id:this.props.selectedNote})}}>
-          DONE
-        </span> : null}
-        <EditTagsBar id={this.props.id}/>
+          <EditTagsBar id={this.props.id}/>
         </div>
       )
     }

@@ -36,7 +36,7 @@ export var undoDrawPoint = [
 ];
 
 export var drawComplete = [
-  set('state:app.view.map.drawing_note_polygon', false), 
+  set('state:app.view.editing_note', false), 
   validateNoteText,
   setWaiting,
   computeNoteStats, {

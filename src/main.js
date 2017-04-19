@@ -1,10 +1,10 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import {Container} from 'cerebral-view-react';
+import {render} from 'react-dom'
+import {Container} from 'cerebral/react';
 import App from './components/App/';
 import controller from './controller';
 
-ReactDOM.render(
+render((
   <Container controller={controller}>
     <App />
-  </Container>, document.querySelector('#root'))
+  </Container>
+), document.querySelector('#root'))

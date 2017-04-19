@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import FontAwesome from 'react-fontawesome';
 import styles from './map.css';
 

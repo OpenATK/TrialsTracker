@@ -40,7 +40,6 @@ var stateTree = {
       map_zoom: 15,
       crop_layers: {},
       isLoading: false,
-      drawing_note_polygon: false,
       dragging_marker: false,
     },
     tag_input_text: '',

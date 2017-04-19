@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import {connect} from 'cerebral-view-react'
+import {connect} from 'cerebral/react'
 import NoteListMenu from '../NoteListMenu/';
 import Note from '../Note/'
 import FieldNote from '../FieldNote/'
@@ -12,7 +12,6 @@ export default connect({
   notes: 'app.model.notes', 
   tags: 'app.model.tags',
   sortMode: 'app.view.sort_mode', 
-  drawing: 'app.view.map.drawing_note_polygon',
   isMobile: 'app.is_mobile',
   editing: 'app.view.editing_note',
   selectedNote: 'app.view.selected_note',
@@ -84,7 +83,7 @@ class NoteList extends React.Component {
   
   handleClick(evt) {
     // call only for note-list element, not children note elements;
-    if (!this.props.drawing) {
+    if (!this.props.editing) {
       if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
         this.props.noteListClicked({});
       }
@@ -101,12 +100,12 @@ class NoteList extends React.Component {
         className={styles['note-list']}>
         <NoteListMenu />
         <div
-          className={styles[this.props.drawing ? 'hidden' : 'add-note']}
+          className={styles[this.props.editing ? 'hidden' : 'add-note']}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           Create a new note...
         </div>
         <div
-          className={styles[this.props.drawing ? 'hidden' : 'add-note-button']}
+          className={styles[this.props.editing ? 'hidden' : 'add-note-button']}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <FontAwesome
             className={styles['add-note-button-icon']}

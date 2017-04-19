@@ -1,11 +1,11 @@
 import React from 'react';
-import { connect } from 'cerebral-view-react';
+import { connect } from 'cerebral/react';
 import { MapControl } from 'react-leaflet';
 import styles from './map.css';
 import Control from 'react-leaflet-control';
 
 export default connect(props => ({
-  drawing: 'app.view.map.drawing_note_polygon',
+  editing: 'app.view.editing_note',
 }), {
 },
 
@@ -16,7 +16,7 @@ class DrawingMessage extends React.Component {
       <Control
         position={this.props.position}>
         <div
-          className={styles[(this.props.drawing) ? 
+          className={styles[(this.props.editing) ? 
             'drawing-message-control' : 'hidden']}>
           Tap on the map to draw a polygon...
         </div>     

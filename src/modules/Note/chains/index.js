@@ -4,6 +4,12 @@ import rmc from 'random-material-color';
 import Color from 'color';
 import _ from 'lodash';
 
+export var cancelNote = [
+  set('state:app.view.editing_note', false),
+  unset('state:app.view.selected_note'),
+  unset(`state:app.model.notes.$id`)
+]
+
 export var toggleNoteDropdown = [
   copy('input:id', 'state:app.view.note_dropdown.note'),
   toggle('state:app.view.note_dropdown.visible'),
@@ -24,8 +30,6 @@ export var handleNoteListClick = [
 ];
 
 export var enterNoteEditMode = [
-  set('state:app.view.map.drawing_note_polygon', true),
-  set('state:app.view.map.drawing_note_polygon', true),
   set('state:app.view.editing_note', true),
   selectNote,
 ];
@@ -39,7 +43,6 @@ export var changeSortMode = [
 ];
 
 export var removeNote = [
-  set('state:app.view.map.drawing_note_polygon', false), 
   set('state:app.view.editing_note', false),
   deselectNote,
   checkTags, 
@@ -57,7 +60,6 @@ export var updateTagText = [
 export var addNewNote = [
   deselectNote,
   createNote, 
-  set('state:app.view.map.drawing_note_polygon', true), 
   set('state:app.view.editing_note', true),
 ];
 
@@ -82,7 +84,7 @@ export var handleNoteClick = [
 ];
 
 function isDrawing ({input, state, output}) {
-  if (state.get('app.view.map.drawing_note_polygon')) {
+  if (state.get('app.view.editing_note')) {
     output.true({})
   } else output.false({})
 }

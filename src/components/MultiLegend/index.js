@@ -1,5 +1,5 @@
 import React, { Proptypes } from 'react';
-import { Decorator as Cerebral } from 'cerebral-view-react';
+import { Decorator as Cerebral } from 'cerebral/react';
 import { MapComponent } from 'react-leaflet';
 import styles from './legend.css';
 import Color from 'color';

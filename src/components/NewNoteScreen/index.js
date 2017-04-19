@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react';
-import {connect} from 'cerebral-view-react'
+import {connect} from 'cerebral/react'
 import TextAreaAutoSize from 'react-textarea-autosize';
 import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
