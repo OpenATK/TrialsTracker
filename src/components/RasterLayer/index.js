@@ -6,14 +6,15 @@ import Promise from 'bluebird'
 import cache from '../../modules/Cache'
 import Color from 'color'
 import L from 'leaflet'
+import { props, state, signal } from 'cerebral/tags'
 
-export default connect(props => ({
-  dataIndex: `${props.data}`,
-  geohashesToDraw: `app.view.map.geohashes_to_draw.${props.layer}`,
-  legend: `app.view.legends.${props.layer}`,
-}), {
-  tileUnloaded: 'app.tileUnloaded',
-  newTileDrawn: 'app.newTileDrawn',
+export default connect({
+  dataIndex: state`${props`data`}`,
+  geohashesToDraw: state`app.view.map.geohashes_to_draw.${props`layer`}`,
+  legend: state`app.view.legends.${props`layer`}`,
+
+  tileUnloaded: signal`app.tileUnloaded`,
+  newTileDrawn: signal`app.newTileDrawn`,
 },
 
 class RasterLayer extends GridLayer {
@@ -142,8 +143,8 @@ class RasterLayer extends GridLayer {
   }
 
   blendColors(c1, c2, percent) {
-    let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
-    let a2 = (typeof c1.b === 'undefined') ? 255 : c1.b;
+//    let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
+//    let a2 = (typeof c1.b === 'undefined') ? 255 : c1.b;
     return { 
       r: c1.r * percent + c2.r * (1-percent),
       g: c1.g * percent + c2.g * (1-percent),

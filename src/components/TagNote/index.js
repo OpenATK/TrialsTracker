@@ -1,18 +1,18 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
 import {connect} from 'cerebral/react'
 import TextAreaAutoSize from 'react-textarea-autosize';
-import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
-import styles from './note.css';
+import './note.css';
 import Color from 'color'; 
 import FontAwesome from 'react-fontawesome';
+import { props, state, signal } from 'cerebral/tags'
 
-export default connect(props => ({
-  tagNote: `app.model.tags.${props.id}`,
-  notes: 'app.model.notes',
-  isMobile: 'app.is_mobile',
-}), {
-  fieldClicked: 'app.fieldNoteClicked',
+export default connect({
+  tagNote: state`app.model.tags.${props.id}`,
+  notes: state`app.model.notes`,
+  isMobile: state`app.is_mobile`,
+
+  fieldClicked: signal`app.fieldNoteClicked`,
 },
 
   class TagNote extends React.Component {
@@ -27,15 +27,15 @@ export default connect(props => ({
             yields.push(
               <div
                 key={this.props.fieldNote.id+'-yield-text-'+crop}
-                className={styles['yield-text']}>
+                className={'yield-text'}>
                 <span
                   key={this.props.fieldNote.id+'-yield-text-'+crop+'-header'}
-                  className={styles['yield-text-header']}>
+                  className={'yield-text-header'}>
                     {cropStr + ' Yield'}
                 </span>
                 <span
                   key={this.props.fieldNote.id+'-yield-text-'+crop+'-value'}
-                  className={styles['yield-text-value']}>
+                  className={'yield-text-value'}>
                     {this.props.fieldNote.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
                 </span>
               </div>
@@ -54,13 +54,13 @@ export default connect(props => ({
         areaContent = 
           <div
             key={'area'}
-            className={styles['area']}>
+            className={'area'}>
             <span 
-              className={styles['area-header']}>
+              className={'area-header'}>
               Area
             </span>
             <span 
-              className={styles['area-value']}>
+              className={'area-value'}>
               {this.props.fieldNote.boundary.area.toFixed(2) + ' acres'}
             </span>
           </div>
@@ -78,15 +78,15 @@ export default connect(props => ({
                 <div
                   key={this.props.id+'-'+field+'-'+crop+'-comparison'}
                   style={{order:idx}}
-                  className={styles['field-comparison']}>
+                  className={'field-comparison'}>
                   <span
                     key={this.props.id+'-'+field+'-'+crop+'-field'}
-                    className={styles['field-comparison-header']}>
+                    className={'field-comparison-header'}>
                     {this.props.notes[id].text+ ' - ' +cropStr}
                   </span>
                   <span
                     key={this.props.id+'-'+field+'-'+crop+'-value'}
-                    className={styles['field-comparison-value']}>
+                    className={'field-comparison-value'}>
                     {noteFields[this.props.id].stats[crop].mean_yield.toFixed(1) +
                     ' (' + sign + (this.props.notes[id][crop].difference).toFixed(2) + ') bu/ac' }
                   </span>
@@ -100,11 +100,11 @@ export default connect(props => ({
       return (
         <div 
           onClick={(e) => this.props.fieldClicked({id:this.props.id})}
-          className={styles[this.props.selected ? 'selected-note' : 'note']}>
+          className={this.props.selected ? 'selected-note' : 'note'}>
           <div
-            className={styles['note-upper']}>
+            className={'note-upper'}>
             <span
-              className={styles['note-text-input']}
+              className={'note-text-input'}
               type='text'
               value={this.props.fieldNote.name} 
               readOnly={"readonly"}>
@@ -112,23 +112,23 @@ export default connect(props => ({
             </span>
           </div>
           <div
-            className={styles[this.props.fieldNote.boundary.area ?
-              'note-main-info' : 'hidden']}>
+            className={this.props.fieldNote.boundary.area ?
+              'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
             {noteComparisons.length === 1 ? 
             <div
-              className={styles['field-comparisons']}>
+              className={'field-comparisons'}>
               {noteComparisons}
             </div> : null}
           </div>
           <div 
-            className={styles['field-comparisons-section']}>
+            className={'field-comparisons-section'}>
             {noteComparisons.length > 1 ? <hr/> : null}
             {noteComparisons.length > 1 ? 
             <div
-              className={styles['field-comparisons']}>
+              className={'field-comparisons'}>
               {noteComparisons}
             </div> : null}
           </div>

@@ -3,14 +3,12 @@ import {connect} from 'cerebral/react';
 import NoteList from '../NoteList/';
 import TrialsMap from '../Map';
 import DataSourceSettings from '../Settings/DataSources';
-import styles from './app.css';
+import './app.css';
+import { signal } from 'cerebral/tags'
 
 export default connect({
 
-}, {
-  init: 'app.init',
-  clearCache: 'app.clearCacheButtonClicked',
-  showDomainModal: 'app.setDomainButtonClicked',
+  init: signal`app.init`,
 },
 
 class App extends React.Component {
@@ -21,7 +19,7 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className={styles['app']}>
+      <div className={'app'}>
         <DataSourceSettings />
         <NoteList />
         <TrialsMap />

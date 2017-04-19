@@ -14,7 +14,7 @@ import {
   toggleNoteDropdown,
   cancelNote,
 } from './chains';
-import drawComplete from '../Map/chains'
+import { drawComplete } from '../Map/chains'
 
 export default {
 

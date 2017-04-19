@@ -5,21 +5,21 @@ import Note from '../Note/'
 import FieldNote from '../FieldNote/'
 import _ from 'lodash'
 import uuid from 'uuid'
-import styles from './note-list.css'
+import './note-list.css'
 import FontAwesome from 'react-fontawesome'
+import {state, signal } from 'cerebral/tags'
 
 export default connect({
-  notes: 'app.model.notes', 
-  tags: 'app.model.tags',
-  sortMode: 'app.view.sort_mode', 
-  isMobile: 'app.is_mobile',
-  editing: 'app.view.editing_note',
-  selectedNote: 'app.view.selected_note',
-  fields: 'app.model.fields',
-}, {
-  noteListClicked: 'app.noteListClicked',
-  addNoteButtonClicked: 'app.addNoteButtonClicked',
-  noteRemoved: 'app.noteRemoved',
+  notes: state`app.model.notes`, 
+  tags: state`app.model.tags`,
+  sortMode: state`app.view.sort_mode`, 
+  isMobile: state`app.is_mobile`,
+  editing: state`app.view.editing_note`,
+  selectedNote: state`app.view.selected_note`,
+  fields: state`app.model.fields`,
+
+  noteListClicked: signal`note.noteListClicked`,
+  addNoteButtonClicked: signal`note.addNoteButtonClicked`,
 },
 
 class NoteList extends React.Component {
@@ -93,23 +93,23 @@ class NoteList extends React.Component {
 
     return (
       <div 
-        className={styles['note-list']}>
+        className={'note-list'}>
         <NoteListMenu />
         <div
-          className={styles[this.props.editing ? 'hidden' : 'add-note']}
+          className={this.props.editing ? 'hidden' : 'add-note'}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           Create a new note...
         </div>
         <div
-          className={styles[this.props.editing ? 'hidden' : 'add-note-button']}
+          className={this.props.editing ? 'hidden' : 'add-note-button'}
           onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <FontAwesome
-            className={styles['add-note-button-icon']}
+            className={'add-note-button-icon'}
             name='plus'
           />
         </div>
         <div 
-          className={styles['notes-container']}
+          className={'notes-container'}
           onClick={(evt) => {this.handleClick(evt)}}>
          {notes_array} 
         </div>

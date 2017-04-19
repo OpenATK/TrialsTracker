@@ -1,15 +1,16 @@
 import { 
+  endMarkerDrag,
+  doneMovingMap,
   handleCurrentLocationButton,
+  handleFieldNoteClick,
   handleLocationFound,
   handleMapClick,
-  undoDrawPoint,
-  endMarkerDrag,
-  startMarkerDrag,
-  markerDragging,
-  doneMovingMap,
   handleMapMoved,
+  markerDragging,
+  startMarkerDrag,
   startMovingMap,
-  handleFieldNoteClick,
+  toggleCropLayerVisibility,
+  undoDrawPoint,
 } from './chains';
 
 export default {
@@ -35,6 +36,8 @@ export default {
     markerDragged: markerDragging,
 
     mouseDownOnMap: handleMapClick,
+
+    toggleCropLayer: toggleCropLayerVisibility,
 
     undoButtonClicked: undoDrawPoint,
   }

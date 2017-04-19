@@ -1,26 +1,27 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import styles from './menu-bar.css';
+import './menu-bar.css';
 import FontAwesome from 'react-fontawesome';
+import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  dataIndex: 'app.model.yield_data_index',
-  currentLocation: 'app.model.current_location',
-  selectedNote: 'app.view.selected_note',
-  menuDropdownVisible: 'app.view.menu_dropdown_visible',
-  editing: 'app.view.editing_note',
-  isMobile: 'app.is_mobile',
-  notes: 'app.model.notes',
-  legendVisible: 'app.view.legend.visible',
-}, {
-  dataSourcesButtonClicked: 'app.dataSourcesButtonClicked',
-  clearCacheButtonClicked: 'app.clearCacheButtonClicked',
-  gpsButtonClicked: 'app.currentLocationButtonClicked',
-  backgroundClicked: 'app.menuBackgroundClicked',
-  showMenuDropdown: 'app.showMenuDropdown',
-  downloadNotes: 'app.downloadNotesButtonClicked',
-  undoButtonClicked: 'app.undoButtonClicked',
-  mapLegendButtonClicked: 'app.mapLegendButtonClicked',
+  dataIndex: state`app.model.yield_data_index`,
+  currentLocation: state`app.model.current_location`,
+  selectedNote: state`app.view.selected_note`,
+  menuDropdownVisible: state`app.view.menu_dropdown_visible`,
+  editing: state`app.view.editing_note`,
+  isMobile: state`app.is_mobile`,
+  notes: state`app.model.notes`,
+  legendVisible: state`app.view.legend.visible`,
+
+  dataSourcesButtonClicked: signal`app.dataSourcesButtonClicked`,
+  clearCacheButtonClicked: signal`app.clearCacheButtonClicked`,
+  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
+  backgroundClicked: signal`app.menuBackgroundClicked`,
+  showMenuDropdown: signal`app.showMenuDropdown`,
+  downloadNotes: signal`app.downloadNotesButtonClicked`,
+  undoButtonClicked: signal`map.undoButtonClicked`,
+  mapLegendButtonClicked: signal`app.mapLegendButtonClicked`,
 },
 
 class MenuBar extends React.Component {
@@ -29,12 +30,12 @@ class MenuBar extends React.Component {
     var undoEnabled = this.props.selectedNote ?
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
     return (
-      <div className={styles['menu-bar']}>
+      <div className={'menu-bar'}>
         {this.props.menuDropdownVisible ? <div
           onClick={() => {this.props.backgroundClicked({})}}
-          className={styles['menu-dropdown-container']}>
+          className={'menu-dropdown-container'}>
           <div
-            className={styles['menu-dropdown']}>
+            className={'menu-dropdown'}>
             <span
               onClick={()=>this.props.clearCacheButtonClicked({})}>
               Clear Cache 
@@ -53,25 +54,25 @@ class MenuBar extends React.Component {
         </div> : null }
         <FontAwesome
           name='ellipsis-v'
-          className={styles['overflow-button']}
+          className={'overflow-button'}
           onClick={()=>{this.props.showMenuDropdown()}}
         />
         {Object.keys(this.props.dataIndex).length > 0 ? <FontAwesome
           name='info'
           onClick={() => this.props.mapLegendButtonClicked({})}
-          className={styles['info-button']}
+          className={'info-button'}
         /> : null }
         {this.props.isMobile ? <FontAwesome
           name='crosshairs'
           disabled={this.props.currentLocation ? true : false}
           onClick={() => this.props.gpsButtonClicked({})}
-          className={styles[this.props.currentLocation ? 
-           'gps-control' : 'gps-control-disabled']}
+          className={this.props.currentLocation ? 
+           'gps-control' : 'gps-control-disabled'}
         /> : null }
         {this.props.isMobile ? <FontAwesome
           name='undo'
-          className={styles[this.props.editing ? 
-            (undoEnabled ? 'undo-control' : 'undo-control-disabled') : 'hidden']}
+          className={this.props.editing ? 
+            (undoEnabled ? 'undo-control' : 'undo-control-disabled') : 'hidden'}
           onClick={() => this.props.undoButtonClicked({})}
         /> : null }
       </div>

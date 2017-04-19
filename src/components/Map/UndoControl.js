@@ -1,13 +1,14 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
 import FontAwesome from 'react-fontawesome';
-import styles from './map.css';
+import './map.css';
 import Control from 'react-leaflet-control';
+import { state, signal } from 'cerebral/tags'
 
-export default connect(props => ({
-  editing: 'app.view.editing_note',
-}), {
-  undoButtonClicked: 'app.undoButtonClicked',
+export default connect({
+  editing: state`app.view.editing_note`,
+
+  undoButtonClicked: signal`map.undoButtonClicked`,
 },
 
 class UndoControl extends React.Component {  
@@ -19,8 +20,8 @@ class UndoControl extends React.Component {
         position={this.props.position}>
         <div
           disabled
-          className={styles[!this.props.editing ? 'hidden' : 
-            this.props.enabled ? 'undo-control' : 'undo-control-disabled']}
+          className={!this.props.editing ? 'hidden' : 
+            this.props.enabled ? 'undo-control' : 'undo-control-disabled'}
           onClick={() => this.props.undoButtonClicked({})}>
           <FontAwesome
             name='undo'

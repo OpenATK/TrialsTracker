@@ -1,20 +1,21 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
 import uuid from 'uuid';
-import styles from './editTagsBar.css'
+import './editTagsBar.css'
 import FontAwesome from 'react-fontawesome';
+import { props, state, signal } from 'cerebral/tags'
 
-export default connect(props => ({
-  note: `app.model.notes.${props.id}`,
-  tags: `app.model.notes.${props.id}.tags`,
-  allTags: 'app.model.tags',
-  editing: 'app.view.editing_note',
-  selected: `app.model.notes.${props.id}.selected`,
-  tagInput: 'app.model.tag_input_text',
-}), {
-  tagAdded: 'app.tagAdded',
-  tagRemoved: 'app.tagRemoved',
-  tagInputTextChanged: 'app.tagInputTextChanged',
+export default connect({
+  note: state`app.model.notes.${props`id`}`,
+  tags: state`app.model.notes.${props`id`}.tags`,
+  allTags: state`app.model.tags`,
+  editing: state`app.view.editing_note`,
+  selected: state`app.model.notes.${props`id`}.selected`,
+  tagInput: state`app.model.tag_input_text`,
+
+  tagAdded: signal`note.tagAdded`,
+  tagRemoved: signal`note.tagRemoved`,
+  tagInputTextChanged: signal`note.tagInputTextChanged`,
 },
 
   class EditTagsBar extends React.Component {
@@ -41,14 +42,14 @@ export default connect(props => ({
 
       return (
         <div
-          className={styles[((this.props.editing && this.props.selected) || this.props.tags.length > 0) ? 
-            'edit-tags-bar' : 'hidden']}>
+          className={((this.props.editing && this.props.selected) || this.props.tags.length > 0) ? 
+            'edit-tags-bar' : 'hidden'}>
           <datalist id={id}>
             {options}
           </datalist>
           <input 
-            className={styles[this.props.editing && this.props.selected ? 
-              'input' : 'hidden']}
+            className={this.props.editing && this.props.selected ? 
+              'input' : 'hidden'}
             placeholder='Add a new tag...'
             style={{
               border: 'none', 
@@ -62,11 +63,11 @@ export default connect(props => ({
           {this.props.tags.map(tag => 
           <div 
             key={tag} 
-            className={styles["tag"]}>
+            className={'tag'}>
             <FontAwesome 
               name='times'
-              className={styles[this.props.selected && this.props.editing ? 
-                'remove-tag-button' : 'hidden']}
+              className={this.props.selected && this.props.editing ? 
+                'remove-tag-button' : 'hidden'}
               onClick={() => this.props.tagRemoved({tag})}
             />
             {tag}

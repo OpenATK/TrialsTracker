@@ -4,11 +4,15 @@ import gjArea from '@mapbox/geojson-area';
 import computeBoundingBox from '../utils/computeBoundingBox.js';
 import getFieldDataForNotes from '../actions/getFieldDataForNotes.js';
 import yieldDataStatsForPolygon from '../actions/yieldDataStatsForPolygon.js';
-import {state } from 'cerebral/tags'
+import { state } from 'cerebral/tags'
 
 export let startMovingMap = [
   set(state`app.view.map.moving`, true)
 ];
+
+export var toggleCropLayerVisibility = [
+  toggleCropLayer,
+]
 
 export let doneMovingMap = [
   set(state`app.view.map.moving`, false)
@@ -68,35 +72,35 @@ export let handleMapMoved = [
   setMapLocation,
 ];
 
-function setMapToCurrentLocation({input, state}) {
+function setMapToCurrentLocation({props, state}) {
   let loc = state.get('app.model.current_location');
   if (loc) state.set('app.view.map.map_location', [loc.lat, loc.lng]);
 }
 
-function setMapLocation({input, state}) {
-  state.set('app.view.map.map_location', [input.latlng.lat, input.latlng.lng]);
-  state.set('app.view.map.map_zoom', input.zoom);
+function setMapLocation({props, state}) {
+  state.set('app.view.map.map_location', [props.latlng.lat, props.latlng.lng]);
+  state.set('app.view.map.map_zoom', props.zoom);
 }
 
-function setCurrentLocation({input, state}) {
+function setCurrentLocation({props, state}) {
   let obj = {
-    lat: input.lat,
-    lng: input.lng,
+    lat: props.lat,
+    lng: props.lng,
   }
   state.set('app.model.current_location', obj);
 }
 
-function setEmptyPolygon({input, state}) {
-  state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);
+function setEmptyPolygon({props, state}) {
+  state.unset(['app', 'model', 'notes', props.id, 'stats', 'computing']);
 }
 
-function setWaiting({input, state}) {
-  state.set(['app', 'model', 'notes', input.id, 'stats', 'computing'], true);
+function setWaiting({props, state}) {
+  state.set(['app', 'model', 'notes', props.id, 'stats', 'computing'], true);
 }
 
-function setMarkerPosition({input, state}) {
+function setMarkerPosition({props, state}) {
   let id = state.get('app.view.selected_note');
-  state.set(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0, input.idx], [input.lng, input.lat])
+  state.set(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0, props.idx], [props.lng, props.lat])
 }
 
 function recalculateArea({state}) {
@@ -110,7 +114,7 @@ function recalculateArea({state}) {
   }
 }
 
-function undo({input, state}) {
+function undo({props, state}) {
   let id = state.get(['app', 'view', 'selected_note']);
   let points = state.get(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0]);
   if (points.length > 0) {
@@ -118,37 +122,41 @@ function undo({input, state}) {
   }
 }
 
-function mapToFieldPolygon({input, state}) {
-  var field = state.get(['app', 'model', 'fields', input.id]);
+function mapToFieldPolygon({props, state}) {
+  var field = state.get(['app', 'model', 'fields', props.id]);
   if (field) state.set(['app', 'view', 'map', 'map_location'], field.boundary.centroid);
 }
 
-function computeNoteStats({input, state, output}) {
+function computeNoteStats({props, state, path}) {
   let token = state.get('app.settings.data_sources.yield.oada_token');
   let domain = state.get('app.settings.data_sources.yield.oada_domain');
   let availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
   let baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
-  let geometry = state.get(['app', 'model', 'notes', input.id, 'geometry']);
+  let geometry = state.get(['app', 'model', 'notes', props.id, 'geometry']);
   yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
   .then((stats) => {
-    output.success({stats, ids:[input.id]});
+    return path.success({stats, ids:[props.id]});
   })
 }
-computeNoteStats.outputs = ['success', 'error'];
 computeNoteStats.async = true;
 
-function setNoteStats({input, state}) {
-  Object.keys(input.stats).forEach(function(crop) {
-    if (isNaN(input.stats[crop].mean_yield)) {
-      state.unset(['app', 'model', 'notes', input.id, 'stats', crop]);
+function setNoteStats({props, state}) {
+  Object.keys(props.stats).forEach(function(crop) {
+    if (isNaN(props.stats[crop].mean_yield)) {
+      state.unset(['app', 'model', 'notes', props.id, 'stats', crop]);
     } else {
-      state.set(['app', 'model', 'notes', input.id, 'stats', crop], input.stats[crop]);
+      state.set(['app', 'model', 'notes', props.id, 'stats', crop], props.stats[crop]);
     }
   })
-  state.unset(['app', 'model', 'notes', input.id, 'stats', 'computing']);
+  state.unset(['app', 'model', 'notes', props.id, 'stats', 'computing']);
 }
 
-function getNoteBoundingBox({input, state, output}) {
+function toggleCropLayer({input, state}) {
+  var vis = state.get(['app', 'view', 'map', 'crop_layers', input.crop, 'visible']);
+  state.set(['app', 'view', 'map', 'crop_layers', input.crop, 'visible'], !vis);
+}
+
+function getNoteBoundingBox({props, state}) {
   let selectedNote = state.get('app.view.selected_note');
   let notes = state.get(['app', 'model', 'notes']);
   let bbox = computeBoundingBox(notes[selectedNote].geometry.geojson);
@@ -156,10 +164,10 @@ function getNoteBoundingBox({input, state, output}) {
   state.set(['app', 'model', 'notes', selectedNote, 'geometry', 'centroid'], [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
 }
 
-function dropPoint ({input, state}) {
+function dropPoint ({props, state}) {
   let id = state.get(['app', 'view', 'selected_note']);
-  state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], input.pt);
+  state.push(['app', 'model', 'notes', id, 'geometry', 'geojson', 'coordinates', 0], props.pt);
 }
 
-function validateNoteText({input, state}) {
+function validateNoteText({props, state}) {
 }

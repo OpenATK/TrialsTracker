@@ -10,7 +10,6 @@ import {
   submitDataSourceSettings,
   cancelDataSourceSettings,
   displayDataSourceSettings,
-  toggleCropLayerVisibility,
   setFieldsSource,
   setYieldSource,
 } from './chains';
@@ -28,8 +27,6 @@ export default {
   signals: {
 
     init: initialize,
-
-    toggleCropLayer: toggleCropLayerVisibility,
 
     yieldSourceButtonClicked: setYieldSource,
 

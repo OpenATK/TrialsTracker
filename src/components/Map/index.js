@@ -1,16 +1,8 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import { 
-  FeatureGroup, 
-  CircleMarker, 
-  Marker, 
-  Map, 
-  TileLayer, 
-  LayersControl, 
-  GeoJSON ,
-} from 'react-leaflet';
+import { FeatureGroup, CircleMarker, Marker, Map, TileLayer, LayersControl, GeoJSON } from 'react-leaflet';
 const { Overlay } = LayersControl;
-import styles from './map.css';
+import './map.css';
 import uuid from 'uuid';
 import RasterLayer from '../RasterLayer';
 import MenuBar from '../MenuBar';
@@ -39,17 +31,15 @@ export default connect({
   isLoading: state`app.view.map.isLoading`,
   isMobile: state`app.is_mobile`,
 
-  mapMoveStarted: signal`app.mapMoveStarted`,
-  mouseDownOnMap: signal`app.mouseDownOnMap`,
-  mouseMoveOnMap: signal`app.mouseMoveOnMap`,
-  startStopLiveDataButtonClicked: signal`app.startStopLiveDataButtonClicked`,
-  markerDragStarted: signal`app.markerDragStarted`,
-  markerDragEnded: signal`app.markerDragEnded`,
-  markerDragged: signal`app.markerDragged`,
-  locationFound: signal`app.locationFound`,
-  mapMoved: signal`app.mapMoved`,
-  gpsButtonClicked: signal`app.currentLocationButtonClicked`,
-  toggleCropLayer: signal`app.toggleCropLayer`,
+  mapMoveStarted: signal`map.mapMoveStarted`,
+  mouseDownOnMap: signal`map.mouseDownOnMap`,
+  markerDragStarted: signal`map.markerDragStarted`,
+  markerDragEnded: signal`map.markerDragEnded`,
+  markerDragged: signal`map.markerDragged`,
+  locationFound: signal`map.locationFound`,
+  mapMoved: signal`map.mapMoved`,
+  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
+  toggleCropLayer: signal`map.toggleCropLayer`,
 },
 
 class TrialsMap extends React.Component {
@@ -80,7 +70,7 @@ class TrialsMap extends React.Component {
     Object.keys(this.props.notes).forEach(function(key) {
       if (self.props.notes[key].geometry.geojson.coordinates[0].length > 0) {
         notePolygons.push(<GeoJSON 
-          className={styles['note-polygon']}
+          className={'note-polygon'}
           data={self.props.notes[key].geometry.geojson} 
           color={self.props.notes[key].color} 
           style={{fillOpacity:0.4}}
@@ -97,7 +87,7 @@ class TrialsMap extends React.Component {
         markerList = [];
         note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
            markerList.push(<Marker
-            className={styles['selected-note-marker']}
+            className={'selected-note-marker'}
 //            icon={marker}
             key={this.props.selectedNote+'-'+i} 
             position={[pt[1], pt[0]]}
@@ -114,7 +104,7 @@ class TrialsMap extends React.Component {
     let fields = [];
     Object.keys(this.props.fields).forEach(function(key) {
       fields.push(<GeoJSON 
-        className={styles['field-polygon']}
+        className={'field-polygon'}
         data={self.props.fields[key].boundary.geojson} 
         key={key}
       />)
@@ -145,9 +135,9 @@ class TrialsMap extends React.Component {
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
 
     return (
-      <div className={styles['map-panel']}>
+      <div className={'map-panel'}>
         <MenuBar/>
-        <div className={styles[this.props.isLoading ? 'loading-screen' : 'hidden']}/>
+        <div className={this.props.isLoading ? 'loading-screen' : 'hidden'}/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
           onClick={(e) => {this.validateMouseEvent(e)}} 

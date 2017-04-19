@@ -3,14 +3,14 @@ import { connect } from 'cerebral/react';
 import Control from 'react-leaflet-control';
 import uuid from 'uuid';
 import Color from 'color';
-import styles from './legend.css';
+import './legend.css';
+import { state } from 'cerebral/tags'
 
-export default connect(props => ({
-  legends: 'app.view.legends',
-  yieldDataIndex: 'app.model.yield_data_index',
-  cropLayers: 'app.view.map.crop_layers',
-  isMobile: 'app.is_mobile',
-}), {
+export default connect({
+  legends: state`app.view.legends`,
+  yieldDataIndex: state`app.model.yield_data_index`,
+  cropLayers: state`app.view.map.crop_layers`,
+  isMobile: state`app.is_mobile`,
 },
 
 class LegendControl extends React.Component {  
@@ -65,7 +65,7 @@ class LegendControl extends React.Component {
       <Control
         position={this.props.position}>
         <div
-          className={styles[(legendPieces.length > 0) ? 'legend-control' : 'hidden']}>
+          className={(legendPieces.length > 0) ? 'legend-control' : 'hidden'}>
           {legendPieces}
         </div>
       </Control>
