@@ -31,7 +31,7 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
   })
 }
 
-function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUrl, token) {
+function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUrl, token, geohashPolygons) {
   return Promise.try(function() {
     //TODO: available geohashes could begin with e.g. geohash-3, but the greatest common prefix may only be a single character
     if (!availableGeohashes['geohash-'+geohash.length]) {

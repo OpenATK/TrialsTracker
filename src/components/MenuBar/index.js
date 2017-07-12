@@ -1,8 +1,9 @@
-import React from 'react';
-import { connect } from 'cerebral/react';
-import './menu-bar.css';
-import FontAwesome from 'react-fontawesome';
+import React from 'react'
+import { connect } from 'cerebral/react'
+import './menu-bar.css'
 import { state, signal } from 'cerebral/tags'
+import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
   dataIndex: state`app.model.yield_data_index`,
@@ -23,59 +24,72 @@ export default connect({
   undoButtonClicked: signal`map.undoButtonClicked`,
   mapLegendButtonClicked: signal`app.mapLegendButtonClicked`,
 },
-
 class MenuBar extends React.Component {
 
+  reqFS() {
+    var el = document.documentElement,
+      rfs = el.requestFullscreen
+        || el.webkitRequestFullScreen
+        || el.mozRequestFullScreen
+        || el.msRequestFullscreen 
+    ;
+    rfs.call(el);
+  }
+
   render() {
-    var undoEnabled = this.props.selectedNote ?
+    let undoEnabled = this.props.selectedNote ?
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
     return (
-      <div className={'menu-bar'}>
-        {this.props.menuDropdownVisible ? <div
-          onClick={() => {this.props.backgroundClicked({})}}
-          className={'menu-dropdown-container'}>
-          <div
-            className={'menu-dropdown'}>
-            <span
-              onClick={()=>this.props.clearCacheButtonClicked({})}>
-              Clear Cache 
-            </span>
-            <br/>
-            <span
-              onClick={()=>this.props.dataSourcesButtonClicked({})}>
-              Change Data Sources
-            </span>
-            <br/>
-            <span
-              onClick={()=>this.props.downloadNotes({})}>
-              Download Notes 
-            </span>
+      <AppBar
+        title="TrialsTracker"
+        showMenuIconButton={false}
+        iconElementRight={<div>
+          {Object.keys(this.props.dataIndex).length > 0 ? 
+            <IconButton
+              key={1}
+              onTouchTap={() => this.props.mapLegendButtonClicked({})}
+              iconClassName="material-icons">info
+            </IconButton>
+          : null }
+          <IconButton
+            key={2}
+            style={this.props.currentLocation ? {} : {display:'none'}}
+            onTouchTap={() => this.props.gpsButtonClicked({})}
+            iconClassName="material-icons">gps_fixed
+          </IconButton>
+          <IconButton
+            key={3}
+            style={this.props.editing ? {} : {display:'none'}}
+            disabled={!undoEnabled}
+            onTouchTap={() => this.props.undoButtonClicked({})}
+            iconClassName="material-icons">undo
+          </IconButton>
+          <IconMenu
+            key={4}
+            iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
+            onRequestChange={()=>{this.props.showMenuDropdown()}}
+            onItemTouchTap={()=>{this.props.showMenuDropdown()}}
+            open={this.props.menuDropdownVisible}
+            targetOrigin={{horizontal: 'right', vertical: 'top'}}
+            anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
+              <MenuItem 
+                primaryText="Clear Cache" 
+                onTouchTap={()=>this.props.clearCacheButtonClicked({})}
+              />
+              <MenuItem
+                style={this.props.isMobile ? {} : {display:'none'}}
+                primaryText="Go Fullscreen"
+                onTouchTap={()=>this.reqFS()}
+              />
+              <Divider />
+              <MenuItem 
+                primaryText="Edit Data Sources"
+                onTouchTap={()=>this.props.dataSourcesButtonClicked({})}
+              />
+            </IconMenu>
           </div>
-        </div> : null }
-        <FontAwesome
-          name='ellipsis-v'
-          className={'overflow-button'}
-          onClick={()=>{this.props.showMenuDropdown()}}
-        />
-        {Object.keys(this.props.dataIndex).length > 0 ? <FontAwesome
-          name='info'
-          onClick={() => this.props.mapLegendButtonClicked({})}
-          className={'info-button'}
-        /> : null }
-        {this.props.isMobile ? <FontAwesome
-          name='crosshairs'
-          disabled={this.props.currentLocation ? true : false}
-          onClick={() => this.props.gpsButtonClicked({})}
-          className={this.props.currentLocation ? 
-           'gps-control' : 'gps-control-disabled'}
-        /> : null }
-        {this.props.isMobile ? <FontAwesome
-          name='undo'
-          className={this.props.editing ? 
-            (undoEnabled ? 'undo-control' : 'undo-control-disabled') : 'hidden'}
-          onClick={() => this.props.undoButtonClicked({})}
-        /> : null }
-      </div>
+        }
+      />
     )
   }
 })

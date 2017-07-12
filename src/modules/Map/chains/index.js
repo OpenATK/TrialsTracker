@@ -45,7 +45,8 @@ export let drawComplete = [
   computeNoteStats, {
     success: [
       setNoteStats, 
-      getFieldDataForNotes
+      getFieldDataForNotes,
+      set(state`map.geohashPolygons`, props`geohashPolygons`),
     ],
     error: [setEmptyPolygon],
   },

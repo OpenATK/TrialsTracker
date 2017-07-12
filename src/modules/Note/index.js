@@ -40,10 +40,7 @@ export default {
 
     noteListClicked: handleNoteListClick,
 
-    noteTextChanged: {
-      chain: [...updateNoteText],
-      immediate: true,
-    },
+    noteTextChanged: updateNoteText,
 
     showHideButtonClicked: changeShowHideState,
 
@@ -53,10 +50,7 @@ export default {
 
     tagAdded: addTag, 
 
-    tagInputTextChanged: {
-      chain: [...updateTagText],
-      immediate: true,
-    },
+    tagInputTextChanged: updateTagText,
 
     tagRemoved: removeTag,
 

@@ -1,10 +1,13 @@
 .note {
-  color: #212121;
-  background-color: #fff;
-  border-radius: 2px;
   margin-bottom: 5px;
   cursor: pointer;
-  box-shadow: 1px 1px 10px 0px #212121;
+}
+.note-header {
+  display: flex;
+  justify-content: space-between;
+}
+.note-textfield {
+  
 }
 .selected-note {
   border-radius: 3px;

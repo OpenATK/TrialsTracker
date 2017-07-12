@@ -4,8 +4,9 @@ import EditTagsBar from './editTagsBar.js';
 import uuid from 'uuid';
 import './note.css';
 import Color from 'color'; 
-import FontAwesome from 'react-fontawesome';
 import { props, state, signal } from 'cerebral/tags'
+import { IconMenu, MenuItem, FlatButton, CardText, CardActions, CardHeader, TextField, IconButton, Divider, Card, Paper, } from 'material-ui'
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
   note: state`app.model.notes.${props`id`}`,
@@ -123,51 +124,46 @@ export default connect({
       }
 
       return (
-        <div 
-          style={{order: this.props.note.order, }} 
-          className={this.props.selected ? 'selected-note' : 'note'} 
-          onClick={(e) => this.props.noteClicked({id:this.props.id})}>
-          <div
+        <Card
+          onTouchTap={(e) => this.props.noteClicked({id:this.props.id})}
+          className={'note'}
+          style={{order: this.props.note.order}}>
+          <CardHeader
+            className={'note-header'}
             style={{backgroundColor: this.props.note.color}}
-            className={'note-upper'}>
-            <textarea
-              className={'note-text-input'}
-              id={this.props.id+'-input'}
-              style={{color: this.props.note.font_color}}
+            title={this.props.editing ? null : this.props.text}>
+            <TextField
+              multiLine={true}
+              rows={1}
+              rowsMax={4}
+              className={'note-textfield'}
+              style={this.props.editing ? null : {display: 'none', color: this.props.note.font_color}}
               type='text'
               value={this.props.text} 
               onChange={(e) => this.props.noteTextChanged({value: e.target.value, id:this.props.id})}
-              rows={1} 
               tabIndex={1}
               autoFocus={this.props.editing && this.props.selected}
-              placeholder='Type note description here...'
+              hintText='Type note description here...'
               readOnly={this.props.editing && this.props.selected ? false : "readonly"}
             />
-            <div 
-              className={'edit-note-button'}
-              onClick={(e)=>{e.stopPropagation();this.props.showNoteDropdown({id:this.props.id})}}>
-              <FontAwesome 
-                name='ellipsis-v'
-                style={{color: this.props.note.font_color}}
-                className={'edit-note-icon'}
+            <IconMenu
+              iconButtonElement={<IconButton onTouchTap={(e)=>{e.stopPropagation()}}><MoreVertIcon /></IconButton>}
+              onRequestChange={()=>{this.props.showNoteDropdown({id:this.props.id})}}
+              onItemTouchTap={()=>{this.props.showMenuDropdown()}}
+              open={this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id}
+              targetOrigin={{horizontal: 'right', vertical: 'top'}}
+              anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
+              <MenuItem 
+                primaryText="Edit" 
+                onTouchTap={(e)=>{this.props.editNoteButtonClicked({id:this.props.id})}}
               />
-              {(this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id) ? 
-              <div
-                className={'note-dropdown'}>
-                <span
-                  onClick={(e)=>{e.stopPropagation();this.props.editNoteButtonClicked({id:this.props.id})}}>
-                  Edit 
-                </span>
-                <br/>
-                <span
-                  onClick={(e) => {e.stopPropagation(); this.props.deleteNoteButtonClicked({id:this.props.id})}}>
-                  Delete
-                </span>
-              </div> : null}
-              {(this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id) ? 
-              <div className={'note-dropdown-container'} /> : null }
-            </div>
-          </div>
+              <Divider />
+              <MenuItem 
+                primaryText="Delete"
+                onTouchTap={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id})}}
+              />
+            </IconMenu>
+          </CardHeader>
           <div
             className={this.props.note.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
@@ -188,12 +184,9 @@ export default connect({
               {fieldComparisons}
             </div> : null}
           </div>
-          <hr 
-            className={this.props.editing && this.props.selected ? 
-              'hr' : 'hidden'}
-          />
+          <Divider />
           <EditTagsBar id={this.props.id}/>
-        </div>
+        </Card>
       )
     }
   }

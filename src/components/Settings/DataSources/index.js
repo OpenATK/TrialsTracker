@@ -1,6 +1,7 @@
-import React from 'react';
-import { connect } from 'cerebral/react';
-import './datasource-settings.css';
+import React from 'react'
+import { connect } from 'cerebral/react'
+import { RadioButtonGroup, Subheader, Divider, RadioButton, TextField, RaisedButton } from 'material-ui'
+import './datasource-settings.css'
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
@@ -19,7 +20,13 @@ export default connect({
 },
 
 class DataSourceSettings extends React.Component {
+
+  doTheThing() {
+    console.log('did it');
+  }  
+
   render() {
+
     return(
       <div className={(this.props.visible) ? 'oada-domain-screen' : 'hidden'}>
         <div className={(this.props.visible) ? 'oada-domain-modal' : 'hidden'}>
@@ -27,107 +34,70 @@ class DataSourceSettings extends React.Component {
             className={'title'}>
             Data Sources
           </span>
-          <br />
-          <span 
-            className={'category-heading'}>
-            Yield Data Source:
-          </span>
-          <form>
-          <input
-            type='radio'
-            className={'radio-button'}
-            checked={this.props.yieldSource === 'oada'}
-            onChange={(e) => this.props.yieldSourceChanged({value:'oada'})}
-            value="OADA"
-            name="yield-data-source"
-          />
-          <span 
-            className={'radio-button-text'}>
-            OADA Server:
-          </span>
-          <input 
-            type='text' 
-            className={'text-input'}
+          <Subheader>Yield Data:</Subheader>
+          <RadioButtonGroup 
+            name="yield-data-source" 
+            onChange={(e,value) => {this.props.yieldSourceChanged({value})}}
+            defaultSelected={this.props.yieldSource}>
+            <RadioButton
+              style={{width:'auto'}}
+              label="OADA"
+              value="oada"
+              name="yield-data-source"
+            />
+            <RadioButton
+              label="None"
+              value="none"
+              name="yield-data-source"
+            />
+          </RadioButtonGroup>
+          <TextField
             value={this.props.yieldOadaDomain} 
+            hintText="yield.oada-dev.com"
+            disabled={this.props.yieldSource !== 'oada'} 
             onChange={(e) => this.props.yieldOadaDomainChanged({value: e.target.value})}
           />
-          <br />
-          <input
-            type='radio'
-            className={'radio-button'}
-            checked={this.props.yieldSource === 'none'}
-            onChange={(e) => this.props.yieldSourceChanged({value:'none'})}
-            value="None"
-            name="yield-data-source"
-          />
-          <span 
-            className={'radio-button-text'}>
-            None
-          </span>
-          </form>
-          <span 
-            className={'category-heading'}>
-            Field Boundaries Source:
-          </span>
-          <form>
-          <input
-            type='radio'
-            className={'radio-button'}
-            checked={this.props.fieldsSource === 'oada'}
-            onChange={(e) => this.props.fieldsSourceChanged({value:'oada'})}
-            value="OADA"
-            name="yield-data-source"
-          />
-          <span 
-            className={'radio-button-text'}>
-            OADA Server:
-          </span>
-          <input 
-            type='text' 
-            className={'text-input'}
+          <Divider />
+          <Subheader>Field Boundaries:</Subheader>
+          <RadioButtonGroup 
+            name="fields-data-source" 
+            onChange={(e,value) => this.props.fieldsSourceChanged({value})}
+            defaultSelected={this.props.fieldsSource}>
+            <RadioButton
+              style={{width:'auto'}}
+              label="OADA"
+              value="oada"
+              name="fields-data-source"
+            />
+            <RadioButton
+              label="Data Silo"
+              value="data_silo"
+              name="fields-data-source"
+            />
+            <RadioButton
+              label="None"
+              value="none"
+              name="fields-data-source"
+            />
+          </RadioButtonGroup>
+          <TextField
+            hintText="yield.oada-dev.com"
             value={this.props.fieldsOadaDomain} 
+            disabled={this.props.fieldsSource !== 'oada'} 
             onChange={(e) => this.props.fieldsOadaDomainChanged({value: e.target.value})}
           />
-          <br />
-          <input
-            type='radio'
-            className={'radio-button'}
-            checked={this.props.fieldsSource === 'data_silo'}
-            onChange={(e) => this.props.fieldsSourceChanged({value:'data_silo'})}
-            value="Data Silo"
-            name="yield-data-source"
-          />
-          <span 
-            className={'radio-button-text'}>
-            Winfield Data Silo
-          </span> 
-          <br />
-          <input
-            type='radio'
-            className={'radio-button'}
-            checked={this.props.fieldsSource === 'none'}
-            onChange={(e) => this.props.fieldsSourceChanged({value:'none'})}
-            value="None"
-            name="yield-data-source"
-          />
-          <span 
-            className={'radio-button-text'}>
-            None
-          </span>
-          </form>
-          <br />
-          <button 
+          <RaisedButton 
             className={'submit-button'}
-            type='button'
-            onClick={() => this.props.submitClicked({})}>
-            Submit
-          </button>
-          <button 
+            label="Submit" 
+            primary={true}
+            onClick={() => this.props.submitClicked({})}
+          />
+          <RaisedButton 
             className={'cancel-button'}
-            type='button'
-            onClick={() => this.props.cancelClicked({})}>
-            Cancel
-          </button>
+            label="Cancel" 
+            secondary={true}
+            onClick={() => this.props.cancelClicked({})}
+          />
         </div>
       </div>
     )

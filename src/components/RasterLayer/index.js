@@ -12,6 +12,8 @@ export default connect({
   dataIndex: state`${props`data`}`,
   geohashesToDraw: state`app.view.map.geohashes_to_draw.${props`layer`}`,
   legend: state`app.view.legends.${props`layer`}`,
+  token: state`app.settings.data_sources.yield.oada_token`,
+  domain: state`app.settings.data_sources.yield.oada_domain`,
 
   tileUnloaded: signal`app.tileUnloaded`,
   newTileDrawn: signal`app.newTileDrawn`,

@@ -1,4 +1,4 @@
-import { set } from 'cerebral/operators';
+import { set, equals } from 'cerebral/operators';
 import _ from 'lodash';
 import oadaIdClient from 'oada-id-client';
 import { Promise } from 'bluebird';  
@@ -7,7 +7,7 @@ import cache from '../Cache';
 import gjArea from '@mapbox/geojson-area';
 import wellknown from 'wellknown';
 import computeBoundingBox from '../Map/utils/computeBoundingBox.js';
-import {getGrower} from '../Map/utils/datasilo.js';
+import { getGrower } from '../Map/utils/datasilo.js';
 import getFieldDataForNotes from '../Map/actions/getFieldDataForNotes.js';
 import setFieldDataForNotes from '../Map/actions/setFieldDataForNotes.js';
 import putInPouch from './factories/putInPouch';
@@ -16,6 +16,7 @@ import db from '../Pouch';
 import MobileDetect from 'mobile-detect';
 import computeFieldStats from './actions/computeFieldStats.js';
 import {props, state } from 'cerebral/tags'
+import {parallel} from 'cerebral'
 
 var computeFieldYieldData = [
   computeFieldStats, {
@@ -38,9 +39,9 @@ var handleFields = [
 ]
 
 var getFieldBoundaries = [
-  handleFieldsSource, {
+  equals('app.settings.data_sources.fields.source'), {
     oada: [
-      getFieldsFromOada, {
+      getOadaTokenSequence, getFieldsFromOada, {
         success: [setFieldBoundaries, handleFields],
         error: [],
       },
@@ -52,33 +53,21 @@ var getFieldBoundaries = [
       },
     ],
     none: [],
-    error: [],
   },
 ];
 
-var getOadaYieldData = [
+var getOadaTokenSequence = [
   getFromPouch('app.settings.data_sources.yield.oada_token'), {
     success: [
       set(state`app.settings.data_sources.yield.oada_token`, props`result.doc.val`),
       testOadaConnection, {
-        success: [
-          getYieldDataIndexFromOada, {
-            success: [setYieldDataIndex, computeFieldYieldData],
-            error: [],
-          },
-        ],
         error: [
           set(state`app.settings.data_sources.yield.oada_domain`, `props:domain`),
           getOadaToken, {
             success: [
               set(state`app.settings.data_sources.yield.oada_token`, props`token`),
               putInPouch('app.settings.data_sources.yield.oada_token'),
-              getYieldDataIndexFromOada, {
-                success: [setYieldDataIndex, computeFieldYieldData],
-                error: [],
-              },
             ],
-            error: [],
           },
         ],
       },
@@ -88,10 +77,6 @@ var getOadaYieldData = [
         success: [
           set(state`app.settings.data_sources.yield.oada_token`, props`token`),
           putInPouch('app.settings.data_sources.yield.oada_token'),
-          getYieldDataIndexFromOada, {
-            success: [setYieldDataIndex, computeFieldYieldData],
-            error: [],
-          },
         ],
         error: [],
       },
@@ -99,8 +84,19 @@ var getOadaYieldData = [
   },
 ]
 
-export var initialize = [
-  setMobile,
+var getOadaYieldData = [
+  getOadaTokenSequence, {
+    success: [
+      getYieldDataIndexFromOada, {
+        success: [setYieldDataIndex, computeFieldYieldData],
+        error: [],
+      }
+    ],
+    error: [],
+  }
+]
+
+export var getDataSources = parallel([
   getFromPouch('app.settings.data_sources.yield.source'), {
     success: [  
       set(state`app.settings.data_sources.yield.source`, props`result.doc.val`), 
@@ -109,14 +105,11 @@ export var initialize = [
         success: [
           set(state`app.settings.data_sources.yield.oada_domain`, props`result.doc.val`),
           set(state`app.view.settings.data_sources.yield.oada_domain`, props`result.doc.val`),
-          getOadaYieldData,
         ],
         error: [set(state`app.view.settings.data_sources.visible`, true)],
       },
     ],
     error: [
-      set(state`app.view.settings.data_sources.yield.oada_domain`, `yield.oada-dev.com`),
-      set(state`app.view.settings.data_sources.yield.source`, 'oada'),
       set(state`app.view.settings.data_sources.visible`, true),
     ],
   },
@@ -128,17 +121,20 @@ export var initialize = [
         success: [
           set(state`app.settings.data_sources.fields.oada_domain`, props`result.doc.val`),
           set(state`app.view.settings.data_sources.fields.oada_domain`, props`result.doc.val`),
-          getFieldBoundaries,
         ],
         error: [set(state`app.view.settings.data_sources.visible`, true)],
       },
     ],
     error: [
-      set(state`app.view.settings.data_sources.fields.oada_domain`, 'yield.oada-dev.com'),
-      set(state`app.view.settings.data_sources.fields.source`, 'oada'),
       set(state`app.view.settings.data_sources.visible`, true),
     ],
   },
+])
+
+export var initialize = [
+  setMobile,
+  getDataSources,
+//  parallel([getOadaYieldData, getFieldBoundaries]), 
 ];
 
 export var removeGeohashes = [
@@ -150,7 +146,10 @@ export var addGeohashes = [
 ];
 
 export var clearCache = [
-  destroyCache,
+  destroyCache, {
+    success: [],
+    error: []
+  },
 ];
 
 export var updateOadaYieldDomain = [
@@ -163,7 +162,7 @@ export var updateOadaFieldsDomain = [
 
 export var submitDataSourceSettings = [
   set(state`app.view.settings.data_sources.visible`, false),
-  getNewYieldSource, {
+  equals(state`app.view.settings.data_sources.yield.source`), {
     oada: [
       set(state`app.settings.data_sources.yield.oada_domain`, state`app.view.settings.data_sources.yield.oada_domain`),
       putInPouch(`app.settings.data_sources.yield.oada_domain`),
@@ -179,10 +178,9 @@ export var submitDataSourceSettings = [
       putInPouch('app.settings.data_sources.yield.source'),
       set(state`app.model.yield_data_index`, {}),
     ],
-    no_change: [],
     error: [], //not really an error; data source didn't change.
   },
-  getNewFieldsSource, {
+  equals(state`app.view.settings.data_sources.fields.source`), {
     oada: [
       set(state`app.settings.data_sources.fields.oada_domain`, state`app.view.settings.data_sources.fields.oada_domain`),
       putInPouch('app.settings.data_sources.fields.oada_domain'),
@@ -208,7 +206,6 @@ export var submitDataSourceSettings = [
       putInPouch('app.settings.data_sources.fields.source'),
       set(state`app.model.fields`, {}),
     ],
-    no_change: [],
     error: [], //not really an error; data source didn't change.
   },
 ];
@@ -236,96 +233,6 @@ function setMobile({input, state, path}) {
   state.set(`app.is_mobile`, (md.mobile() !== null));
 }
 
-function getNewFieldsSource({state, path}) {
-  var currentSource = state.get(`app.settings.data_sources.fields.source`);
-  var newSource = state.get(`app.view.settings.data_sources.fields.source`);
-  if (currentSource !== newSource) {
-//  if (newSource) return path[newSource]
-    switch (newSource) { 
-      case 'oada': 
-        return path.oada({});
-      case 'none': 
-        return path.none({});
-      case 'data_silo': 
-        return path.data_silo({});
-      default: 
-        return path.error({});
-    }
-  }
-  if (currentSource === 'oada') {
-    var currentDomain = state.get('app.settings.data_sources.fields.oada_domain');
-    var newDomain = state.get('app.view.settings.data_sources.fields.oada_domain');
-    if (currentDomain !== newDomain) {
-      return path.oada({});
-    }
-  }
-  return path.no_change({});
-}
-getNewFieldsSource.async = true;
-getNewFieldsSource.outputs = ['oada', 'data_silo', 'none', 'no_change', 'error'];
-
-function getNewYieldSource({state, path}) {
-  var currentSource = state.get('app.settings.data_sources.yield.source');
-  var newSource = state.get('app.view.settings.data_sources.yield.source');
-  if (currentSource !== newSource) {
-    switch (newSource) { 
-      case 'oada': 
-        return path.oada({});
-      case 'none': 
-        return path.none({});
-      default: 
-        return path.error({});
-    }
-  }
-  if (currentSource === 'oada') {
-    var currentDomain = state.get('app.settings.data_sources.yield.oada_domain');
-    var newDomain = state.get('app.view.settings.data_sources.yield.oada_domain');
-    if (currentDomain !== newDomain) {
-      return path.oada({});
-    }
-  }
-  return path.no_change({});
-}
-getNewYieldSource.async = true;
-getNewYieldSource.outputs = ['oada', 'none', 'no_change', 'error'];
-
-function handleYieldSource({state, path}) {
-  var yieldSource = state.get('app.settings.data_sources.yield.source');
-  if (yieldSource) {
-    switch(yieldSource) {
-      case 'oada': 
-        return path.oada({});
-      case 'none': 
-        return path.none({});
-      default: 
-        return path.error({});
-    }
-  }
-  return path.error({});
-}
-handleYieldSource.outputs = ['oada', 'none', 'error'];
-handleYieldSource.async = true;
-
-function handleFieldsSource({state, path}) {
-  var fieldsSource = state.get('app.settings.data_sources.fields.source');
-  if (fieldsSource) {
-    switch(fieldsSource) {
-      case 'oada': 
-        return path.oada({});
-      case 'data_silo': 
-        return path.data_silo({});
-      case 'none': 
-        return path.none({});
-      default: 
-        return path.error({});
-    }
-  }
-  return path.error({});
-}
-handleFieldsSource.outputs = ['oada', 'data_silo', 'none', 'error'];
-handleFieldsSource.async = true;
-
-
 function computeFieldBoundingBoxes({input, state, path}) {
   var bboxes = {};
   var areas = {};
@@ -339,8 +246,6 @@ function computeFieldBoundingBoxes({input, state, path}) {
     return path.error({err});
   })
 }
-computeFieldBoundingBoxes.async = true;
-computeFieldBoundingBoxes.outputs = ['success', 'error'];
 
 function setFieldBoundingBoxes({input, state}) {
 //TODO: need to check for valid data source
@@ -394,7 +299,6 @@ function getFieldsFromDatasilo({state, path}) {
                   geojson: wellknown(season.boundary)
                 }
               };
-
             });
           });
         });
@@ -406,15 +310,13 @@ function getFieldsFromDatasilo({state, path}) {
       return path.error(error);
     })
 }
-getFieldsFromDatasilo.outputs = ['success', 'error'];
-getFieldsFromDatasilo.async = true;
 
 function getFieldsFromOada({state, path}) {
   var token = state.get('app.settings.data_sources.yield.oada_token');
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
   var url = 'https://' + domain + '/bookmarks/fields/fields-index/';
   var fields = {};
-  cache.get(url, token).then(function(fieldsIndex) {
+  return cache.get(url, token).then(function(fieldsIndex) {
     return Promise.map(Object.keys(fieldsIndex), function(item) {
       return cache.get(url + item, token).then(function(fieldItem) {
         if (fieldItem['fields-index']) {
@@ -440,8 +342,6 @@ function getFieldsFromOada({state, path}) {
     return path.error({fields});
   })
 }
-getFieldsFromOada.outputs = ['success', 'error'];
-getFieldsFromOada.async = true;
 
 function setFieldBoundaries({input, state}) {
   if (input.fields) {
@@ -476,8 +376,6 @@ function getYieldDataIndexFromOada({state, path}) {
     return path.success({data, cropStatus});
   })
 }
-getYieldDataIndexFromOada.outputs = ['success', 'error'];
-getYieldDataIndexFromOada.async = true;
 
 function setYieldDataIndex({input, state}) {
   if (input.data) {
@@ -491,24 +389,13 @@ function setYieldDataIndex({input, state}) {
   }
 }
 
-function getOadaDomainFromPouch({state, path}) {
-  //First, check if the domain is already in the cache;
-  db().get('domain').then(function(result) {
-    if (result.doc.domain.indexOf('offline') > 0) {
-      return path.offline({}); //In cache, but not connected to server for now
-    } else {
-      return path.cached({value: result.doc.domain});//In cache, use it. 
-    }
-  }).catch(function(err) {
-    if (err.status !== 404) throw err;
-    return path.error({});//Don't have it yet, prompt for it. 
+function destroyCache({path}) {
+  return db().destroy()
+  .then((result) => {
+    return path.success({result})
+  }).catch((error) => {
+    return path.error({error})
   })
-};
-getOadaDomainFromPouch.outputs = ['cached', 'offline', 'error'];
-getOadaDomainFromPouch.async = true;
-
-function destroyCache() {
-  db().destroy();
 };
 
 function registerGeohashes({input, state}) {
@@ -536,8 +423,6 @@ function testOadaConnection({state, path}) {
     return path.error({});
   })
 }
-testOadaConnection.async = true;
-testOadaConnection.outputs = ['success', 'error'];
 
 function getOadaToken({input, state, path}) {
   var options = {
@@ -550,9 +435,7 @@ function getOadaToken({input, state, path}) {
   }
   var domain = state.get('app.settings.data_sources.yield.oada_domain'); //TODO: don't hard code this as the source of the domain
   oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
-    if (err) { console.dir(err); return path.error(); } // Something went wrong  
+    if (err) { console.dir(err); return path.error(err); } // Something went wrong  
     return path.success({token:accessToken.access_token});
   })
 }
-getOadaToken.outputs = ['success', 'error'];
-getOadaToken.async = true;

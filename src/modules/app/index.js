@@ -26,40 +26,34 @@ export default {
 
   signals: {
 
-    init: initialize,
+    clearCacheButtonClicked: clearCache,
 
-    yieldSourceButtonClicked: setYieldSource,
-
-    fieldsSourceButtonClicked: setFieldsSource,
+    dataSourcesButtonClicked: displayDataSourceSettings,
 
     dataSourcesSubmitClicked: submitDataSourceSettings,
 
     dataSourcesCancelClicked: cancelDataSourceSettings,
+ 
+    downloadNotesButtonClicked: downloadNotes,
 
-    yieldOadaDomainChanged: {
-      chain: [...updateOadaYieldDomain],
-      immediate: true,
-    },
+    fieldsOadaDomainChanged: updateOadaFieldsDomain,
 
-    fieldsOadaDomainChanged: {
-      chain: [...updateOadaFieldsDomain],
-      immediate: true,
-    },
+    fieldsSourceButtonClicked: setFieldsSource,
 
-    clearCacheButtonClicked: clearCache,
-
-    tileUnloaded: removeGeohashes,
-
-    newTileDrawn: addGeohashes,
-  
-    dataSourcesButtonClicked: displayDataSourceSettings,
+    init: initialize,
 
     menuBackgroundClicked: toggleMenuDropdown,
 
+    mapLegendButtonClicked: toggleMapLegend,
+
+    newTileDrawn: addGeohashes,
+ 
     showMenuDropdown: toggleMenuDropdown,
 
-    downloadNotesButtonClicked: downloadNotes,
+    tileUnloaded: removeGeohashes,
+ 
+    yieldOadaDomainChanged: updateOadaYieldDomain,
 
-    mapLegendButtonClicked: toggleMapLegend,
+    yieldSourceButtonClicked: setYieldSource,
   }
 }

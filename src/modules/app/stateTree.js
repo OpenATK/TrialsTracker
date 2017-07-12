@@ -13,13 +13,13 @@ let stateTree = {
   settings: {
     data_sources: {
       yield: {
-        source: 'none',
-        oada_domain: '',
+        source: 'oada',
+        oada_domain: 'yield.oada-dev.com',
         oada_token: '',
       },
       fields: {
         source: 'none',
-        oada_domain: '',
+        oada_domain: 'yield.oada-dev.com',
         oada_token: '',
       }
     }
@@ -43,19 +43,19 @@ let stateTree = {
     },
     tag_input_text: '',
     crop_dropdown_visible: false,
-    sort_mode: 'all', //'all' 'fields' 'tags'
+    sort_mode: 0, //0 - notes; 1 - fields; 2 - tags; 3 - search;
     editing_note: false,
     settings: {
       data_sources: {
         visible: false,
         yield: {
-          source: 'none',
-          oada_domain: '',
+          source: 'oada',
+          oada_domain: 'yield.oada-dev.com',
           oada_token: '',
         },
         fields: {
-          source: 'none',
-          oada_domain: '',
+          source: 'oada',
+          oada_domain: 'yield.oada-dev.com',
           oada_token: '',
         }
       }

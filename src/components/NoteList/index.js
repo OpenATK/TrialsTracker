@@ -1,13 +1,12 @@
 import React from 'react'
 import {connect} from 'cerebral/react'
-import NoteListMenu from '../NoteListMenu/';
 import Note from '../Note/'
 import FieldNote from '../FieldNote/'
-import _ from 'lodash'
-import uuid from 'uuid'
 import './note-list.css'
-import FontAwesome from 'react-fontawesome'
+import {Tabs, Tab, FloatingActionButton} from 'material-ui';
+import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
+import ContentAdd from 'material-ui/svg-icons/content/add';
 
 export default connect({
   notes: state`app.model.notes`, 
@@ -18,65 +17,13 @@ export default connect({
   selectedNote: state`app.view.selected_note`,
   fields: state`app.model.fields`,
 
+  sortingTabClicked: signal`note.sortingTabClicked`,
   noteListClicked: signal`note.noteListClicked`,
   addNoteButtonClicked: signal`note.addNoteButtonClicked`,
 },
 
 class NoteList extends React.Component {
 
-  getNotes () {
-    var notes_array = [];
-    var self = this;
-    switch (this.props.sortMode){
-      default: //'all'
-        Object.keys(self.props.notes).forEach(function(key) {
-          var note = self.props.notes[key];
-          notes_array.push(<Note 
-            id={note.id} 
-            key={note.id}/>
-          );
-        });
-        break;
-
-      case 'fields':
-        Object.keys(self.props.fields).forEach((field) => {
-          notes_array.push(<FieldNote 
-            id={field} 
-            key={field} />
-          )  
-        })
-        break;
-
-      case 'tags':
-        // First, add notes without any tags.
-        _.each(self.props.notes, function(note) {
-        if (_.isEmpty(note.tags)) {
-          notes_array.push(<Note 
-            id={note.id} 
-            key={note.id} />
-          );  
-        }
-      });
-      // Next, for each tag, show all notes with that tag.  Repetitions of the same note may occur.
-      _.each(this.props.tags, function(tag) {
-        notes_array.push(<span className='note-tag-headings' key={uuid.v4()}>{tag.text}</span>);
-        notes_array.push(<hr key={uuid.v4()}/>);
-        _.each(self.props.notes, function(note) {
-          _.each(note.tags, function(noteTag) {
-            if (noteTag === tag.text) {
-              notes_array.push(<Note 
-                id={note.id} 
-                key={note.id} 
-              />);  
-            }
-          });
-        });
-      });  
-      break;
-    }
-    return notes_array;
-  }
-  
   handleClick(evt) {
     // call only for note-list element, not children note elements;
     if (!this.props.editing) {
@@ -86,33 +33,58 @@ class NoteList extends React.Component {
     }
   }
 
-  
-
   render() {
-    var notes_array = this.getNotes();
+    let notes_array = Object.keys(this.props.notes).map((key) => {
+      return (<Note 
+        id={key} 
+        key={key}
+      />)
+    });
+
+    let fields_array = Object.keys(this.props.fields).map((field) => {
+      return(<FieldNote 
+        id={field} 
+        key={field}
+      />)  
+    })
 
     return (
       <div 
         className={'note-list'}>
-        <NoteListMenu />
-        <div
-          className={this.props.editing ? 'hidden' : 'add-note'}
-          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
-          Create a new note...
-        </div>
-        <div
-          className={this.props.editing ? 'hidden' : 'add-note-button'}
-          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
-          <FontAwesome
-            className={'add-note-button-icon'}
-            name='plus'
-          />
-        </div>
-        <div 
-          className={'notes-container'}
-          onClick={(evt) => {this.handleClick(evt)}}>
-         {notes_array} 
-        </div>
+        <Tabs
+          onChange={() => this.props.sortingTabClicked({newSortMode: 'all'})}
+          value={this.props.sortMode}>
+          <Tab label="NOTES" value={0} />
+          <Tab label="FIELDS" value={1} />
+          <Tab label="TAGS" value={2} />
+        </Tabs>
+        <SwipeableViews
+          index={this.props.sortMode}
+          onChangeIndex={() => this.props.sortingTabClicked({newSortMode: 'all'})}>
+          <div
+            className={'notes-container'}
+            onTouchTap={(evt) => {this.handleClick(evt)}}>
+            <div
+              className={this.props.editing ? 'hidden' : 'add-note'}
+              onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+              Create a new note...
+            </div>
+            {notes_array} 
+          </div>
+          <div
+            className={'notes-container'}>
+            {fields_array} 
+          </div>
+          <div>
+            TAG CARDS
+          </div>
+        </SwipeableViews>
+        <FloatingActionButton
+          className={'add-note-button'}
+          style={(this.props.editing && this.props.sortMode === 0) ? {display: 'none'} : null}
+          onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          <ContentAdd />
+        </FloatingActionButton>
       </div>
     );
   }
