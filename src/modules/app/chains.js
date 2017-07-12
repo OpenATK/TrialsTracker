@@ -68,6 +68,7 @@ var getOadaTokenSequence = [
               set(state`app.settings.data_sources.yield.oada_token`, props`token`),
               putInPouch('app.settings.data_sources.yield.oada_token'),
             ],
+            error: [],
           },
         ],
       },
@@ -434,8 +435,11 @@ function getOadaToken({input, state, path}) {
 //      }
   }
   var domain = state.get('app.settings.data_sources.yield.oada_domain'); //TODO: don't hard code this as the source of the domain
-  oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
-    if (err) { console.dir(err); return path.error(err); } // Something went wrong  
-    return path.success({token:accessToken.access_token});
+  return new Promise((resolve) => {
+    oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
+      console.log(accessToken)
+      if (err) { console.dir(err); return resolve(path.error(err)); } // Something went wrong  
+      return resolve(path.success({token:accessToken.access_token}));
+    })
   })
 }

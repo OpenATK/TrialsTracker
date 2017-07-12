@@ -21,7 +21,7 @@ export default connect({
   dragging: state`app.view.map.dragging_marker`,
   isLoading: state`app.view.map.isLoading`,
   isMobile: state`app.is_mobile`,
-  geohashPolygons: state`map.geohashPolygons`,
+//  geohashPolygons: state`map.geohashPolygons`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
   mouseDownOnMap: signal`map.mouseDownOnMap`,
@@ -72,7 +72,7 @@ class TrialsMap extends React.Component {
         />)
       }
     })
-
+/*
     let geohashPolygons = [];
     this.props.geohashPolygons.forEach(function(gjson) {
       geohashPolygons.push(<GeoJSON
@@ -81,6 +81,7 @@ class TrialsMap extends React.Component {
         key={uuid.v4()}
       />)
     })
+*/
 
     let markerList = [];
     if (this.props.editing) {
