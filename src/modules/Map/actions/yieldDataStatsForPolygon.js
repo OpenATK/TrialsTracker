@@ -10,35 +10,37 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
     gh.encode(bbox.south, bbox.east, 9),
     gh.encode(bbox.south, bbox.west, 9)];
   let commonString = longestCommonPrefix(strings);
-  let stats = {};
+  let stuff = {};
+  stuff.stats = {};
+  stuff.geohashPolygons = [];
   return Promise.each(Object.keys(availableGeohashes), function(crop) {
-    stats[crop] = { 
+    stuff.stats[crop] = { 
       area_sum: 0,
       weight_sum: 0,
       count: 0,
       mean_yield: 0,
     };
-    return recursiveGeohashSum(polygon, commonString, stats[crop], availableGeohashes[crop], baseUrl+crop+'/geohash-length-index/', token)
-    .then(function(newStats) {
-      stats[crop].area_sum = newStats.area_sum;
-      stats[crop].weight_sum = newStats.weight_sum;
-      stats[crop].count = newStats.count;
-      stats[crop].mean_yield = newStats.weight_sum/newStats.area_sum;
-      return stats;
+    return recursiveGeohashSum(polygon, commonString, {stats:stuff.stats[crop], geohashPolygons:stuff.geohashPolygons}, availableGeohashes[crop], baseUrl+crop+'/geohash-length-index/', token)
+    .then(function(newStuff) {
+      stuff.stats[crop].area_sum = newStuff.stats.area_sum;
+      stuff.stats[crop].weight_sum = newStuff.stats.weight_sum;
+      stuff.stats[crop].count = newStuff.stats.count;
+      stuff.stats[crop].mean_yield = newStuff.stats.weight_sum/newStuff.stats.area_sum;
+      return stuff;
     })
   }).then(function() {
-    return stats;
+    return stuff;
   })
 }
 
-function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUrl, token, geohashPolygons) {
+function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUrl, token) {
   return Promise.try(function() {
     //TODO: available geohashes could begin with e.g. geohash-3, but the greatest common prefix may only be a single character
     if (!availableGeohashes['geohash-'+geohash.length]) {
-      return stats;
+      return stuff;
     }
     if (!availableGeohashes['geohash-'+geohash.length][geohash]) {
-      return stats;
+      return stuff;
     }
 
     let ghBox = gh.decode_bbox(geohash);
@@ -66,25 +68,25 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
                 let pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
                 let poly = {"type":"Polygon","coordinates": [polygon]};
                 if (gju.pointInPolygon(pt, poly)) {
-                  stats.area_sum += geohashes[g].area.sum;
-                  stats.weight_sum += geohashes[g].weight.sum;
-                  stats.count += geohashes[g].count;
+                  stuff.stats.area_sum += geohashes[g].area.sum;
+                  stuff.stats.weight_sum += geohashes[g].weight.sum;
+                  stuff.stats.count += geohashes[g].count;
                 }
               })
-              return stats;
+              return stuff;
             })
           } else {
             let geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
             return Promise.map(geohashes, function(g) {
-              return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
-              .then(function (newStats) {
-                if (newStats === null) {
-                  return stats;
+              return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, baseUrl, token)
+              .then(function (newStuff) {
+                if (newStuff === null) {
+                  return stuff;
                 }
-                return newStats;
+                return newStuff;
               })
             }).then(() => {
-              return stats;
+              return stuff;
             })
           }
         } 
@@ -97,10 +99,11 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
     if (gju.pointInPolygon(pt, poly)) {
       var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
       return cache.get(url, token).then(function(data) {
-        stats.area_sum += data.area.sum;
-        stats.weight_sum += data.weight.sum;
-        stats.count += data.count;
-        return stats;
+        stuff.stats.area_sum += data.area.sum;
+        stuff.stats.weight_sum += data.weight.sum;
+        stuff.stats.count += data.count;
+        stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
+        return stuff;
       })
     }
 //3. If polygon is completely inside geohash, dig deeper. Only one point
@@ -116,29 +119,30 @@ function recursiveGeohashSum(polygon, geohash, stats, availableGeohashes, baseUr
             let pt = {"type":"Point","coordinates": [ghBox[1], ghBox[0]]};
             let poly = {"type":"Polygon","coordinates": [polygon]};
             if (gju.pointInPolygon(pt, poly)) {
-              stats.area_sum += g.area.sum;
-              stats.weight_sum += g.weight.sum;
-              stats.count += g.stats.count;
+              stuff.stats.area_sum += g.area.sum;
+              stuff.stats.weight_sum += g.weight.sum;
+              stuff.stats.count += g.stats.count;
+              stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
             }
           })
-          return stats;
+          return stuff;
         })
       }
       let geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
       return Promise.map(geohashes, function(g) {
-        return recursiveGeohashSum(polygon, g, stats, availableGeohashes, baseUrl, token)
-        .then(function (newStats) {
-          if (newStats === null) {
-            return stats;
+        return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, baseUrl, token)
+        .then(function (newStuff) {
+          if (newStuff === null) {
+            return stuff;
           }
-          return newStats;
+          return newStuff;
         })
       }).then(() => {
-        return stats;
+        return stuff;
       })
     }
 //4. The geohash and polygon are non-overlapping.
-    return stats;
+    return stuff;
   }).catch((error) => {
     console.log(error);
     return error

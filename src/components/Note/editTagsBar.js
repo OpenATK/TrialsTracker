@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'cerebral/react';
 import uuid from 'uuid';
 import './editTagsBar.css'
-import FontAwesome from 'react-fontawesome';
+import { IconButton } from 'material-ui'
 import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
@@ -64,11 +64,11 @@ export default connect({
           <div 
             key={tag} 
             className={'tag'}>
-            <FontAwesome 
-              name='times'
+            <IconButton
+              iconClassName="muidocs-icon-custom-clear"
               className={this.props.selected && this.props.editing ? 
                 'remove-tag-button' : 'hidden'}
-              onClick={() => this.props.tagRemoved({tag})}
+              onTouchTap={() => this.props.tagRemoved({tag})}
             />
             {tag}
           </div>)}

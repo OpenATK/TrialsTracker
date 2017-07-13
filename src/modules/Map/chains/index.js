@@ -134,9 +134,9 @@ function computeNoteStats({props, state, path}) {
   let availableGeohashes = state.get(['app', 'model', 'yield_data_index']);
   let baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   let geometry = state.get(['app', 'model', 'notes', props.id, 'geometry']);
-  yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
-  .then((stats) => {
-    return path.success({stats, ids:[props.id]});
+  return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
+  .then((data) => {
+    return path.success({geohashPolygons: data.geohashPolygons, stats: data.stats, ids:[props.id]});
   })
 }
 computeNoteStats.async = true;

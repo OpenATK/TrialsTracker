@@ -36,12 +36,10 @@ export default connect({
 class TrialsMap extends React.Component {
 
   validateMouseEvent(evt) {
-    console.log(evt)
     if (this.props.editing) {
       // Don't fire a click event when panning the map or when dragging a point.
       if (!this.props.moving && !this.props.dragging) {
         // Don't add a point if a control was clicked.
-        console.log(evt.originalEvent.toElement.offsetParent)
         if (!evt.originalEvent.toElement.offsetParent) {
           this.props.mouseDownOnMap({pt: [evt.latlng.lng, evt.latlng.lat]})
         } else if (!evt.originalEvent.toElement.offsetParent.className.includes('control')) {

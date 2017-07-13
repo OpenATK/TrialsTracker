@@ -4,7 +4,6 @@ import TextAreaAutoSize from 'react-textarea-autosize';
 import uuid from 'uuid';
 import './note.css';
 import Color from 'color'; 
-import FontAwesome from 'react-fontawesome';
 import { props, state, signal } from 'cerebral/tags'
 
 export default connect({

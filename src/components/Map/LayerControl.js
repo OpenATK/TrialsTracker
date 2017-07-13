@@ -1,5 +1,7 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
+import Leaflet from 'leaflet'
+import PropTypes from 'prop-types'
 import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 const { Overlay } = LayersControl;
 import './map.css';
@@ -20,9 +22,11 @@ export default connect({
   toggleCropLayer: signal`map.toggleCropLayer`,
 },
 
-class TrialsMap extends React.Component {
+class LayerControl extends React.Component {
+
   render() {
     let fields = [];
+    let self = this;
     Object.keys(this.props.fields).forEach(function(key) {
       fields.push(<GeoJSON 
         className={'field-polygon'}
@@ -41,7 +45,6 @@ class TrialsMap extends React.Component {
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            map={this.refs.map.leafletElement}
             data={'app.model.yield_data_index.'+crop}
             layer={crop}
             url={'https://'+self.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}

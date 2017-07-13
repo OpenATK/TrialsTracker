@@ -9,7 +9,7 @@ export default connect({
   notes: state`app.model.notes`,
   isMobile: state`app.is_mobile`,
 
-  fieldClicked: signal`app.fieldNoteClicked`,
+  fieldClicked: signal`map.fieldNoteClicked`,
 },
 
   class FieldNote extends React.Component {

@@ -1,12 +1,12 @@
 import polygonsIntersect from '../utils/polygonsIntersect.js';
 import { Promise } from 'bluebird';  
 
-export default function getFieldDataForNotes({input, state, output}) {
+export default function getFieldDataForNotes({props, state, path}) {
   var notes = state.get(['app', 'model', 'notes']);
   var fields = state.get(['app', 'model', 'fields']);
-  if (fields && input.ids) {
+  if (fields && props.ids) {
     var noteFields = {};
-    Promise.map(input.ids, (noteId) => {
+    return Promise.map(props.ids, (noteId) => {
       noteFields[noteId] = {};
       return Promise.map(Object.keys(fields), (fieldId) => {
         if (notes[noteId].geometry.geojson.coordinates[0].length > 3) {
@@ -26,10 +26,7 @@ export default function getFieldDataForNotes({input, state, output}) {
         } else return false;
       })
     }).then((result) => {
-      output.success({noteFields});
+      return path.success({noteFields});
     })
-  } else output.error({});
+  } else return path.error({});
 }
-getFieldDataForNotes.async = true;
-getFieldDataForNotes.outputs = ['success', 'error'];
-

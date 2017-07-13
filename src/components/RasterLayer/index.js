@@ -44,8 +44,8 @@ class RasterLayer extends GridLayer {
 
     var tileSwPt = new L.Point(coords.x*256, (coords.y*256)+256);
     var tileNePt = new L.Point((coords.x*256)+256, coords.y*256);
-    var sw = this.props.map.unproject(tileSwPt, coords.z);
-    var ne = this.props.map.unproject(tileNePt, coords.z);
+    var sw = this.context.map.unproject(tileSwPt, coords.z);
+    var ne = this.context.map.unproject(tileNePt, coords.z);
     var precision = this.getGeohashLevel(coords.z, sw, ne);
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
     this.props.newTileDrawn({geohashes, coords, layer: this.props.layer});
@@ -98,8 +98,8 @@ class RasterLayer extends GridLayer {
           var swLatLng = new L.latLng(ghBounds[0], ghBounds[1]);
           var neLatLng = new L.latLng(ghBounds[2], ghBounds[3]);
           var levels = self.props.legend;
-          var sw = self.props.map.project(swLatLng, coords.z);
-          var ne = self.props.map.project(neLatLng, coords.z);
+          var sw = self.context.map.project(swLatLng, coords.z);
+          var ne = self.context.map.project(neLatLng, coords.z);
           var w = sw.x - coords.x*256;
           var n = ne.y - coords.y*256;
           var e = ne.x - coords.x*256;

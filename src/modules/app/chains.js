@@ -16,7 +16,7 @@ import db from '../Pouch';
 import MobileDetect from 'mobile-detect';
 import computeFieldStats from './actions/computeFieldStats.js';
 import {props, state } from 'cerebral/tags'
-import {parallel} from 'cerebral'
+import { parallel } from 'cerebral'
 
 var computeFieldYieldData = [
   computeFieldStats, {
@@ -39,12 +39,16 @@ var handleFields = [
 ]
 
 var getFieldBoundaries = [
-  equals('app.settings.data_sources.fields.source'), {
+  equals(state`app.settings.data_sources.fields.source`), {
     oada: [
-      getOadaTokenSequence, getFieldsFromOada, {
-        success: [setFieldBoundaries, handleFields],
-        error: [],
-      },
+//      getOadaTokenSequence, {
+//        success: [],
+//        error: [],
+//      },
+//   getFieldsFromOada, {
+      //  success: [setFieldBoundaries, handleFields],
+      //  error: [],
+     // },
     ],
     data_silo: [
       getFieldsFromDatasilo, {
@@ -60,9 +64,9 @@ var getOadaTokenSequence = [
   getFromPouch('app.settings.data_sources.yield.oada_token'), {
     success: [
       set(state`app.settings.data_sources.yield.oada_token`, props`result.doc.val`),
-      testOadaConnection, {
+      testOadaToken, {
+        success: [],
         error: [
-          set(state`app.settings.data_sources.yield.oada_domain`, `props:domain`),
           getOadaToken, {
             success: [
               set(state`app.settings.data_sources.yield.oada_token`, props`token`),
@@ -86,13 +90,9 @@ var getOadaTokenSequence = [
 ]
 
 var getOadaYieldData = [
-  getOadaTokenSequence, {
-    success: [
-      getYieldDataIndexFromOada, {
-        success: [setYieldDataIndex, computeFieldYieldData],
-        error: [],
-      }
-    ],
+  getOadaTokenSequence, 
+  getYieldDataIndexFromOada, {
+    success: [setYieldDataIndex, computeFieldYieldData],
     error: [],
   }
 ]
@@ -135,7 +135,8 @@ export var getDataSources = parallel([
 export var initialize = [
   setMobile,
   getDataSources,
-//  parallel([getOadaYieldData, getFieldBoundaries]), 
+  getOadaYieldData, 
+//  getFieldBoundaries, 
 ];
 
 export var removeGeohashes = [
@@ -229,17 +230,18 @@ export var setFieldsSource = [
   set(state`app.view.settings.data_sources.fields.source`, props`value`) 
 ]
 
-function setMobile({input, state, path}) {
+function setMobile({state, path}) {
   var md = new MobileDetect(window.navigator.userAgent);
   state.set(`app.is_mobile`, (md.mobile() !== null));
 }
 
-function computeFieldBoundingBoxes({input, state, path}) {
+function computeFieldBoundingBoxes({props, state, path}) {
   var bboxes = {};
   var areas = {};
-  Promise.map(Object.keys(input.fields), (field) => {
-    bboxes[field] = computeBoundingBox(input.fields[field].boundary.geojson);
-    areas[field] = gjArea.geometry(input.fields[field].boundary.geojson)/4046.86;
+  console.log(props)
+  return Promise.map(Object.keys(props.fields), (field) => {
+    bboxes[field] = computeBoundingBox(props.fields[field].boundary.geojson);
+    areas[field] = gjArea.geometry(props.fields[field].boundary.geojson)/4046.86;
     return true;
   }).then((result) => {
     return path.success({bboxes, areas})
@@ -248,26 +250,26 @@ function computeFieldBoundingBoxes({input, state, path}) {
   })
 }
 
-function setFieldBoundingBoxes({input, state}) {
+function setFieldBoundingBoxes({props, state}) {
 //TODO: need to check for valid data source
-  Object.keys(input.bboxes).forEach((field) => {
-    state.set(['app', 'model', 'fields', field, 'boundary', 'area'], input.areas[field]);
-    state.set(['app', 'model', 'fields', field, 'boundary', 'bbox'], input.bboxes[field]);
-    state.set(['app', 'model', 'fields', field, 'boundary', 'centroid'], [(input.bboxes[field].north + input.bboxes[field].south)/2, (input.bboxes[field].east + input.bboxes[field].west)/2]);
+  Object.keys(props.bboxes).forEach((field) => {
+    state.set(['app', 'model', 'fields', field, 'boundary', 'area'], props.areas[field]);
+    state.set(['app', 'model', 'fields', field, 'boundary', 'bbox'], props.bboxes[field]);
+    state.set(['app', 'model', 'fields', field, 'boundary', 'centroid'], [(props.bboxes[field].north + props.bboxes[field].south)/2, (props.bboxes[field].east + props.bboxes[field].west)/2]);
   })
 }
 
-function setFieldStats({input, state}) {
+function setFieldStats({props, state}) {
 //TODO: need to check for NPE
-  Object.keys(input.stats).forEach((field) => {
-    Object.keys(input.stats[field]).forEach((crop) => {
-      if (isNaN(input.stats[field][crop].mean_yield)) {
+  Object.keys(props.stats).forEach((field) => {
+    Object.keys(props.stats[field]).forEach((crop) => {
+      if (isNaN(props.stats[field][crop].mean_yield)) {
         state.unset(['app', 'model', 'fields', field, 'stats', crop]);
       } else {
-        state.set(['app', 'model', 'fields', field, 'stats', crop], input.stats[field][crop]);
+        state.set(['app', 'model', 'fields', field, 'stats', crop], props.stats[field][crop]);
       }
     })
-    state.unset(['app', 'model', 'fields', field, 'stats', 'computing']);
+//    state.unset(`app.model.fields.${field}.stats.computing`);
   })
 }
 
@@ -344,10 +346,10 @@ function getFieldsFromOada({state, path}) {
   })
 }
 
-function setFieldBoundaries({input, state}) {
-  if (input.fields) {
-    Object.keys(input.fields).forEach(function(field) {
-      state.set(['app', 'model', 'fields', field], input.fields[field]);
+function setFieldBoundaries({props, state}) {
+  if (props.fields) {
+    Object.keys(props.fields).forEach(function(field) {
+      state.set(['app', 'model', 'fields', field], props.fields[field]);
     })
   }
 }
@@ -359,7 +361,7 @@ function getYieldDataIndexFromOada({state, path}) {
   var url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   var data = {};
   var cropStatus = {};
-  cache.get(url, token).then(function(crops) {
+  return cache.get(url, token).then(function(crops) {
     return Promise.each(Object.keys(crops), function(crop) {
       data[crop] = {};
       return cache.get(url + crop + '/geohash-length-index', token).then(function(geohashLengthIndex) {
@@ -378,13 +380,14 @@ function getYieldDataIndexFromOada({state, path}) {
   })
 }
 
-function setYieldDataIndex({input, state}) {
-  if (input.data) {
-    Object.keys(input.data).forEach(function(crop) {
-      state.set(['app', 'view', 'map', 'crop_layers', crop, 'visible'], true);
-      state.set(['app', 'view', 'map', 'geohashes_to_draw', crop], {});
-      Object.keys(input.data[crop]).forEach(function(ghLength) {
-        state.set(['app', 'model', 'yield_data_index', crop, ghLength], input.data[crop][ghLength]);
+function setYieldDataIndex({props, state}) {
+  if (props.data) {
+    Object.keys(props.data).forEach(function(crop) {
+      state.set(`app.view.map.crop_layers.${crop}`, {visible: true});
+      state.set(`app.view.map.geohashes_to_draw.${crop}`, {});
+      state.set(`app.model.yield_data_index.${crop}`, {});
+      Object.keys(props.data[crop]).forEach(function(ghLength) {
+        state.set(`app.model.yield_data_index.${crop}.${ghLength}`, props.data[crop][ghLength]);
       })
     })
   }
@@ -399,19 +402,19 @@ function destroyCache({path}) {
   })
 };
 
-function registerGeohashes({input, state}) {
+function registerGeohashes({props, state}) {
 // This case occurs before a token is available. Just save all geohashes and
 // filter them later when the list of available geohashes becomes known.
-  var coordsIndex = input.coords.z.toString() + '-' + input.coords.x.toString() + '-' + input.coords.y.toString();
-  state.set(['app', 'view', 'map', 'geohashes_on_screen', input.layer, coordsIndex], input.geohashes)
+  let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
+  state.set(`app.view.map.geohashes_on_screen.${props.layer}`, {[coordsIndex]: props.geohashes})
 }
 
-function unregisterGeohashes({input, state}) {
-  var coordsIndex = input.coords.z.toString() + '-' + input.coords.x.toString() + '-' + input.coords.y.toString();
-  state.unset(['app', 'view', 'map', 'geohashes_on_screen', input.layer, coordsIndex]);
+function unregisterGeohashes({props, state}) {
+  var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
+  state.unset(['app', 'view', 'map', 'geohashes_on_screen', props.layer, coordsIndex]);
 }
 
-function testOadaConnection({state, path}) {
+function testOadaToken({state, path}) {
   var domain = state.get('app.settings.data_sources.yield.oada_domain');
   var token = state.get('app.settings.data_sources.yield.oada_token');
   var url = 'https://'+domain+'/bookmarks/';
@@ -421,11 +424,12 @@ function testOadaConnection({state, path}) {
   .then(function(response) {
     return path.success({});
   }).catch(function(err) {
+    console.log(err)
     return path.error({});
   })
 }
 
-function getOadaToken({input, state, path}) {
+function getOadaToken({state, path}) {
   var options = {
     metadata: 'eyJqa3UiOiJodHRwczovL2lkZW50aXR5Lm9hZGEtZGV2LmNvbS9jZXJ0cyIsImtpZCI6ImtqY1NjamMzMmR3SlhYTEpEczNyMTI0c2ExIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJyZWRpcmVjdF91cmlzIjpbImh0dHBzOi8vdHJpYWxzdHJhY2tlci5vYWRhLWRldi5jb20vb2F1dGgyL3JlZGlyZWN0Lmh0bWwiLCJodHRwOi8vbG9jYWxob3N0OjgwMDAvb2F1dGgyL3JlZGlyZWN0Lmh0bWwiXSwidG9rZW5fZW5kcG9pbnRfYXV0aF9tZXRob2QiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6Y2xpZW50LWFzc2VydGlvbi10eXBlOmp3dC1iZWFyZXIiLCJncmFudF90eXBlcyI6WyJpbXBsaWNpdCJdLCJyZXNwb25zZV90eXBlcyI6WyJ0b2tlbiIsImlkX3Rva2VuIiwiaWRfdG9rZW4gdG9rZW4iXSwiY2xpZW50X25hbWUiOiJUcmlhbHMgVHJhY2tlciIsImNsaWVudF91cmkiOiJodHRwczovL2dpdGh1Yi5jb20vT3BlbkFUSy9UcmlhbHNUcmFja2VyIiwiY29udGFjdHMiOlsiU2FtIE5vZWwgPHNhbm9lbEBwdXJkdWUuZWR1PiJdLCJzb2Z0d2FyZV9pZCI6IjVjYzY1YjIwLTUzYzAtNDJmMS05NjRlLWEyNTgxODA5MzM0NCIsInJlZ2lzdHJhdGlvbl9wcm92aWRlciI6Imh0dHBzOi8vaWRlbnRpdHkub2FkYS1kZXYuY29tIiwiaWF0IjoxNDc1NjA5NTkwfQ.Qsve_NiyQHGf_PclMArHEnBuVyCWvH9X7awLkO1rT-4Sfdoq0zV_ZhYlvI4QAyYSWF_dqMyiYYokeZoQ0sJGK7ZneFwRFXrVFCoRjwXLgHKaJ0QfV9Viaz3cVo3I4xyzbY4SjKizuI3cwfqFylwqfVrffHjuKR4zEmW6bNT5irI',
     scope: 'yield-data field-notes field-boundaries',
@@ -437,7 +441,6 @@ function getOadaToken({input, state, path}) {
   var domain = state.get('app.settings.data_sources.yield.oada_domain'); //TODO: don't hard code this as the source of the domain
   return new Promise((resolve) => {
     oadaIdClient.getAccessToken(domain, options, function(err, accessToken) {
-      console.log(accessToken)
       if (err) { console.dir(err); return resolve(path.error(err)); } // Something went wrong  
       return resolve(path.success({token:accessToken.access_token}));
     })
