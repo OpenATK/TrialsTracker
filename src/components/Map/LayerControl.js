@@ -17,7 +17,6 @@ export default connect({
   fields: state`app.model.fields`,
   domain: state`app.settings.data_sources.yield.oada_domain`,
   isLoading: state`app.view.map.isLoading`,
-  isMobile: state`app.is_mobile`,
 
   toggleCropLayer: signal`map.toggleCropLayer`,
 },

@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'cerebral/react'
-import './menu-bar.css'
+import './styles.css'
 import { state, signal } from 'cerebral/tags'
 import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
@@ -10,7 +10,7 @@ export default connect({
   currentLocation: state`app.model.current_location`,
   selectedNote: state`app.view.selected_note`,
   menuDropdownVisible: state`app.view.menu_dropdown_visible`,
-  editing: state`app.view.editing_note`,
+  editing: state`app.view.editing`,
   isMobile: state`app.is_mobile`,
   notes: state`app.model.notes`,
   legendVisible: state`app.view.legend.visible`,
@@ -41,6 +41,7 @@ class MenuBar extends React.Component {
       this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
     return (
       <AppBar
+        className={'menu-bar'}
         title="TrialsTracker"
         showMenuIconButton={false}
         iconElementRight={<div>

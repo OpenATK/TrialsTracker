@@ -35,6 +35,7 @@ let stateTree = {
       moving: false,
       geohashes_to_draw: {},
       geohashes_on_screen: {},
+      geohashPolygons: [],
       map_location: [],
       map_zoom: 15,
       crop_layers: {},
@@ -44,7 +45,7 @@ let stateTree = {
     tag_input_text: '',
     crop_dropdown_visible: false,
     sort_mode: 0, //0 - notes; 1 - fields; 2 - tags; 3 - search;
-    editing_note: false,
+    editing: false,
     settings: {
       data_sources: {
         visible: false,

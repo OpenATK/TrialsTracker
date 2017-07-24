@@ -21,6 +21,10 @@
     z-index: 10000;
   }
 }
+.geohash-polygon {
+  stroke-width: 1;
+  stroke: black;
+} 
 
 :global #draw-polygon {
 	position: absolute;

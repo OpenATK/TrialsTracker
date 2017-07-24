@@ -2,7 +2,7 @@ import React from 'react'
 import {connect} from 'cerebral/react'
 import Note from '../Note/'
 import FieldNote from '../FieldNote/'
-import './note-list.css'
+import './styles.css'
 import {Tabs, Tab, FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
@@ -13,13 +13,14 @@ export default connect({
   tags: state`app.model.tags`,
   sortMode: state`app.view.sort_mode`, 
   isMobile: state`app.is_mobile`,
-  editing: state`app.view.editing_note`,
+  editing: state`app.view.editing`,
   selectedNote: state`app.view.selected_note`,
   fields: state`app.model.fields`,
 
   sortingTabClicked: signal`note.sortingTabClicked`,
   noteListClicked: signal`note.noteListClicked`,
   addNoteButtonClicked: signal`note.addNoteButtonClicked`,
+  doneClicked: signal`note.doneEditingButtonClicked`,
 },
 
 class NoteList extends React.Component {
@@ -51,8 +52,14 @@ class NoteList extends React.Component {
     return (
       <div 
         className={'note-list'}>
+        <button
+          type="button"
+          className={this.props.editing ? 'done-editing-button' : 'hidden'}
+          onClick={() => this.props.doneClicked({id:this.props.selectedNote})}>
+          DONE
+        </button>
         <Tabs
-          onChange={() => this.props.sortingTabClicked({newSortMode: 'all'})}
+          onChange={(val) => this.props.sortingTabClicked({newSortMode: val})}
           value={this.props.sortMode}>
           <Tab label="NOTES" value={0} />
           <Tab label="FIELDS" value={1} />
@@ -60,7 +67,7 @@ class NoteList extends React.Component {
         </Tabs>
         <SwipeableViews
           index={this.props.sortMode}
-          onChangeIndex={() => this.props.sortingTabClicked({newSortMode: 'all'})}>
+          onChangeIndex={(val) => this.props.sortingTabClicked({newSortMode: val})}>
           <div
             className={'notes-container'}
             onTouchTap={(evt) => {this.handleClick(evt)}}>

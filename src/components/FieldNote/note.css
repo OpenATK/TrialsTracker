@@ -106,23 +106,6 @@
   right: 5px;
   margin: 2px;
 }
-.done-editing-button {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  display: table;
-  text-align: center;
-  height: 25px;
-  width: 25px;
-  border-radius: 50px;
-  cursor: pointer;
-}
-.done-editing-icon {
-  display: table-cell;
-  font-size: 20px;
-  vertical-align: middle;
-  color: #00bb00;
-}
 .edit-note-button {
   position:relative;
   display: table;

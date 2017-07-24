@@ -4,7 +4,7 @@ import gjArea from '@mapbox/geojson-area';
 import computeBoundingBox from '../utils/computeBoundingBox.js';
 import getFieldDataForNotes from '../actions/getFieldDataForNotes.js';
 import yieldDataStatsForPolygon from '../actions/yieldDataStatsForPolygon.js';
-import { state } from 'cerebral/tags'
+import { state, path, props} from 'cerebral/tags'
 
 export let startMovingMap = [
   set(state`app.view.map.moving`, true)
@@ -39,14 +39,14 @@ export let undoDrawPoint = [
 ];
 
 export let drawComplete = [
-  set(state`app.view.editing_note`, false), 
+  set(state`app.view.editing`, false), 
   validateNoteText,
   setWaiting,
   computeNoteStats, {
     success: [
       setNoteStats, 
-      getFieldDataForNotes,
-      //set(state`map.geohashPolygons`, props`geohashPolygons`),
+      //TODO: test whether fields exist getFieldDataForNotes,
+      set(state`app.view.map.geohashPolygons`, props`geohashPolygons`),
     ],
     error: [setEmptyPolygon],
   },
@@ -139,7 +139,6 @@ function computeNoteStats({props, state, path}) {
     return path.success({geohashPolygons: data.geohashPolygons, stats: data.stats, ids:[props.id]});
   })
 }
-computeNoteStats.async = true;
 
 function setNoteStats({props, state}) {
   Object.keys(props.stats).forEach(function(crop) {

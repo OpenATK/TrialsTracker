@@ -5,7 +5,7 @@ import uuid from 'uuid';
 import './note.css';
 import Color from 'color'; 
 import { props, state, signal } from 'cerebral/tags'
-import { IconMenu, MenuItem, FlatButton, CardText, CardActions, CardHeader, TextField, IconButton, Divider, Card, Paper, } from 'material-ui'
+import { IconMenu, MenuItem, CardText, CardActions, CardHeader, TextField, IconButton, Divider, Card, Paper, } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
@@ -13,7 +13,7 @@ export default connect({
   text: state`app.model.notes.${props`id`}.text`,
   tags: state`app.model.notes.${props`id`}.tags`,
   selected: state`app.model.notes.${props`id`}.selected`,
-  editing: state`app.view.editing_note`,
+  editing: state`app.view.editing`,
   geometryVisible: state`app.model.notes.${props`id`}.geometry_visible`,
   noteFields: state`app.model.notes.${props`id`}.fields`,
   fields: state`app.model.fields`,
@@ -130,7 +130,7 @@ export default connect({
           style={{order: this.props.note.order}}>
           <CardHeader
             className={'note-header'}
-            style={{backgroundColor: this.props.note.color}}
+            style={{padding: '0px 0px 0px 10px', height: '25px', backgroundColor: this.props.note.color }}
             title={this.props.editing ? null : this.props.text}>
             <TextField
               multiLine={true}

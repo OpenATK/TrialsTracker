@@ -9,7 +9,7 @@ export default connect({
   note: state`app.model.notes.${props`id`}`,
   tags: state`app.model.notes.${props`id`}.tags`,
   allTags: state`app.model.tags`,
-  editing: state`app.view.editing_note`,
+  editing: state`app.view.editing`,
   selected: state`app.model.notes.${props`id`}.selected`,
   tagInput: state`app.model.tag_input_text`,
 

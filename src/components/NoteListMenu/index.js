@@ -1,12 +1,12 @@
 import React from 'react';
 import { connect } from 'cerebral/react';
-import './note-list-menu.css';
+import './styles.css';
 import FontAwesome from 'react-fontawesome';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
   sortMode: state`app.view.sort_mode`,
-  editing: state`app.view.editing_note`,
+  editing: state`app.view.editing`,
   selectedNote: state`app.view.selected_note`,
 
   sortingTabClicked: signal`note.sortingTabClicked`,
@@ -17,6 +17,7 @@ export default connect({
   class NoteListMenu extends React.Component {
 
     render() {
+      console.log(this.props.editing)
       return ( 
         <div className={'sorting-tabs'}>
           <button 

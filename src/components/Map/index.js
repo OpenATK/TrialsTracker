@@ -3,7 +3,6 @@ import { connect } from 'cerebral/react';
 import { CircleMarker, Marker, Map, TileLayer, GeoJSON } from 'react-leaflet';
 import './map.css';
 import uuid from 'uuid';
-import MenuBar from '../MenuBar';
 import DrawingMessage from './DrawingMessage';
 import {state, signal} from 'cerebral/tags'
 import LayerControl from './LayerControl'
@@ -21,7 +20,7 @@ export default connect({
   dragging: state`app.view.map.dragging_marker`,
   isLoading: state`app.view.map.isLoading`,
   isMobile: state`app.is_mobile`,
-//  geohashPolygons: state`map.geohashPolygons`,
+  geohashPolygons: state`app.view.map.geohashPolygons`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
   mouseDownOnMap: signal`map.mouseDownOnMap`,
@@ -64,22 +63,22 @@ class TrialsMap extends React.Component {
           className={'note-polygon'}
           data={self.props.notes[key].geometry.geojson} 
           color={self.props.notes[key].color} 
-          style={{fillOpacity:0.4}}
+          style={{fillOpacity:0.0}}
           dragging={true} 
           key={uuid.v4()} //TODO don't create a new one every time
         />)
       }
     })
-/*
+
     let geohashPolygons = [];
     this.props.geohashPolygons.forEach(function(gjson) {
       geohashPolygons.push(<GeoJSON
         className={'geohash-polygon'}
         data={gjson} 
+        style={{fillOpacity:0.0, strokeWidth: 1}}
         key={uuid.v4()}
       />)
     })
-*/
 
     let markerList = [];
     if (this.props.editing) {
@@ -104,7 +103,6 @@ class TrialsMap extends React.Component {
 
     return (
       <div className={'map-panel'}>
-        <MenuBar/>
         <div className={this.props.isLoading ? 'loading-screen' : 'hidden'}/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
@@ -114,7 +112,6 @@ class TrialsMap extends React.Component {
           dragging={true}
           ref='map'
           center={position}
-          zoomControl={!this.props.isMobile}
           attributionControl={!this.props.isMobile}
           zoom={this.props.mapZoom || 15}>
           {this.props.currentLocation ? <CircleMarker
@@ -139,6 +136,7 @@ class TrialsMap extends React.Component {
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
           {notePolygons}
+          {geohashPolygons}
           {markerList}
           <LayerControl />
         </Map> 

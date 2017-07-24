@@ -5,6 +5,8 @@
   flex-direction: row;
   justify-content: flex-end;
   z-index: 1001;
+  align-items: center;
+  height: 50px;
 }
 .span {
   padding-top: 3px;

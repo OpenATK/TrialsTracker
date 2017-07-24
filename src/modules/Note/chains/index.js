@@ -6,7 +6,7 @@ import _ from 'lodash';
 import {state, props } from 'cerebral/tags'
 
 export var cancelNote = [
-  set(state`app.view.editing_note`, false),
+  set(state`app.view.editing`, false),
   unset(state`app.view.selected_note`),
   unset(`state:app.model.notes.$id`)
 ]
@@ -27,16 +27,16 @@ export var removeTag = [
 
 export var handleNoteListClick = [
   deselectNote, 
-  set(state`app.view.editing_note`, false),
+  set(state`app.view.editing`, false),
 ];
 
 export var enterNoteEditMode = [
-  set(state`app.view.editing_note`, true),
+  set(state`app.view.editing`, true),
   selectNote,
 ];
 
 export var exitNoteEditMode = [
-  set(state`app.view.editing_note`, false),
+  set(state`app.view.editing`, false),
 ];
 
 export var changeSortMode = [
@@ -44,7 +44,7 @@ export var changeSortMode = [
 ];
 
 export var removeNote = [
-  set(state`app.view.editing_note`, false),
+  set(state`app.view.editing`, false),
   deselectNote,
   checkTags, 
   deleteNote, 
@@ -61,7 +61,7 @@ export var updateTagText = [
 export var addNewNote = [
   deselectNote,
   createNote, 
-  set(state`app.view.editing_note`, true),
+  set(state`app.view.editing`, true),
 ];
 
 export var changeShowHideState = [
@@ -74,14 +74,14 @@ export var handleNoteClick = [
     true: [],
     false: [
       deselectNote, 
-      set(state`app.view.editing_note`, false),
+      set(state`app.view.editing`, false),
       selectNote, 
     ],
   },
 ];
 
 function isDrawing ({props, state, path}) {
-  if (state.get('app.view.editing_note')) {
+  if (state.get('app.view.editing')) {
     return path.true({})
   } else return path.false({})
 }

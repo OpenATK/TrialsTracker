@@ -41,14 +41,14 @@ var handleFields = [
 var getFieldBoundaries = [
   equals(state`app.settings.data_sources.fields.source`), {
     oada: [
-//      getOadaTokenSequence, {
-//        success: [],
-//        error: [],
-//      },
-//   getFieldsFromOada, {
-      //  success: [setFieldBoundaries, handleFields],
-      //  error: [],
-     // },
+      getOadaTokenSequence, {
+        success: [],
+        error: [],
+      },
+      getFieldsFromOada, {
+        success: [setFieldBoundaries, handleFields],
+        error: [],
+      },
     ],
     data_silo: [
       getFieldsFromDatasilo, {

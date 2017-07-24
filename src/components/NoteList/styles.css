@@ -10,6 +10,9 @@
 .hidden {
   display: none;
 }
+.done-editing-button {
+
+}
 .notes-container {
   display: flex;
   flex-direction: column;
