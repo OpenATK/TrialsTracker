@@ -1,7 +1,7 @@
 import { Controller } from 'cerebral';
 import Devtools from 'cerebral/devtools'
 
-import app from './modules/app'
+import app from './modules/App'
 import map from './modules/Map'
 import note from './modules/Note'
 
