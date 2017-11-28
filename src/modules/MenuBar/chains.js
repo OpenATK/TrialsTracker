@@ -2,7 +2,7 @@ import { toggle } from 'cerebral/operators'
 import {state} from 'cerebral/tags'
 
 export var toggleMenuDropdown = [
-  toggle(state`app.view.menu_dropdown_visible`)
+  toggle(state`MenuBar.open`)
 ]
 
 export var downloadNotes = [
@@ -10,5 +10,5 @@ export var downloadNotes = [
 ]
 
 export var toggleMapLegend = [
-  toggle(state`app.view.legend.visible`)
+  toggle(state`App.view.legend.visible`)
 ]

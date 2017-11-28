@@ -1,9 +1,9 @@
-import polygonsIntersect from '../utils/polygonsIntersect.js';
+import polygonsIntersect from '../../Map/utils/polygonsIntersect.js';
 import { Promise } from 'bluebird';  
 
 export default function getFieldDataForNotes({props, state, path}) {
-  var notes = state.get(['app', 'model', 'notes']);
-  var fields = state.get(['app', 'model', 'fields']);
+  var notes = state.get(['App', 'model', 'notes']);
+  var fields = state.get(['App', 'model', 'fields']);
   if (fields && props.ids) {
     var noteFields = {};
     return Promise.map(props.ids, (noteId) => {

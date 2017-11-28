@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import { connect } from '@cerebral/react';
 import Control from 'react-leaflet-control';
 import uuid from 'uuid';
 import Color from 'color';
@@ -7,10 +7,10 @@ import './legend.css';
 import { state } from 'cerebral/tags'
 
 export default connect({
-  legends: state`app.view.legends`,
-  yieldDataIndex: state`app.model.yield_data_index`,
-  cropLayers: state`app.view.map.crop_layers`,
-  isMobile: state`app.is_mobile`,
+  legends: state`App.view.legends`,
+  yieldDataIndex: state`App.model.yield_data_index`,
+  cropLayers: state`App.view.map.crop_layers`,
+  isMobile: state`App.is_mobile`,
 },
 
 class LegendControl extends React.Component {  

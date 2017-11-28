@@ -1,13 +1,13 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import { connect } from '@cerebral/react';
 import './styles.css';
 import FontAwesome from 'react-fontawesome';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`app.view.sort_mode`,
-  editing: state`app.view.editing`,
-  selectedNote: state`app.view.selected_note`,
+  sortMode: state`App.view.sort_mode`,
+  editing: state`App.view.editing`,
+  selectedNote: state`App.view.selected_note`,
 
   sortingTabClicked: signal`note.sortingTabClicked`,
   doneClicked: signal`note.doneEditingButtonClicked`,

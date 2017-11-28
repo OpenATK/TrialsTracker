@@ -1,5 +1,5 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import { connect } from '@cerebral/react';
 import { CircleMarker, Marker, Map, TileLayer, GeoJSON } from 'react-leaflet';
 import './map.css';
 import uuid from 'uuid';
@@ -9,18 +9,18 @@ import LayerControl from './LayerControl'
 import LegendControl from './LegendControl'
 
 export default connect({
-  notes: state`app.model.notes`,
-  selectedNote: state`app.view.selected_note`,
-  editing: state`app.view.editing`,
-  legends: state`app.view.legends`,
-  legendVisible: state`app.view.legend.visible`,
-  currentLocation: state`app.model.current_location`,
-  mapZoom: state`app.view.map.map_zoom`,
-  moving: state`app.view.map.moving`,
-  dragging: state`app.view.map.dragging_marker`,
-  isLoading: state`app.view.map.isLoading`,
-  isMobile: state`app.is_mobile`,
-  geohashPolygons: state`app.view.map.geohashPolygons`,
+  notes: state`App.model.notes`,
+  selectedNote: state`App.view.selected_note`,
+  editing: state`App.view.editing`,
+  legends: state`App.view.legends`,
+  legendVisible: state`App.view.legend.visible`,
+  currentLocation: state`App.model.current_location`,
+  mapZoom: state`App.view.map.map_zoom`,
+  moving: state`App.view.map.moving`,
+  dragging: state`App.view.map.dragging_marker`,
+  isLoading: state`App.view.map.isLoading`,
+  isMobile: state`App.is_mobile`,
+  geohashPolygons: state`App.view.map.geohashPolygons`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
   mouseDownOnMap: signal`map.mouseDownOnMap`,
@@ -46,7 +46,7 @@ class TrialsMap extends React.Component {
         }
       }
     }
-  }
+	}
 
   componentDidMount() {
     this.refs.map.leafletElement.locate();

@@ -6,19 +6,19 @@ import _ from 'lodash';
 import {state, props } from 'cerebral/tags'
 
 export var cancelNote = [
-  set(state`app.view.editing`, false),
-  unset(state`app.view.selected_note`),
-  unset(`state:app.model.notes.$id`)
+  set(state`App.view.editing`, false),
+  unset(state`App.view.selected_note`),
+  unset(`state:App.model.notes.$id`)
 ]
 
 export var toggleNoteDropdown = [
-  set(state`app.view.note_dropdown.note`, props`id`),
-  toggle(state`app.view.note_dropdown.visible`),
+  set(state`App.view.note_dropdown.note`, props`id`),
+  toggle(state`App.view.note_dropdown.visible`),
 ];
 
 export var addTag = [
   addTagToNote, addTagToAllTagsList, 
-  set(state`app.model.tag_input_text`, ''),
+  set(state`App.model.tag_input_text`, ''),
 ];
 
 export var removeTag = [
@@ -27,24 +27,24 @@ export var removeTag = [
 
 export var handleNoteListClick = [
   deselectNote, 
-  set(state`app.view.editing`, false),
+  set(state`App.view.editing`, false),
 ];
 
 export var enterNoteEditMode = [
-  set(state`app.view.editing`, true),
+  set(state`App.view.editing`, true),
   selectNote,
 ];
 
 export var exitNoteEditMode = [
-  set(state`app.view.editing`, false),
+  set(state`App.view.editing`, false),
 ];
 
 export var changeSortMode = [
-  set(state`app.view.sort_mode`, props`newSortMode`),
+  set(state`App.view.sort_mode`, props`newSortMode`),
 ];
 
 export var removeNote = [
-  set(state`app.view.editing`, false),
+  set(state`App.view.editing`, false),
   deselectNote,
   checkTags, 
   deleteNote, 
@@ -55,13 +55,13 @@ export var updateNoteText = [
 ];
 
 export var updateTagText = [
-  set(state`app.model.tag_input_text`, props`value`),
+  set(state`App.model.tag_input_text`, props`value`),
 ];
 
 export var addNewNote = [
   deselectNote,
   createNote, 
-  set(state`app.view.editing`, true),
+  set(state`App.view.editing`, true),
 ];
 
 export var changeShowHideState = [
@@ -74,59 +74,59 @@ export var handleNoteClick = [
     true: [],
     false: [
       deselectNote, 
-      set(state`app.view.editing`, false),
+      set(state`App.view.editing`, false),
       selectNote, 
     ],
   },
 ];
 
 function isDrawing ({props, state, path}) {
-  if (state.get('app.view.editing')) {
+  if (state.get('App.view.editing')) {
     return path.true({})
   } else return path.false({})
 }
 isDrawing.outputs = ['true', 'false'];
 
 function mapToNotePolygon({props, state}) {
-  var note = state.get(`app.model.notes.${props.id}`);
-  if (note) state.set(['app', 'view', 'map', 'map_location'], note.geometry.centroid);
+  var note = state.get(`App.model.notes.${props.id}`);
+  if (note) state.set(['App', 'view', 'map', 'map_location'], note.geometry.centroid);
 }
 
 function deselectNote ({props, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  if (!_.isEmpty(note)) state.set(['app', 'model', 'notes', note, 'selected'], false);
-  state.unset(['app', 'view', 'selected_note']);
+  var note = state.get(['App', 'view', 'selected_note']);
+  if (!_.isEmpty(note)) state.set(['App', 'model', 'notes', note, 'selected'], false);
+  state.unset(['App', 'view', 'selected_note']);
 };
 
 function changeShowHide ({props, state}) {
-  var geometryVisible = state.get(['app', 'model', 'notes', props.id, 'geometry', 'visible']);
+  var geometryVisible = state.get(['App', 'model', 'notes', props.id, 'geometry', 'visible']);
   if (geometryVisible) {
-    state.set(['app', 'model', 'notes', props.id, 'geometry', 'visible'], false);
+    state.set(['App', 'model', 'notes', props.id, 'geometry', 'visible'], false);
   } else {
-    state.set(['app', 'model', 'notes', props.id, 'geometry', 'visible'], true);
+    state.set(['App', 'model', 'notes', props.id, 'geometry', 'visible'], true);
   }
 };
 
 function setNoteText ({props, state}) {
-  state.set(['app', 'model', 'notes', props.id, 'text'], props.value);
+  state.set(['App', 'model', 'notes', props.id, 'text'], props.value);
 };
 
 function selectNote ({props, state}) {
   //check that the selected note isn't already selected
-  if (state.get(['app', 'view', 'selected_note']) !== props.id) {
+  if (state.get(['App', 'view', 'selected_note']) !== props.id) {
     // set the status of the currently selected note to "unselected"
-    if (!_.isEmpty(state.get(['app', 'view', 'selected_note']))) {
-      state.set(['app', 'model', 'notes', state.get(['app', 'view', 'selected_note']), 'selected'], false);
+    if (!_.isEmpty(state.get(['App', 'view', 'selected_note']))) {
+      state.set(['App', 'model', 'notes', state.get(['App', 'view', 'selected_note']), 'selected'], false);
     }
-    state.set(['app', 'view', 'selected_note'], props.id);
-    state.set(['app', 'model', 'notes', props.id, 'selected'], true);
+    state.set(['App', 'view', 'selected_note'], props.id);
+    state.set(['App', 'model', 'notes', props.id, 'selected'], true);
   }
 };
 
 function createNote({props, state}) {
-  var notes = state.get(['app', 'model', 'notes']);
+  var notes = state.get(['App', 'model', 'notes']);
   Object.keys(notes).forEach(function(note) {
-    state.set(['app', 'model', 'notes', note, 'order'], notes[note].order +1);
+    state.set(['App', 'model', 'notes', note, 'order'], notes[note].order +1);
   })
 
   var newNote = {
@@ -151,8 +151,8 @@ function createNote({props, state}) {
     order: 1,
   };
   newNote.font_color = getFontColor(newNote.color);
-  state.set(['app', 'model', 'notes', newNote.id], newNote);
-  state.set(['app', 'view', 'selected_note'], newNote.id);
+  state.set(['App', 'model', 'notes', newNote.id], newNote);
+  state.set(['App', 'view', 'selected_note'], newNote.id);
 };
 
 function getFontColor(color) {
@@ -165,55 +165,55 @@ function getFontColor(color) {
 }
 
 function checkTags ({props, state}) {
-  var allTags = state.get(['app', 'model', 'tags']);
-  var noteTags = state.get(['app', 'model', 'notes', props.id, 'tags']);
+  var allTags = state.get(['App', 'model', 'tags']);
+  var noteTags = state.get(['App', 'model', 'notes', props.id, 'tags']);
   noteTags.forEach((tag) => {
     if (allTags[tag].references <= 1) {
-      state.unset(['app', 'model', 'tags', tag]); 
+      state.unset(['App', 'model', 'tags', tag]); 
     }
   })
 }
 
 function deleteNote({props, state}) {
-  state.unset(['app', 'model', 'notes', props.id]); 
-  var notes = state.get(['app', 'model', 'notes']);
+  state.unset(['App', 'model', 'notes', props.id]); 
+  var notes = state.get(['App', 'model', 'notes']);
   Object.keys(notes).forEach(function(note) {
     if (notes[note].order > props.id) {
-      state.set(['app', 'model', 'notes', note, 'order'], notes[note].order);
+      state.set(['App', 'model', 'notes', note, 'order'], notes[note].order);
     }
   })
 };
 
 function addTagToNote({props, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  state.concat(['app', 'model', 'notes', note, 'tags'], props.text);
+  var note = state.get(['App', 'view', 'selected_note']);
+  state.concat(['App', 'model', 'notes', note, 'tags'], props.text);
 };
 
 function removeTagFromNote({props, state}) {
-  var note = state.get(['app', 'view', 'selected_note']);
-  var tags = state.get(['app', 'model', 'notes', note, 'tags']);
+  var note = state.get(['App', 'view', 'selected_note']);
+  var tags = state.get(['App', 'model', 'notes', note, 'tags']);
   var idx = tags.indexOf(props.tag);
-  state.splice(['app', 'model', 'notes', note, 'tags'], idx, 1);
+  state.splice(['App', 'model', 'notes', note, 'tags'], idx, 1);
 };
 
 function addTagToAllTagsList({props, state}) {
-  var allTags = state.get(['app', 'model', 'tags']);
+  var allTags = state.get(['App', 'model', 'tags']);
   if (!allTags[props.text]) {
-    state.set(['app', 'model', 'tags', props.text], { 
+    state.set(['App', 'model', 'tags', props.text], { 
       text: props.text,
       references: 1
     });
   } else {
-    state.set(['app', 'model', 'tags', props.text, 'references'], allTags[props.text].references+1);
+    state.set(['App', 'model', 'tags', props.text, 'references'], allTags[props.text].references+1);
   }
 };
 
 function removeTagFromAllTagsList({props, state}) {
-  var refs = state.get(['app', 'model', 'tags', props.tag, 'references']);
+  var refs = state.get(['App', 'model', 'tags', props.tag, 'references']);
   if (refs === 0) {
-    state.unset(['app', 'model', 'tags', props.tag]);
+    state.unset(['App', 'model', 'tags', props.tag]);
   } else {
-    state.set(['app', 'model', 'tags', props.tag, 'references'], refs - 1);
+    state.set(['App', 'model', 'tags', props.tag, 'references'], refs - 1);
   }
 };
 

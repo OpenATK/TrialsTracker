@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect } from 'cerebral/react'
+import { connect } from '@cerebral/react'
 import { RadioButtonGroup, Subheader, Divider, RadioButton, TextField, RaisedButton } from 'material-ui'
 import './datasource-settings.css'
 import { state, signal } from 'cerebral/tags'
@@ -19,11 +19,7 @@ export default connect({
   yieldOadaDomainChanged: signal`app.yieldOadaDomainChanged`,
 },
 
-class DataSourceSettings extends React.Component {
-
-  doTheThing() {
-    console.log('did it');
-  }  
+class DataConnectionsDialog extends React.Component {
 
   render() {
 
@@ -32,7 +28,7 @@ class DataSourceSettings extends React.Component {
         <div className={(this.props.visible) ? 'oada-domain-modal' : 'hidden'}>
           <span 
             className={'title'}>
-            Data Sources
+            Data Connections
           </span>
           <Subheader>Yield Data:</Subheader>
           <RadioButtonGroup 

@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect} from 'cerebral/react'
+import {connect} from '@cerebral/react'
 import Note from '../Note/'
 import FieldNote from '../FieldNote/'
 import './styles.css'
@@ -9,13 +9,13 @@ import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
 
 export default connect({
-  notes: state`app.model.notes`, 
-  tags: state`app.model.tags`,
-  sortMode: state`app.view.sort_mode`, 
-  isMobile: state`app.is_mobile`,
-  editing: state`app.view.editing`,
-  selectedNote: state`app.view.selected_note`,
-  fields: state`app.model.fields`,
+  notes: state`App.model.notes`, 
+  tags: state`App.model.tags`,
+  sortMode: state`App.view.sort_mode`, 
+  isMobile: state`App.is_mobile`,
+  editing: state`App.view.editing`,
+  selectedNote: state`App.view.selected_note`,
+  fields: state`App.model.fields`,
 
   sortingTabClicked: signal`note.sortingTabClicked`,
   noteListClicked: signal`note.noteListClicked`,
@@ -36,13 +36,14 @@ class NoteList extends React.Component {
 
   render() {
     let notes_array = Object.keys(this.props.notes).map((key) => {
-      return (<Note 
+			return (<Note 
+				note={this.props.notes[key]}
         id={key} 
         key={key}
       />)
     });
 
-    let fields_array = Object.keys(this.props.fields).map((field) => {
+    let fields_array = Object.keys(this.props.fields || {}).map((field) => {
       return(<FieldNote 
         id={field} 
         key={field}

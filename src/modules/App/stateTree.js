@@ -3,29 +3,16 @@ import Color from 'color';
 
 let stateTree = {
 
-  model: {
-    'yield_data_index': {},
+	model: {
+		fields: null,
+		yield_data_index: null,
     notes: initial_notes(),
     tags: initial_tags(),
-    fields: {}, 
   },
   is_mobile: false,
   settings: {
-    data_sources: {
-      yield: {
-        source: 'oada',
-        oada_domain: 'yield.oada-dev.com',
-        oada_token: '',
-      },
-      fields: {
-        source: 'none',
-        oada_domain: 'yield.oada-dev.com',
-        oada_token: '',
-      }
-    }
   },
   view: {
-    menu_dropdown_visible: false,
     note_dropdown: {
       visible: false,
       note: '',
@@ -47,19 +34,6 @@ let stateTree = {
     sort_mode: 0, //0 - notes; 1 - fields; 2 - tags; 3 - search;
     editing: false,
     settings: {
-      data_sources: {
-        visible: false,
-        yield: {
-          source: 'oada',
-          oada_domain: 'yield.oada-dev.com',
-          oada_token: '',
-        },
-        fields: {
-          source: 'oada',
-          oada_domain: 'yield.oada-dev.com',
-          oada_token: '',
-        }
-      }
     },
     legend: {
       visible: false,

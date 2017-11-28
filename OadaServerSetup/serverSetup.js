@@ -7,8 +7,8 @@ var fs = require('fs');
 var oadaIdClient = require('oada-id-client');
 var PouchDB = require('pouchdb');
 var Promise = require('bluebird').Promise;
+var axios = require('axios');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-var agent = require('superagent-promise')(require('superagent'), Promise);
 var rawData = {};
 var tiledMaps = {};
 var tradeMoisture = {
@@ -17,7 +17,6 @@ var tradeMoisture = {
   wheat: 13,
 };
 var Promise = require('bluebird');
-var agent = require('superagent-promise')(require('superagent'), Promise);
 var uuid = require('uuid');
 var TOKEN;
 var DOMAIN;
@@ -35,38 +34,74 @@ var tree = {
     'tiled-maps': {
        _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
       'dry-yield-map': {
-         _type: 'application/vnd.oada.data-index.tiled-map.1+json',
+         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
         'crop-index': {},
       },
     },
   },
 };
 
+var btree = {
+  a: {
+    _type: 'application/vnd.oada.harvest.1+json',
+    'b': {
+      _type: 'application/vnd.oada.as-harvested.1+json',
+      'c': {
+        _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+        'd': {}
+      },
+    },
+    'e': {
+       _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+      'f': {
+         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+        'g': {},
+      },
+    },
+  },
+};
+
+
 module.exports = function(yield_data_directory, domain, token) {
   TOKEN = token;
   DOMAIN = domain;
-  rr('./' + yield_data_directory, function(err,files) {
-    files = files.filter(function(file) {
+  console.log(TOKEN, DOMAIN)
+  rr('./' + yield_data_directory, (err,files) => {
+    files = files.filter((file) => {
       return (file.substr(-3) === 'csv');
     })
-    return Promise.each(files, function(file) {
+    return Promise.each(files, (file) => {
       console.log('Processing ' + file);
       var options = { delimiter : ','};
       var data = fs.readFileSync(file, { encoding : 'utf8'});
       var jsonCsvData = csvjson.toObject(data, options);
       return this.processRawData(jsonCsvData, file);
-    }).then(function() {
+    }).then(() => {
       return this.createAggregates([1, 2, 3, 4, 5, 6, 7]);
-    }).then(function() {
-      return _Setup.putLinkedTree(tree, []);
-    });
-  });
+    }).then(() => {
+      return Promise.map(Object.keys(tree), (key) => {
+				return _Setup.putLinkedTree(tree[key], key).then((res) => {
+					console.log(res)
+          let pathString = '/bookmarks/'+key
+          return axios({
+            method: 'put',
+             url: 'https://'+DOMAIN+pathString,
+            headers: {
+              'Authorization': 'Bearer ' + TOKEN,
+              'Content-Type': tree[key]._type
+            },
+            data: res,
+          })
+        })
+      })
+    })
+  })
 }
 
 processRawData = function(csvJson, filename) {
   var geohash;
   // First check that all the keys are matched
-  if (!(csvJson[0]['Yield Vol(Wet)(bu/ac)'] && !csvJson[0]['Estimated Volume (Wet)(bu/ac)']) {
+  if (!csvJson[0]['Yield Vol(Wet)(bu/ac)'] && !csvJson[0]['Estimated Volume (Wet)(bu/ac)']) {
     console.log(`Headers weren't found matching either "Yield Vol (Wet)(bu/ac)" or "Estimated Volume (Wet)(bu/ac)"`);
   }
   if (!csvJson[1]['Product - Name']) {
@@ -102,14 +137,14 @@ processRawData = function(csvJson, filename) {
     }
   } 
 
-  return Promise.map(csvJson, function(row, i) {
+  return Promise.map(csvJson, (row, i) => {
     geohash = gh.encode(csvJson[i].Latitude, csvJson[i].Longitude, 7);
     var cropType = csvJson[i]['Product - Name'] || csvJson[i]['Product'];
     cropType = cropType.replace(/\w\S*/g, txt => txt.toLowerCase());
 
     //Handle new crop types
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] || {
-      _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.crop.1+json',
+      _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
       'geohash-length-index': {
         'geohash-7': {
          'geohash-index': {},
@@ -118,7 +153,7 @@ processRawData = function(csvJson, filename) {
     };
     //Handle new geohashes
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] || {
-      _type: 'application/vnd.oada.as-harvested.yield-moisture.1+json',
+      _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
       data: { },
     };
  
@@ -170,14 +205,14 @@ processRawData = function(csvJson, filename) {
     //push the point
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data[id] = pt;
     return tree;
-  });
+  }, {concurrency: 1});
 }
 
 createAggregates = function(levels) {
   var i = 1;
-  return Promise.map(Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index']), function(cropType) {
-   Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index']).forEach(function(geohash) {
-      Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data).forEach(function(key) {
+  return Promise.map(Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index']), (cropType) => {
+    Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index']).forEach((geohash) => {
+      Object.keys(tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data).forEach((key) => {
         var pt = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash].data[key];
         levels.forEach((level) => {
           var weight = pt.weight;
@@ -204,7 +239,7 @@ createAggregates = function(levels) {
 
           //Handle new crop types
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
-            _type: 'application/vnd.oada.tiled-maps.dry-yield-map.crop.1+json',
+            _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
             'geohash-length-index': {},
           };
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] || {
@@ -212,7 +247,7 @@ createAggregates = function(levels) {
           }
           //Handle new geohashes
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] || {
-            _type: 'application/vnd.oada.tiled-maps.dry-yield.crop.1+json',
+            _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
             stats: {
               area: {
                 sum: 0,
@@ -269,7 +304,7 @@ createAggregates = function(levels) {
         });
       });
     });
-  });
+  }, {concurrency: 1});
 };
 
 recomputeStats = function(currentStats, additionalStats) {
@@ -282,52 +317,39 @@ recomputeStats = function(currentStats, additionalStats) {
 };
 
 var _Setup = {
-  putLinkedTree: function(desc, keysArray) {
-    // If there are any sub-objects, put them first:
-    return Promise.map(Object.keys(desc), function(key) {
-      var val = desc[key];
-      var newArray = [];
-      keysArray.forEach(function(k) {
-        newArray.push(k);
-      })
-      if (typeof val === 'object' && val) {
-        newArray.push(key);
-        return _Setup.putLinkedTree(val, newArray);
+
+  putLinkedTree: function(dataTree, pathString) {
+    return Promise.each(Object.keys(dataTree), (key) => {
+      if (typeof dataTree[key] === 'object' && dataTree[key]) {
+        return _Setup.putLinkedTree(dataTree[key], pathString+'/'+key).then((res) => {
+          return dataTree[key] = res;
+        })
+      } else return dataTree[key] = dataTree[key];
+    }, {concurrency: 5}).then((results) => {
+      if (dataTree._type) {
+        return axios({
+          method:'post', 
+          url:'https://'+DOMAIN+'/resources/',
+          headers: {
+            'Authorization': 'Bearer '+ TOKEN,
+            'Content-Type': dataTree._type,
+          },
+          data: dataTree,
+        }).then((response) => {
+          var resId = response.headers.location.replace(/^\/resources\//, '');
+          console.log('RETURNING', pathString, dataTree);
+					return {_id: 'resources/'+resId, _rev: '0-0'};
+        })
+      } else {
+        return dataTree
       }
-    }, {concurrency: 5}).then(function() {
-      if (!desc._type) throw {cancel: true}; // don't put non-resources
-      return desc;
-    }).then(function(resource) {
-      resource = _Setup.replaceLinks(desc, resource);
-      resource.context = {};
-      for (var i = 0; i < keysArray.length-1; i++) {
-        resource.context[keysArray[i]] = keysArray[i+1];
-      }
-//      console.log('POSTed ', resource);
-      return agent('POST', 'https://'+DOMAIN+'/resources/')
-        .set('Authorization', 'Bearer '+ TOKEN)
-        .send(resource)
-        .end()
-      .then(function(response) {
-        var resId = response.headers.location.replace(/^\/resources\//, '');
-        desc._id = resId;
-        desc._rev = '0-0';
-        var url = 'https://'+DOMAIN+'/bookmarks/' + keysArray.slice(0, keysArray.length-1).join('/');
-        var content = {};
-        content[keysArray[keysArray.length-1]] = {_id: resId, _rev: '0-0'}
-//        console.log('PUT ', content, ' to url: ', url);
-        return agent('PUT', url)
-          .set('Authorization', 'Bearer ' + TOKEN)
-          .send(content)
-          .end();
-      });
-    }).catch(function(e) {
+    }).catch((e) => {
       if(!e.cancel) {
         throw e;
       }
     })
   },
-  
+
   replaceLinks: function(desc, example) {
     var ret = (Array.isArray(example)) ? [] : {};
     if (!desc) return example;  // no defined descriptors for this level

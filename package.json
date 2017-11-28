@@ -6,9 +6,12 @@
     "react-scripts": "0.9.5"
   },
   "dependencies": {
+    "@cerebral/react": "^2.5.0",
     "@mapbox/geojson-area": "^0.2.2",
     "aws-v4-sign-small": "^1.1.1",
-    "cerebral": "2.0.0-b-alpha.a54303bb",
+    "axios": "^0.17.1",
+    "cerebral": "^3.5.0",
+    "csvjson": "^4.3.4",
     "geojson-utils": "^1.1.0",
     "leaflet": "^1.0.3",
     "material-ui": "^0.17.4",
@@ -27,6 +30,7 @@
     "react-textarea-autosize": "^4.0.5",
     "superagent": "^3.5.2",
     "superagent-promise": "^1.1.0",
+    "togeojson": "^0.16.0",
     "wellknown": "^0.5.0"
   },
   "scripts": {

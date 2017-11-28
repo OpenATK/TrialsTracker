@@ -1,12 +1,12 @@
 import React from 'react';
-import { connect } from 'cerebral/react';
+import { connect } from '@cerebral/react';
 import FontAwesome from 'react-fontawesome';
 import './map.css';
 import Control from 'react-leaflet-control';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  currentLocation: state`app.model.current_location`,
+  currentLocation: state`App.model.current_location`,
 
   gpsButtonClicked: signal`map.currentLocationButtonClicked`,
 },

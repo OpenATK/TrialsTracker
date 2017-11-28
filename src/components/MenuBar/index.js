@@ -1,28 +1,28 @@
 import React from 'react'
-import { connect } from 'cerebral/react'
+import { connect } from '@cerebral/react'
 import './styles.css'
 import { state, signal } from 'cerebral/tags'
 import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  dataIndex: state`app.model.yield_data_index`,
-  currentLocation: state`app.model.current_location`,
-  selectedNote: state`app.view.selected_note`,
-  menuDropdownVisible: state`app.view.menu_dropdown_visible`,
-  editing: state`app.view.editing`,
-  isMobile: state`app.is_mobile`,
-  notes: state`app.model.notes`,
-  legendVisible: state`app.view.legend.visible`,
+  dataIndex: state`App.model.yield_data_index`,
+  currentLocation: state`App.model.current_location`,
+  selectedNote: state`App.view.selected_note`,
+  open: state`MenuBar.open`,
+  editing: state`App.view.editing`,
+  isMobile: state`App.is_mobile`,
+  notes: state`App.model.notes`,
+  legendVisible: state`App.view.legend.visible`,
 
-  dataSourcesButtonClicked: signal`app.dataSourcesButtonClicked`,
-  clearCacheButtonClicked: signal`app.clearCacheButtonClicked`,
+  connectionsClicked: signal`MenuBar.connectionsClicked`,
+  clearCacheButtonClicked: signal`MenuBar.clearCacheButtonClicked`,
   gpsButtonClicked: signal`map.currentLocationButtonClicked`,
-  backgroundClicked: signal`app.menuBackgroundClicked`,
-  showMenuDropdown: signal`app.showMenuDropdown`,
-  downloadNotes: signal`app.downloadNotesButtonClicked`,
+  backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
+  showMenuDropdown: signal`MenuBar.showMenuDropdown`,
+  downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
   undoButtonClicked: signal`map.undoButtonClicked`,
-  mapLegendButtonClicked: signal`app.mapLegendButtonClicked`,
+  mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
 },
 class MenuBar extends React.Component {
 
@@ -45,7 +45,7 @@ class MenuBar extends React.Component {
         title="TrialsTracker"
         showMenuIconButton={false}
         iconElementRight={<div>
-          {Object.keys(this.props.dataIndex).length > 0 ? 
+          {Object.keys(this.props.dataIndex || {}).length > 0 ? 
             <IconButton
               key={1}
               onTouchTap={() => this.props.mapLegendButtonClicked({})}

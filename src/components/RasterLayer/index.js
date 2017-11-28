@@ -1,4 +1,4 @@
-import { connect } from 'cerebral/react'
+import { connect } from '@cerebral/react'
 import { GridLayer} from 'react-leaflet'
 import gh from 'ngeohash'
 import _ from 'lodash'
@@ -10,18 +10,19 @@ import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
   dataIndex: state`${props`data`}`,
-  geohashesToDraw: state`app.view.map.geohashes_to_draw.${props`layer`}`,
-  legend: state`app.view.legends.${props`layer`}`,
-  token: state`app.settings.data_sources.yield.oada_token`,
-  domain: state`app.settings.data_sources.yield.oada_domain`,
+  geohashesToDraw: state`App.view.map.geohashes_to_draw.${props`layer`}`,
+  legend: state`App.view.legends.${props`layer`}`,
+  token: state`Connections.oada_token`,
+  domain: state`Connections.oada_domain`,
 
-  tileUnloaded: signal`app.tileUnloaded`,
-  newTileDrawn: signal`app.newTileDrawn`,
+  tileUnloaded: signal`App.tileUnloaded`,
+  newTileDrawn: signal`App.newTileDrawn`,
 },
 
 class RasterLayer extends GridLayer {
   
-  componentWillMount() {
+	componentWillMount() {
+		console.log('rasterlayer gonna mount')
     super.componentWillMount();
     this.leafletElement.createTile = this.createTile.bind(this);
     this.tileUnload = this.tileUnload.bind(this);

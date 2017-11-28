@@ -1,13 +1,13 @@
 import React from 'react';
-import {connect} from 'cerebral/react'
+import {connect} from '@cerebral/react'
 import uuid from 'uuid';
 import './note.css';
 import {state, signal, props} from 'cerebral/tags'
 
 export default connect({
-  fieldNote: state`app.model.fields.${props.id}`,
-  notes: state`app.model.notes`,
-  isMobile: state`app.is_mobile`,
+  fieldNote: state`App.model.fields.${props`id`}`,
+  notes: state`App.model.notes`,
+  isMobile: state`App.is_mobile`,
 
   fieldClicked: signal`map.fieldNoteClicked`,
 },

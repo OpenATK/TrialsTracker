@@ -1,5 +1,5 @@
 import React from 'react';
-import {connect} from 'cerebral/react'
+import {connect} from '@cerebral/react'
 import TextAreaAutoSize from 'react-textarea-autosize';
 import uuid from 'uuid';
 import './note.css';
@@ -7,11 +7,11 @@ import Color from 'color';
 import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
-  tagNote: state`app.model.tags.${props.id}`,
-  notes: state`app.model.notes`,
-  isMobile: state`app.is_mobile`,
+  tagNote: state`App.model.tags.${props.id}`,
+  notes: state`App.model.notes`,
+  isMobile: state`App.is_mobile`,
 
-  fieldClicked: signal`app.fieldNoteClicked`,
+  fieldClicked: signal`App.fieldNoteClicked`,
 },
 
   class TagNote extends React.Component {

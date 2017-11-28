@@ -1,18 +1,22 @@
 import { Controller } from 'cerebral';
 import Devtools from 'cerebral/devtools'
 
-import app from './modules/App'
+import App from './modules/App'
 import map from './modules/Map'
 import note from './modules/Note'
+import Connections from './modules/Connections'
+import MenuBar from './modules/MenuBar'
 
 const controller = Controller({
   modules: {
-    app,
+    App,
     map,
     note,
+    Connections,
+    MenuBar,
   },
 
-  devtools: Devtools({remoteDebugger:'localhost:8787'}),
+  devtools: Devtools({host:'localhost:8787'}),
 })
 
 export default controller
