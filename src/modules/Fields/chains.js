@@ -1,4 +1,3 @@
-import { getOadaTokenSequence } from '../Connections/chains';
 import setFieldBoundingBoxes from './actions/setFieldBoundingBoxes';
 import computeFieldBoundingBoxes from './actions/computeFieldBoundingBoxes';
 import setFieldBoundaries from './actions/setFieldBoundaries';
@@ -7,11 +6,14 @@ import setFieldStats from './actions/setFieldStats';
 import setFieldDataForNotes from './actions/setFieldDataForNotes';
 import getFieldDataForNotes from './actions/getFieldDataForNotes';
 import getOadaFields from './actions/getOadaFields';
+import { set } from 'cerebral/operators'
+import { state, props } from 'cerebral/tags'
 
 export var computeFieldYieldData = [
   getFieldStats, {
     success: [
-      setFieldStats,
+			setFieldStats,
+			set(props`notes`, state`Note.notes`),
       getFieldDataForNotes, {
         success: [setFieldDataForNotes],
         error: [],
@@ -23,18 +25,19 @@ export var computeFieldYieldData = [
 
 export let handleFields = [
   computeFieldBoundingBoxes, {
-    success: [setFieldBoundingBoxes, computeFieldYieldData],
+		success: [
+			setFieldBoundingBoxes,
+		],
     error: [],
   },
 ]
 
-export let getFieldBoundaries = [
-  getOadaTokenSequence, {
-    success: [],
-    error: [],
-  },
+export let getFields = [
   getOadaFields, {
-    success: [setFieldBoundaries, handleFields],
+		success: [
+			setFieldBoundaries,
+			...handleFields
+	  ],
     error: [],
-  },
-];
+	},
+]

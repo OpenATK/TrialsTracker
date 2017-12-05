@@ -17,21 +17,6 @@ var tree = {
   }
 }
 
-makeField = function(grower, farmName, fieldName, geometry) {
-  var field = {
-    _type: 'application/vnd.oada.field.1+json',
-    name: fieldName,
-    context: {
-      grower: {_id: grower},
-      farm: {_id: farmName},
-    },
-    boundary: {
-      geojson: geometry,
-    }
-  }
-  return field;
-}
-
 module.exports = function(data_directory, domain, token, grower, farm) {
   TOKEN = token;
   DOMAIN = domain;
@@ -73,41 +58,27 @@ fieldsToOadaFormat = function(file) {
   var fieldFeatures = [];
 // First, get the more easily parsed farm names. 
 	kmlFile.features.forEach((feature) => {
-    if (feature.properties.name.includes(' - ')) {
-      var farmName = feature.properties.farm || feature.properties.name.split(' - ')[0].replace(/\s+/g, '');
-      var fieldName = feature.properties.name.split(' - ')[1].replace(/\s+/g, '');
-      var grower = feature.properties.grower || defaultGrower;
-      var field = makeField(grower, farmName, fieldName, feature.geometry);
-      tree.fields.growers[grower] = tree.fields.growers[grower] || {
-        _type: 'application/vnd.oada.grower.1+json',
-        farms: {}
-      };
-      tree.fields.growers[grower].farms[farmName] = tree.fields.growers[grower].farms[farmName] || { 
-        _type: 'application/vnd.oada.farm.1+json',
-        fields: {},
-      }
-      tree.fields.growers[grower].farms[farmName].fields[fieldName] = field;
-      tree.fields['fields-index'][farmName] = tree.fields['fields-index'][farmName] || {
-        _type: 'application/vnd.oada.field.1+json',
-        'fields-index': {},
-      }
-      tree.fields['fields-index'][farmName]['fields-index'][fieldName] = field;
-      fields.push(field);
-    } else {
-      fieldFeatures.push(feature);
-    }
-  })
 
-// Now put all remaining fields into an unknown farm.
-  for (var i = fieldFeatures.length-1; i >= 0; i--) {
-    var fieldName = fieldFeatures[i].properties.name.replace(/\s+/g, '');
-    var farmName = fieldFeatures[i].properties.farm || defaultFarm;
-    var grower = fieldFeatures[i].properties.grower || defaultGrower;
-    var field = makeField(grower, farmName, fieldName, fieldFeatures[i].geometry);
+		//    if (feature.properties.name.includes(' - ')) {
+		var splitName = feature.properties.name.split(' - ');
+		var fieldName = splitName.length > 1 ? splitName[1].replace(/\s+/g, '') : splitName[0].replace(/\s+/g, '');
+		var farmName = splitName.length > 1 ? splitName[0].replace(/\s+/g, '') : defaultFarm;
+    var grower = feature.properties.grower || defaultGrower;
+    var field = {
+      _type: 'application/vnd.oada.field.1+json',
+      name: fieldName,
+      context: {
+        grower: {_id: grower},
+        farm: {_id: farmName},
+      },
+      boundary: {
+        geojson: feature.geometry,
+      }
+    }
     tree.fields.growers[grower] = tree.fields.growers[grower] || {
       _type: 'application/vnd.oada.grower.1+json',
       farms: {}
-    }
+    };
     tree.fields.growers[grower].farms[farmName] = tree.fields.growers[grower].farms[farmName] || { 
       _type: 'application/vnd.oada.farm.1+json',
       fields: {},
@@ -117,8 +88,9 @@ fieldsToOadaFormat = function(file) {
       _type: 'application/vnd.oada.field.1+json',
       'fields-index': {},
     }
-    tree.fields['fields-index'][fieldName] = field;
-  }
+    tree.fields['fields-index'][farmName]['fields-index'][fieldName] = field;
+    fields.push(field);
+  })
 }
 
 putLinkedTree = function(dataTree, pathString) {

@@ -2,14 +2,15 @@ import React from 'react';
 import {connect} from '@cerebral/react'
 import uuid from 'uuid';
 import './note.css';
+import { Card, CardHeader } from 'material-ui'
 import {state, signal, props} from 'cerebral/tags'
 
 export default connect({
-  fieldNote: state`App.model.fields.${props`id`}`,
-  notes: state`App.model.notes`,
+  fieldNote: state`Fields.${props`id`}`,
+  notes: state`Notes`,
   isMobile: state`App.is_mobile`,
 
-  fieldClicked: signal`map.fieldNoteClicked`,
+  fieldClicked: signal`Map.fieldNoteClicked`,
 },
 
   class FieldNote extends React.Component {
@@ -18,42 +19,45 @@ export default connect({
       if (!this.props.fieldNote) return null;
       let yields = [];
       if (this.props.fieldNote.stats) {
-      Object.keys(this.props.fieldNote.stats).forEach((crop) => {
-        let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-        if (!isNaN(this.props.fieldNote.stats[crop].mean_yield)) {
-          yields.push(
-            <div
-              key={this.props.fieldNote.id+'-yield-text-'+crop}
-              className={'yield-text'}>
-              <span
-                key={this.props.fieldNote.id+'-yield-text-'+crop+'-header'}
-                className={'yield-text-header'}>
-                  {cropStr + ' Yield'}
-              </span>
-              <span
-                key={this.props.fieldNote.id+'-yield-text-'+crop+'-value'}
-                className={'yield-text-value'}>
-                  {this.props.fieldNote.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
-              </span>
-            </div>
-          )
-          yields.push(
-            <br key={uuid.v4()}/>
-          );
-        }
-      })
+        Object.keys(this.props.fieldNote.stats).forEach((crop) => {
+          let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+          if (!isNaN(this.props.fieldNote.stats[crop].mean_yield)) {
+            yields.push(
+              <div
+                key={this.props.fieldNote.id+'-yield-text-'+crop}
+                className={'yield-text'}>
+                <span
+                  key={this.props.fieldNote.id+'-yield-text-'+crop+'-header'}
+                  className={'yield-text-header'}>
+                    {cropStr + ' Yield'}
+                </span>
+                <span
+                  key={this.props.fieldNote.id+'-yield-text-'+crop+'-value'}
+                  className={'yield-text-value'}>
+                    {this.props.fieldNote.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
+                </span>
+              </div>
+            )
+            yields.push(
+              <br key={uuid.v4()}/>
+            );
+          }
+        })
       }
 
       let areaContent = null;
       if (this.props.fieldNote.boundary.area) {
-//        let area = 'Area: ' + this.props.fieldNote.boundary.area.toFixed(2) + ' acres';
         areaContent = 
           <div
             key={'area'}
             className={'area'}>
             <span 
               className={'area-header'}>
-              Area
+							Area 
+					    <div
+                style={{color: '#000', backgroundColor: '#fff'}}
+                className={'note-area-box'}
+              />
             </span>
             <span 
               className={'area-value'}>
@@ -94,19 +98,28 @@ export default connect({
       }
 
       return (
-        <div 
-          onClick={(e) => this.props.fieldClicked({id:this.props.id})}
+        <Card 
+          onTouchTap={(e) => this.props.fieldClicked({id:this.props.id})}
           className={this.props.selected ? 'selected-note' : 'note'}>
-          <div
-            className={'note-upper'}>
+					<CardHeader
+						className={'note-header'}
+						style={{
+							padding: '0px 0px 0px 10px',
+							fontWeight: this.props.selected ? 'bold' : 'normal',
+						}}
+						textStyle={{padding: '0px'}}>
+						<div
+						  className={'note-text'}>
+							{this.props.text}
+					  </div>
             <span
               className={'note-text-input'}
               type='text'
-              value={this.props.fieldNote.name} 
+              value={this.props.id} 
               readOnly={"readonly"}>
-              {this.props.fieldNote.name}
+              {this.props.id}
             </span>
-          </div>
+          </CardHeader>
           <div
             className={this.props.fieldNote.boundary.area ?
               'note-main-info' : 'hidden'}>
@@ -128,7 +141,7 @@ export default connect({
               {noteComparisons}
             </div> : null}
           </div>
-        </div>
+        </Card>
       )
     }
   }

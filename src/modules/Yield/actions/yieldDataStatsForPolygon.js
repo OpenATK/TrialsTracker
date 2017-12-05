@@ -13,9 +13,10 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
     gh.encode(bbox.south, bbox.east, 9),
     gh.encode(bbox.south, bbox.west, 9)];
   let commonString = longestCommonPrefix(strings);
-  let stuff = {};
-  stuff.stats = {};
-  stuff.geohashPolygons = [];
+	let stuff = {
+	  stats: {},
+	  geohashPolygons: []
+	};
   return Promise.each(Object.keys(availableGeohashes), (crop) => {
     stuff.stats[crop] = { 
       area_sum: 0,
@@ -28,11 +29,11 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
       stuff.stats[crop].area_sum = newStuff.stats.area_sum;
       stuff.stats[crop].weight_sum = newStuff.stats.weight_sum;
       stuff.stats[crop].count = newStuff.stats.count;
-      stuff.stats[crop].mean_yield = newStuff.stats.weight_sum/newStuff.stats.area_sum;
-      return stuff;
+			stuff.stats[crop].mean_yield = newStuff.stats.weight_sum/newStuff.stats.area_sum;
+      if (stuff.stats[crop].count === 0) delete stuff.stats[crop]
+      return true;
     })
   }).then(() => {
-    console.log(stuff)
     return stuff;
   })
 }
@@ -95,8 +96,8 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUr
 //   need be tested because no lines intersect in Step 1.
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
-    if (gju.pointInPolygon(pt, poly)) {
-      var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
+		if (gju.pointInPolygon(pt, poly)) {
+			var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
       return cache.get(url, token).then((data) => {
         stuff.stats.area_sum += data.area.sum;
         stuff.stats.weight_sum += data.weight.sum;

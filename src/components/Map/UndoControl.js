@@ -8,7 +8,7 @@ import { state, signal } from 'cerebral/tags'
 export default connect({
   editing: state`App.view.editing`,
 
-  undoButtonClicked: signal`map.undoButtonClicked`,
+  undoButtonClicked: signal`Map.undoButtonClicked`,
 },
 
 class UndoControl extends React.Component {  

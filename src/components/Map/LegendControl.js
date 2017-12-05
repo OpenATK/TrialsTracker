@@ -8,8 +8,8 @@ import { state } from 'cerebral/tags'
 
 export default connect({
   legends: state`App.view.legends`,
-  yieldDataIndex: state`App.model.yield_data_index`,
-  cropLayers: state`App.view.map.crop_layers`,
+  yieldDataIndex: state`Yield.data_index`,
+  cropLayers: state`Map.crop_layers`,
   isMobile: state`App.is_mobile`,
 },
 

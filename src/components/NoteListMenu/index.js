@@ -7,7 +7,7 @@ import { state, signal } from 'cerebral/tags'
 export default connect({
   sortMode: state`App.view.sort_mode`,
   editing: state`App.view.editing`,
-  selectedNote: state`App.view.selected_note`,
+  selectedNote: state`Note.selected_note`,
 
   sortingTabClicked: signal`note.sortingTabClicked`,
   doneClicked: signal`note.doneEditingButtonClicked`,

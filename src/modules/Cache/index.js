@@ -15,7 +15,7 @@ module.exports = {
         console.log(err);
       })
     // Resource isn't in the cache. Perform an HTTP request to OADA 
-    }).catch(function(err) {
+		}).catch(function(err) {
       if (token) {
         return agent('GET', url)
         .set('Authorization', 'Bearer '+ token)

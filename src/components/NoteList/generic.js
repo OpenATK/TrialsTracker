@@ -1,6 +1,6 @@
 import React from 'react'
 import {connect} from '@cerebral/react'
-import Note from '../Note/'
+import Note from '../Note/genericNote.js'
 import FieldNote from '../FieldNote/'
 import Header from './Header'
 import './styles.css'
@@ -37,16 +37,40 @@ class NoteList extends React.Component {
 
   render() {
     let notes_array = Object.keys(this.props.notes).map((key) => {
+			let comparisons = Object.keys(this.props.notes[key].fields).map((field) => {
+				return {
+					text: field,
+					stats: this.props.notes[key].fields[field]
+				}
+			})
 			return (<Note 
         id={key} 
-        key={key}
+				key={key}
+				comparisons={comparisons}
+				color={this.props.notes[key].color}
+				area={this.props.notes[key].geometry.area}
+				type='note'
+				path={`Note.notes.${key}`}
+				selected={this.props.notes[key].selected}
+				text={this.props.notes[key].text}
+				stats={this.props.notes[key].stats}
       />)
     });
 
-    let fields_array = Object.keys(this.props.fields || {}).map((field) => {
-      return(<FieldNote 
+		let fields_array = Object.keys(this.props.fields || {}).map((field) => {
+			let comparisons = [];
+      Object.keys(this.props.notes).forEach((id) => {                          
+				if (this.props.notes[id].fields[field]) comparisons.push({text: this.props.notes[id].text, stats: this.props.notes[id].fields[field]}) 
+			})
+      return(<Note 
         id={field} 
-        key={field}
+				key={field}
+				comparisons={comparisons}
+				area={this.props.fields[field].boundary.area}
+				type='field'
+				path={`Fields.${field}`}
+				text={field}
+				stats={this.props.fields[field].stats}
       />)  
     })
 

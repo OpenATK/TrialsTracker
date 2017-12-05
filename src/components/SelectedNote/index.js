@@ -9,13 +9,13 @@ import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  text: state`App.model.notes.${props`id`}.text`,
-  tags: state`App.model.notes.${props`id`}.tags`,
-  selected: state`App.model.notes.${props`id`}.selected`,
+  text: state`Note.notes.${props`id`}.text`,
+  tags: state`Note.notes.${props`id`}.tags`,
+  selected: state`Note.notes.${props`id`}.selected`,
   editing: state`App.view.editing`,
-  geometryVisible: state`App.model.notes.${props`id`}.geometry_visible`,
-  noteFields: state`App.model.notes.${props`id`}.fields`,
-  fields: state`App.model.fields`,
+  geometryVisible: state`Note.notes.${props`id`}.geometry_visible`,
+  noteFields: state`Note.notes.${props`id`}.fields`,
+  fields: state`Fields`,
   isMobile: state`App.is_mobile`,
   noteDropdownVisible: state`App.view.note_dropdown.visible`,
   noteDropdown: state`App.view.note_dropdown.note`,

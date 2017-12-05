@@ -8,7 +8,7 @@ import { state, signal } from 'cerebral/tags'
 export default connect({
   currentLocation: state`App.model.current_location`,
 
-  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
+  gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
 },
 
 class GpsControl extends React.Component {  

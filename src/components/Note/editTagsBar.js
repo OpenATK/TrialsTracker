@@ -1,72 +1,65 @@
 import React from 'react';
 import { connect } from '@cerebral/react';
-import uuid from 'uuid';
 import './editTagsBar.css'
-import { Chip } from 'material-ui'
-import { state, signal } from 'cerebral/tags'
+import { AutoComplete, Chip } from 'material-ui'
+import { state, signal, props } from 'cerebral/tags'
+
+let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
+	  tags: state`Note.notes.${props`id`}.tags`,
+	  selected: state`Note.notes.${props`id`}.selected`,
     allTags: state`App.model.tags`,
     editing: state`App.view.editing`,
-    tagInput: state`App.model.tag_input_text`,
+	  tagInput: state`App.model.tag_input_text`,
+	  error: state`Note.notes.${props`id`}.tag_error`,
 
-    tagAdded: signal`note.tagAdded`,
-    tagRemoved: signal`note.tagRemoved`,
-    tagInputTextChanged: signal`note.tagInputTextChanged`,
+    tagAdded: signal`Note.tagAdded`,
+    tagRemoved: signal`Note.tagRemoved`,
+    tagInputTextChanged: signal`Note.tagInputTextChanged`,
 },
 
   class EditTagsBar extends React.Component {
-
-    componentWillMount() {
-      this.handleKeyDown = this.handleKeyDown.bind(this);
-    }
-  
-    handleKeyDown(evt) {
-      if (evt.keyCode === 13 || evt.keyCode === 9) {
-        this.props.tagAdded({text: evt.target.value});
-      }
-    }
   
 		render() {
-      var options = [];
-      
-      var id = uuid.v4();
-
       return (
         <div
-          className={((this.props.editing && this.props.selected) || this.props.tags.length > 0) ? 
-            'edit-tags-bar' : 'hidden'}>
-          <datalist id={id}>
-						{Object.keys(this.props.allTags).filter(tag => this.props.tags.indexOf(tag) < 0
-						).map(tag => 
-							<option key={uuid.v4()} value={tag}>{tag} </option>
-						)}
-          </datalist>
-          <input 
-            className={this.props.editing && this.props.selected ? 
-              'input' : 'hidden'}
-            placeholder='Add a new tag...'
-            style={{border: 'none'}}
-            list={id}
-            autoComplete='on'
-            onChange={(e) => this.props.tagInputTextChanged({value: e.target.value, noteId:this.props.id})}
-            value={this.props.tagInput}
-            onKeyDown={this.handleKeyDown}
-          />
-					{this.props.selected && this.props.editing ? this.props.tags.map(tag => 
+          className={'edit-tags-bar'}>
+						
+					{this.props.selected && this.props.editing ? this.props.tags.map((tag, idx) => 
 					  <Chip
-              key={this.props.id + tag} 
-							onRequestDelete={() => this.props.tagRemoved({tag})} 
+							key={this.props.id + tag}
+							labelStyle={labelStyle}
+							style={{marginLeft: idx>0 ? '3px' : '0px'}}
+							onRequestDelete={() => this.props.tagRemoved({idx})} 
 						  className={'tag'}>
 						  {tag}
 						</Chip>) 
-					: this.props.tags.map(tag => 
+					: this.props.tags.map((tag, idx) => 
 					  <Chip
               key={this.props.id + tag} 
+							labelStyle={labelStyle}
+							style={{marginLeft: idx>0 ? '3px' : '0px'}}
 						  className={'tag'}>
 						  {tag}
 						</Chip>) 
 					}
+				  {this.props.editing && this.props.selected ? <AutoComplete
+						style={{height:'30px'}}
+						underlineStyle={{bottom: '0px'}}
+					  textFieldStyle={{height:'30px'}}
+						hintStyle={{bottom: '0px'}}
+						errorStyle={{bottom: '17px'}}
+            className={'input'}
+						hintText={this.props.error ? null : 'Add a new tag...'}
+						errorText={this.props.error ? this.props.error : null}
+						dataSource={Object.keys(this.props.allTags).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
+            onUpdateInput={(value) => this.props.tagInputTextChanged({value, noteId:this.props.id})}
+            onNewRequest={(text, id) => this.props.tagAdded({text, noteId:this.props.id})}
+            searchText={this.props.tagInput}
+					  onKeyDown={this.handleKeyDown}
+					  tabIndex={2}
+          /> : null }
         </div>
       )
     }

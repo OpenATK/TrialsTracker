@@ -6,22 +6,21 @@ import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  dataIndex: state`App.model.yield_data_index`,
+  dataIndex: state`Yield.data_index`,
   currentLocation: state`App.model.current_location`,
-  selectedNote: state`App.view.selected_note`,
+  selectedNote: state`Note.notes.${state`Note.selected_note`}`,
   open: state`MenuBar.open`,
   editing: state`App.view.editing`,
   isMobile: state`App.is_mobile`,
-  notes: state`App.model.notes`,
   legendVisible: state`App.view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
   clearCacheButtonClicked: signal`MenuBar.clearCacheButtonClicked`,
-  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
+  gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
-  undoButtonClicked: signal`map.undoButtonClicked`,
+  undoButtonClicked: signal`Map.undoButtonClicked`,
   mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
 },
 class MenuBar extends React.Component {
@@ -38,7 +37,7 @@ class MenuBar extends React.Component {
 
   render() {
     let undoEnabled = this.props.selectedNote ?
-      this.props.notes[this.props.selectedNote].geometry.geojson.coordinates[0].length > 0 : false;
+      this.props.selectedNote.geometry.geojson.coordinates[0].length > 0 : false;
     return (
       <AppBar
         className={'menu-bar'}
@@ -84,8 +83,8 @@ class MenuBar extends React.Component {
               />
               <Divider />
               <MenuItem 
-                primaryText="Edit Data Sources"
-                onTouchTap={()=>this.props.dataSourcesButtonClicked({})}
+                primaryText="Edit Source Data"
+                onTouchTap={()=>this.props.connectionsClicked({})}
               />
             </IconMenu>
           </div>

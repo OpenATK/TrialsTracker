@@ -9,28 +9,31 @@ import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  text: state`App.model.notes.${props`id`}.text`,
-  tags: state`App.model.notes.${props`id`}.tags`,
-  selected: state`App.model.notes.${props`id`}.selected`,
+  note: state`Note.notes.${props`id`}`,
+  text: state`Note.notes.${props`id`}.text`,
+  selected: state`Note.notes.${props`id`}.selected`,
   editing: state`App.view.editing`,
-  geometryVisible: state`App.model.notes.${props`id`}.geometry_visible`,
-  noteFields: state`App.model.notes.${props`id`}.fields`,
-  fields: state`App.model.fields`,
+  geometryVisible: state`Note.notes.${props`id`}.geometry_visible`,
+  noteFields: state`Note.notes.${props`id`}.fields`,
+  fields: state`Fields`,
   isMobile: state`App.is_mobile`,
   noteDropdownVisible: state`App.view.note_dropdown.visible`,
   noteDropdown: state`App.view.note_dropdown.note`,
 
-  deleteNoteButtonClicked: signal`note.deleteNoteButtonClicked`,
-  editNoteButtonClicked: signal`note.editNoteButtonClicked`,
-  noteClicked: signal`note.noteClicked`,
-  noteTextChanged: signal`note.noteTextChanged`,
-  backgroundClicked: signal`note.noteBackgroundClicked`,
-  showNoteDropdown: signal`note.showNoteDropdown`,
+  deleteNoteButtonClicked: signal`Note.deleteNoteButtonClicked`,
+  editNoteButtonClicked: signal`Note.editNoteButtonClicked`,
+  noteClicked: signal`Note.noteClicked`,
+  noteTextChanged: signal`Note.noteTextChanged`,
+  backgroundClicked: signal`Note.noteBackgroundClicked`,
+	showNoteDropdown: signal`Note.showNoteDropdown`,
 },
 
   class Note extends React.Component {
 
-    render() {
+		render() {
+			const inputField = this.props.selected && this.props.editing ? input => {
+        if (input) setTimeout(() => input.focus(), 100);
+      } : null;
       let color = Color(this.props.note.color).alpha(0.4).rgb();
       if (!this.props.note) return null;
       let yields = [];
@@ -70,8 +73,7 @@ export default connect({
       }
 
       let areaContent = null;
-      if (this.props.note.area) {
-      //  let area = 'Area: ' + this.props.note.area.toFixed(2) + ' acres';
+      if (this.props.note.geometry.area) {
         areaContent = 
           <div
             key={'area'}
@@ -85,42 +87,38 @@ export default connect({
             </span>
             <span 
               className={'area-value'}>
-              {this.props.note.area.toFixed(2) + ' acres'}
+              {this.props.note.geometry.area.toFixed(2) + ' acres'}
             </span>
           </div>
       }
 
       let fieldComparisons = [];
-      if (this.props.noteFields) {
-        Object.keys(this.props.noteFields).forEach((field) => {
-          Object.keys(this.props.note.stats).forEach((crop, idx) => {
-            if (!isNaN(this.props.note.stats[crop].mean_yield)) {
-              if (this.props.noteFields[field][crop]) {
-                let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-                let sign = (this.props.noteFields[field][crop].difference < 0) ? '' : '+';
-                fieldComparisons.push(
-                  <div
-                    key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
-                    style={{order:idx}}
-                    className={'field-comparison'}>
-                    <span
-                      key={this.props.note.id+'-'+field+'-'+crop+'-field'}
-                      className={'field-comparison-header'}>
-                      {field + ' ' +cropStr}
-                    </span>
-                    <span
-                      key={this.props.note.id+'-'+field+'-'+crop+'-value'}
-                      className={'field-comparison-value'}>
-                      {this.props.fields[field].stats[crop].mean_yield.toFixed(1) +
-                      ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
-                    </span>
-                  </div>
-                );
-              }
-            }
-          })
+      Object.keys(this.props.noteFields || {}).forEach((field) => {
+        Object.keys(this.props.note.stats).forEach((crop, idx) => {
+          if (this.props.noteFields[field][crop]) {
+            let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+            let sign = (this.props.noteFields[field][crop].difference < 0) ? '' : '+';
+            fieldComparisons.push(
+              <div
+                key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
+                style={{order:idx}}
+                className={'field-comparison'}>
+                 <span
+                  key={this.props.note.id+'-'+field+'-'+crop+'-field'}
+                  className={'field-comparison-header'}>
+                  {field + ' ' +cropStr}
+                </span>
+                 <span
+                  key={this.props.note.id+'-'+field+'-'+crop+'-value'}
+                  className={'field-comparison-value'}>
+                  {this.props.fields[field].stats[crop].mean_yield.toFixed(1) +
+                  ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
+                </span>
+              </div>
+            );
+          }
         })
-      }
+      })
 
       return (
         <Card
@@ -129,33 +127,57 @@ export default connect({
           style={{order: this.props.note.order}}>
           <CardHeader
             className={'note-header'}
-            style={{padding: '0px 0px 0px 10px', height: '25px', backgroundColor: this.props.note.color }}
-            title={this.props.editing ? null : this.props.text}>
-            <TextField
-              multiLine={true}
+						style={{
+							padding: '0px 0px 0px 10px',
+							backgroundColor: this.props.note.color, 
+							fontWeight: this.props.selected ? 'bold' : 'normal',
+						}}
+						textStyle={{padding: '0px'}}>
+						<div className={'text'}>
+						{this.props.editing && this.props.selected ? <TextField
+							multiLine={true}
+							fullWidth={true}
               rows={1}
-              rowsMax={4}
-              className={'note-textfield'}
-              style={this.props.editing ? null : {display: 'none', color: this.props.note.font_color}}
-              type='text'
+              rowsMax={3}
+							className={'note-textfield'}
+							textareaStyle={{
+								lineHeight: '1.3em',
+								maxHeight: '3.9em',
+								margin: '0px',
+							}}
+							inputStyle={{display: 'flex'}}
               value={this.props.text} 
-              onChange={(e) => this.props.noteTextChanged({value: e.target.value, id:this.props.id})}
-              tabIndex={1}
-              autoFocus={this.props.editing && this.props.selected}
-              hintText='Type note description here...'
-              readOnly={this.props.editing && this.props.selected ? false : "readonly"}
-            />
-            <IconMenu
-              iconButtonElement={<IconButton onTouchTap={(e)=>{e.stopPropagation()}}><MoreVertIcon /></IconButton>}
+              onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.id})}
+							tabIndex={1}
+							hintText='Type note description here...'
+							hintStyle={{bottom: '2px'}}
+							underlineShow={false}
+						/> 
+						: 
+						<div
+						  className={'note-text'}>
+							{this.props.text}
+					  </div>
+						}
+					</div>
+				    <IconMenu
+							menuStyle={{padding: '0px'}}
+							iconButtonElement={
+								<IconButton 
+									style={{height:'25px', padding: '0px'}}
+									onTouchTap={(e)=>{e.stopPropagation()}}>
+									<MoreVertIcon />
+								</IconButton>
+							}
               onRequestChange={()=>{this.props.showNoteDropdown({id:this.props.id})}}
               open={this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id}
               targetOrigin={{horizontal: 'right', vertical: 'top'}}
               anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
-              <MenuItem 
+							{this.props.selected && this.props.editing ? null : <MenuItem 
                 primaryText="Edit" 
                 onTouchTap={(e)=>{this.props.editNoteButtonClicked({id:this.props.id})}}
-              />
-              <Divider />
+              /> }
+							{this.props.selected && this.props.editing ? null : <Divider /> }
               <MenuItem 
                 primaryText="Delete"
                 onTouchTap={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id})}}
@@ -163,7 +185,7 @@ export default connect({
             </IconMenu>
           </CardHeader>
           <div
-            className={this.props.note.area ? 'note-main-info' : 'hidden'}>
+            className={this.props.note.geometry.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
@@ -182,8 +204,7 @@ export default connect({
               {fieldComparisons}
             </div> : null}
           </div>
-          <Divider />
-          <EditTagsBar selected={this.props.note.selected} tags={this.props.note.tags}/>
+          {(this.props.editing && this.props.selected) || this.props.note.tags.length > 0 ? <EditTagsBar id={this.props.id}/> : null }
         </Card>
       )
     }

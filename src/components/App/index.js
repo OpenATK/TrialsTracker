@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from '@cerebral/react';
-import NoteList from '../NoteList/';
+import NoteList from '../NoteList/generic.js';
 import TrialsMap from '../Map';
 import MenuBar from '../MenuBar';
 import Connections from '../Connections';
@@ -23,8 +23,8 @@ class App extends React.Component {
       <div className={'app'}>
 				<Connections />
         <MenuBar />
-        <NoteList />
-        <TrialsMap />
+				<NoteList />
+				<TrialsMap />
       </div>
     )
   }

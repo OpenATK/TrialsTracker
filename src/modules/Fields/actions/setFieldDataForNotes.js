@@ -1,10 +1,11 @@
-export default function setFieldDataForNotes({props, state}) {
+function setFieldDataForNotes({props, state}) {
   if (props.noteFields) {
-    Object.keys(props.noteFields).forEach((noteId) => {
-      state.set(['App', 'model', 'notes', noteId, 'fields'], {});
-      Object.keys(props.noteFields[noteId]).forEach((fieldId) => {
-        state.set(['App', 'model', 'notes', noteId, 'fields', fieldId], props.noteFields[noteId][fieldId]);
+    Object.keys(props.noteFields).forEach((id) => {
+      state.set(`Note.notes.${id}.fields`, {});
+      Object.keys(props.noteFields[id]).forEach((fieldId) => {
+        state.set(`Note.notes.${id}.fields.${fieldId}`, props.noteFields[id][fieldId]);
       })
     })
   }
 }
+export default setFieldDataForNotes;

@@ -10,7 +10,7 @@ import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
   dataIndex: state`${props`data`}`,
-  geohashesToDraw: state`App.view.map.geohashes_to_draw.${props`layer`}`,
+  geohashesToDraw: state`Map.geohashesToDraw.${props`layer`}`,
   legend: state`App.view.legends.${props`layer`}`,
   token: state`Connections.oada_token`,
   domain: state`Connections.oada_domain`,
@@ -22,7 +22,6 @@ export default connect({
 class RasterLayer extends GridLayer {
   
 	componentWillMount() {
-		console.log('rasterlayer gonna mount')
     super.componentWillMount();
     this.leafletElement.createTile = this.createTile.bind(this);
     this.tileUnload = this.tileUnload.bind(this);

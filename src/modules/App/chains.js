@@ -41,10 +41,10 @@ function registerGeohashes({props, state}) {
 // This case occurs before a token is available. Just save all geohashes and
 // filter them later when the list of available geohashes becomes known.
   let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-  state.set(`App.view.map.geohashes_on_screen.${props.layer}`, {[coordsIndex]: props.geohashes})
+  state.set(`Map.geohashesOnScreen.${props.layer}`, {[coordsIndex]: props.geohashes})
 }
 
 function unregisterGeohashes({props, state}) {
   var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-  state.unset(`App.view.map.geohashes_on_screen.${props.layer}.${coordsIndex}`);
+  state.unset(`Map.geohashesOnScreen.${props.layer}.${coordsIndex}`);
 }
