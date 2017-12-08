@@ -111,7 +111,8 @@ function getOadaToken({state, path}) {
     scope: 'oada.awesome:all',
 //      params: {
 //        "redirect_uri": 'https://trialstracker.oada-dev.com/oauth2/redirect.html', 
-      "redirect": 'http://vip3.ecn.purdue.edu:8000/oauth2/redirect.html',
+		//      "redirect": 'http://localhost:8000/oauth2/redirect.html',
+		      "redirect": 'http://vip3.ecn.purdue.edu:8000/oauth2/redirect.html',
 //      }
   }
   var domain = state.get('Connections.oada_domain'); //TODO: don't hard code this as the source of the domain

@@ -40,7 +40,8 @@ class NoteList extends React.Component {
 			let comparisons = Object.keys(this.props.notes[key].fields).map((field) => {
 				return {
 					text: field,
-					stats: this.props.notes[key].fields[field]
+					stats: this.props.fields[field].stats,
+					comparison: this.props.notes[key].fields[field]
 				}
 			})
 			return (<Note 
@@ -60,7 +61,11 @@ class NoteList extends React.Component {
 		let fields_array = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
       Object.keys(this.props.notes).forEach((id) => {                          
-				if (this.props.notes[id].fields[field]) comparisons.push({text: this.props.notes[id].text, stats: this.props.notes[id].fields[field]}) 
+				if (this.props.notes[id].fields[field]) comparisons.push({
+					text: this.props.notes[id].text,
+					stats: this.props.notes[id].stats,
+					comparison: this.props.notes[id].fields[field]
+				}) 
 			})
       return(<Note 
         id={field} 

@@ -1,3 +1,6 @@
+import {
+  selectField
+} from './chains'
 export default {
 
 	state : {
@@ -5,6 +8,6 @@ export default {
 	},
 
 	signals: {
-
+		fieldClicked: selectField,
   }
 }

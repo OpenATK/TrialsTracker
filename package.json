@@ -12,6 +12,7 @@
     "axios": "^0.17.1",
     "cerebral": "^3.6.0",
     "csvjson": "^4.3.4",
+    "gaussian": "^1.1.0",
     "geojson-utils": "^1.1.0",
     "leaflet": "^1.2.0",
     "material-ui": "^0.17.4",

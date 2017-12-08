@@ -16,7 +16,8 @@ import {
   removeTag,
   toggleNoteDropdown,
 	cancelNote,
-  drawComplete,
+	drawComplete,
+	toggleComparisonsPane,
 } from './chains';
 
 export default {
@@ -25,7 +26,8 @@ export default {
 		notes: initial_notes(),
 	},
 
-  signals: {
+	signals: {
+		expandComparisonsClicked: toggleComparisonsPane,
     addNoteButtonClicked: addNewNote,
     cancelEditingButtonClicked: cancelNote,
     deleteNoteButtonClicked: removeNote,
@@ -57,13 +59,19 @@ function initial_notes() {
       text: 'n-serve test',
       tags: [],//['application', 
       fields: {},
-      color: '#ff5722',
+			color: '#ff5722',
+			expanded: false,
       stats: {
         corn: { 
-          area_sum: 14.017808080808045,
-          weight_sum: 3089.313640255855,
+          area: {sum: 14.017808080808045, },
+          weight: {sum: 3089.313640255855,},
           count: 5167,
-          mean_yield: 220.38492911637678, 
+					yield: {
+						mean: 220.38492911637678, 
+						standardDeviation: 32.55,
+						variance: Math.pow(32.55, 2),
+					},
+					'sum-yield-squared-area': 46824,
         },
       },
       geometry: { 
@@ -105,12 +113,18 @@ function initial_notes() {
         time: time,
         tags: ['low area'],
         color: '#607d8b',
+			  expanded: false,
         stats: {
           corn: {
-            area_sum: 0.9599224747474746,
-            weight_sum: 123.93012176598845,
+            area: {sum: 0.9599224747474746,},
+            weight: {sum: 123.93012176598845,},
             count: 346,
-            mean_yield: 129.1043027183946, 
+						yield: { 
+							mean: 129.1043027183946, 
+							standardDeviation: 26.75,
+							variance: Math.pow(26.75, 2),
+						},
+						'sum-yield-squared-area': 46824,
           },
         },
         fields: {},

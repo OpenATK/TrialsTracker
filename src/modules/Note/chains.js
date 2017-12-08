@@ -2,9 +2,15 @@ import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
 import uuid from 'uuid';
 import rmc from 'random-material-color';
 import Color from 'color';
-import yieldDataStatsForPolygon from '../Yield/actions/yieldDataStatsForPolygon.js';
+import yieldDataStatsForPolygon from '../Yield/actions/yieldDataStatsForPolygon';
+import getFieldDataForNotes from '../Fields/actions/getFieldDataForNotes';
+import setFieldDataForNotes from '../Fields/actions/setFieldDataForNotes';
 import _ from 'lodash';
 import {state, props, } from 'cerebral/tags'
+
+export var toggleComparisonsPane = [
+  toggle(state`${props`path`}.expanded`)
+]
 
 export var cancelNote = [
   set(state`App.view.editing`, false),
@@ -64,8 +70,13 @@ export let drawComplete = [
 	set(state`Note.notes.${props`id`}.stats.computing`, true),
   computeNoteStats, {
     success: [
-      setNoteStats, 
+			setNoteStats, 
       set(state`Map.geohashPolygons`, props`geohashPolygons`),
+			set(props`notes`, {[props.id]: state`Note.notes.${props`id`}`}),
+      getFieldDataForNotes, {
+        success: [setFieldDataForNotes],
+        error: [],
+      }
     ],
 		error: [
       unset(state`Note.notes.${props`id`}.stats.computing`)

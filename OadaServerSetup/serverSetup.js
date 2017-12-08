@@ -229,14 +229,16 @@ createAggregates = function(levels) {
             count: 1,
             weight: {
               sum: weight,
-              'sum-of-squares': Math.pow(weight, 2)
-            },
+              'sum-of-squares': Math.pow(weight, 2),
+						},
+						'yield-squared-area': Math.pow(weight/pt.area, 2)*pt.area,
             area: {
               sum: pt.area,
               'sum-of-squares': Math.pow(pt.area, 2)
-            }
-          };
-
+						},
+						'sum-yield-squared-area': Math.pow(weight/pt.area, 2)*pt.area,
+					};
+					console.log(additionalStats)
           //Handle new crop types
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
@@ -257,6 +259,8 @@ createAggregates = function(levels) {
                 sum: 0,
                 'sum-of-squares': 0,
               },
+						  'sum-yield-squared-area': 0,
+						  'yield-squared-area': 0,
               count: 0,
             },
             datum: 'WGS84',
@@ -295,8 +299,9 @@ createAggregates = function(levels) {
                 'sum-of-squares': 0,
               },
               count: 0,
+						  'sum-yield-squared-area': 0,
+						  'yield-squared-area': 0,
             };
-
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh] = 
             recomputeStats(tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh]['geohash-data'][aggregateGh], additionalStats);
 
@@ -312,7 +317,9 @@ recomputeStats = function(currentStats, additionalStats) {
   currentStats.area.sum = currentStats.area.sum + additionalStats.area.sum;
   currentStats.area['sum-of-squares'] = currentStats.area['sum-of-squares'] + additionalStats.area['sum-of-squares'];
   currentStats.weight.sum = currentStats.weight.sum + additionalStats.weight.sum;
-  currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] + additionalStats.weight['sum-of-squares'];
+	currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] + additionalStats.weight['sum-of-squares'];
+	currentStats['sum-yield-squared-area'] = currentStats['sum-yield-squared-area'] + additionalStats['sum-yield-squared-area'];
+	console.log(currentStats['sum-yield-squared-area']);
   return currentStats;
 };
 
@@ -337,7 +344,6 @@ var _Setup = {
           data: dataTree,
         }).then((response) => {
           var resId = response.headers.location.replace(/^\/resources\//, '');
-          console.log('RETURNING', pathString, dataTree);
 					return {_id: 'resources/'+resId, _rev: '0-0'};
         })
       } else {

@@ -18,9 +18,11 @@ export default connect({
   deleteNoteButtonClicked: signal`Note.deleteNoteButtonClicked`,
   editNoteButtonClicked: signal`Note.editNoteButtonClicked`,
   noteClicked: signal`Note.noteClicked`,
+  fieldClicked: signal`Fields.fieldClicked`,
   noteTextChanged: signal`Note.noteTextChanged`,
   backgroundClicked: signal`Note.noteBackgroundClicked`,
 	showNoteDropdown: signal`Note.showNoteDropdown`,
+	expandComparisonsClicked: signal`Note.expandComparisonsClicked`,
 },
 
   class Note extends React.Component {
@@ -54,7 +56,7 @@ export default connect({
               <span
                 key={this.props.note.id+'-yield-text-'+crop+'-value'}
                 className={'yield-text-value'}>
-                  {this.props.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
+                  {this.props.stats[crop].yield.mean.toFixed(1) + ' bu/ac'}
               </span>
             </div>
           )
@@ -90,7 +92,7 @@ export default connect({
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.stats).forEach((crop) => {
           let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-					let sign = (comp.stats[crop].difference < 0) ? '' : '+';
+					let sign = (comp.comparison[crop].comparison.differenceMeans < 0 ^ this.props.type === 'note') ? '-' : '+';
           comps.push(
             <div
               key={this.props.note.id+'-'+comp.text+'-'+crop+'-comparison'}
@@ -108,8 +110,8 @@ export default connect({
               <span
                 key={this.props.note.id+'-'+comp.text+'-'+crop+'-value'}
                 className={'comparison-value'}>
-                {this.props.stats[crop].mean_yield.toFixed(1) +
-                ' (' + sign + (comp.stats[crop].difference).toFixed(2) + ') bu/ac' }
+                {comp.stats[crop].yield.mean.toFixed(1) +
+                ' (' + sign + Math.abs(comp.comparison[crop].comparison.differenceMeans).toFixed(2) + ') bu/ac' }
               </span>
             </div>
           )
@@ -118,7 +120,7 @@ export default connect({
 
       return (
         <Card
-          onTouchTap={this.props.type === 'note' ? (e) => this.props.noteClicked({id:this.props.note.id}) : null}
+					onTouchTap={this.props.type === 'note' ? (e) => this.props.noteClicked({id:this.props.note.id}) : (e) => this.props.fieldClicked({id:this.props.note.id})}
           className={'note'}
           style={{order: this.props.note.order || this.props.stats ? '0' : '1'}}>
           <CardHeader
@@ -183,25 +185,23 @@ export default connect({
             </IconMenu>
           </CardHeader>
           <div
-            className={this.props.area ? 'note-main-info' : 'hidden'}>
+						className={this.props.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
-            {comps.length === 1 ? 
-            <div
-              className={'field-comparisons'}>
-              {comps}
-            </div> : null}
-          </div>
-          <div 
-            className={'field-comparisons-section'}>
-            {comps.length > 1 ? <hr/> : null}
-            {comps.length > 1 ? 
-            <div
-              className={'field-comparisons'}>
-              {comps}
-            </div> : null}
-          </div>
+					</div>
+					{comps.length ? <div
+				  	className={'comparison-container'}>
+						<div className={'comparisons-expander'}
+						  onClick={() => this.props.expandComparisonsClicked({path:this.props.path})}>
+							<hr className={'comp-hr'}/>
+							{'Yield Comparisons'}
+							<hr className={'comp-hr'}/>
+						</div>
+					  <div className={'comparisons'}>
+							{this.props.note.expanded ? comps : null}
+            </div>
+          </div> : null }
           {(this.props.editing && this.props.selected) || (this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar id={this.props.note.id}/> : null }
         </Card>
       )
