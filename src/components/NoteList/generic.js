@@ -1,10 +1,9 @@
 import React from 'react'
 import {connect} from '@cerebral/react'
 import Note from '../Note/genericNote.js'
-import FieldNote from '../FieldNote/'
 import Header from './Header'
 import './styles.css'
-import {Tabs, Tab, FloatingActionButton} from 'material-ui';
+import {FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';

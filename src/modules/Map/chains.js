@@ -1,7 +1,7 @@
 import { set } from 'cerebral/operators';
 import _ from 'lodash';
 import computeBoundingBox from './utils/computeBoundingBox.js';
-import { state, props} from 'cerebral/tags'
+import { state } from 'cerebral/tags'
 import gjArea from '@mapbox/geojson-area';
 
 export let startMovingMap = [
@@ -57,7 +57,7 @@ export let handleMapMoved = [
   setMapLocation,
 ];
 
-function setMapToCurrentLocation({props, state}) {
+function setMapToCurrentLocation({state}) {
   let loc = state.get('App.model.current_location');
   if (loc) state.set('Map.center', [loc.lat, loc.lng]);
 }

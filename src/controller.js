@@ -8,6 +8,7 @@ import Connections from './modules/Connections'
 import MenuBar from './modules/MenuBar'
 import Fields from './modules/Fields'
 import Yield from './modules/Yield'
+import oada from './providers/oada'
 
 const controller = Controller({
   modules: {
@@ -18,8 +19,10 @@ const controller = Controller({
 		MenuBar,
 		Fields,
 		Yield,
-  },
-
+	},
+	providers: [
+		oada,
+	],
   devtools: Devtools({host:'localhost:8787'}),
 })
 

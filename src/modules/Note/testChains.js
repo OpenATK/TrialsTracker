@@ -6,7 +6,33 @@ import yieldDataStatsForPolygon from '../Yield/actions/yieldDataStatsForPolygon'
 import getFieldDataForNotes from '../Fields/actions/getFieldDataForNotes';
 import setFieldDataForNotes from '../Fields/actions/setFieldDataForNotes';
 import _ from 'lodash';
-import {state, props, } from 'cerebral/tags'
+import {state, props } from 'cerebral/tags'
+import {oadaCache} from 'oada'
+
+let tree = {
+	harvest: {
+		'tiled-maps': {
+			_type: "application/vnd.oada.harvest.1+json",
+			'dry-yield-map': {
+				_type: "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
+				'crop-index': {
+					'*': {
+				    "_type": "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
+						'geohash-length-index': {
+							'*': {
+								'geohash-index': {
+									'*': {
+                    "_type": "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 export var toggleComparisonsPane = [
   toggle(state`${props`path`}.expanded`)
@@ -19,16 +45,17 @@ export var initialize = [
 export var cancelNote = [
   set(state`App.view.editing`, false),
   unset(state`Note.selected_note`),
-  unset(state`Note.notes.${props`id`}`)
+	unset(state`Note.notes.${props`id`}`),
+  oadaCache.remove(state`Note.notes.${props`id`}`)
 ]
 
 export var toggleNoteDropdown = [
   set(state`App.view.note_dropdown.note`, props`id`),
-  toggle(state`App.view.note_dropdown.visible`),
+	oadaCache.toggle(`App.view.note_dropdown.visible`),
 ];
 
 export var addTag = [
-  set(state`App.model.tag_input_text`, ''),
+  oadaCache.putt(state`App.model.tag_input_text`, ''),
 	addTagToNote, {
 		error: [
 			set(state`Note.notes.${state`Note.selected_note`}.tag_error`, props`message`),
@@ -46,6 +73,7 @@ export var addTag = [
 
 export var removeTag = [
   unset(state`Note.notes.${state`Note.selected_note`}.tags.${props`idx`}`),
+	//	removeTagFromNote, 
 	removeTagFromAllTagsList,
 ];
 
@@ -214,6 +242,38 @@ function createNote({props, state}) {
   state.set('Note.selected_note', newNote.id);
 };
 
+function createNoteAlt({props, state, oada}) {
+  var notes = oada.get(`Note.notes`);
+	Object.keys(notes).forEach((note) => {
+    oada.set(`Note.notes.${note}.order`, notes[note].order +1);
+  })
+
+  var newNote = {
+    time: Date.now(),
+    id: uuid.v4(),
+    text: '',
+    tags: [],
+    fields: {},
+    geometry: { 
+      geojson: {
+        "type":"Polygon",
+        "coordinates": [[]],
+      },
+      bbox: {},
+      centroid: [],
+      visible: true,
+    },
+    color: rmc.getColor(),
+    completions: [],
+    selected: true,
+    stats: {},
+    order: 1,
+  };
+  newNote.font_color = getFontColor(newNote.color);
+  oada.set(`Note.notes.${newNote.id}`, newNote);
+  state.set('Note.selected_note', newNote.id);
+};
+
 function getFontColor(color) {
   var L = Color(color).luminosity();
   if (L > 0.179) {
@@ -255,6 +315,13 @@ function addTagToNote({props, state, path}) {
 		state.push(`Note.notes.${id}.tags`, props.text);
 		return path.success()
 	}
+};
+
+function removeTagFromNote({props, state}) {
+  var id = state.get('Note.selected_note');
+  var tags = state.get(`Note.notes.${id}.tags`);
+  var idx = tags.indexOf(props.tag);
+  state.splice(`Note.notes.${id}.tags.${idx}`, 1);
 };
 
 function addTagToAllTagsList({props, state}) {

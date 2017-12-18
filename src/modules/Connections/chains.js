@@ -5,10 +5,16 @@ import getFromPouch from '../App/factories/getFromPouch';
 import { set } from 'cerebral/operators';
 import { parallel } from 'cerebral';
 import { getOadaYieldData } from '../Yield/chains.js'
-import setFieldBoundaries from '../Fields/actions/setFieldBoundaries'
 import { computeFieldYieldData, getFields } from '../Fields/chains'
+import configureWebsocketProvider from './actions/configureWebsocketProvider'
 import axios from 'axios'
 import _ from 'lodash'
+
+export var signOut = [
+  set(state`Connections.oada_token`, ''),
+  set(state`Connections.oada_domain`, ''),
+  set(state`Connections.oada_domain_text`, ''),
+]
 
 export var getData = [
 	parallel([
@@ -24,6 +30,7 @@ export var getOadaTokenSequence = [
       set(state`Connections.oada_token`, props`result.doc.val`),
       testOadaToken, {
 				success: [
+					configureWebsocketProvider,
          	...getData,
 				],
         error: [
@@ -31,6 +38,7 @@ export var getOadaTokenSequence = [
             success: [
               set(state`Connections.oada_token`, props`token`),
               putInPouch('Connections.oada_token'),
+					    configureWebsocketProvider,
             	...getData,
             ],
             error: [],
@@ -43,6 +51,7 @@ export var getOadaTokenSequence = [
         success: [
           set(state`Connections.oada_token`, props`token`),
           putInPouch('Connections.oada_token'),
+					configureWebsocketProvider,
           ...getData,
         ],
         error: [],
@@ -55,6 +64,7 @@ export let getConnections = [
   getFromPouch('Connections.oada_domain'), {
     success: [  
       set(state`Connections.oada_domain`, props`result.doc.val`), 
+      set(props`domain`, props`result.doc.val`), 
       getFromPouch('Connections.oada_token'), {
 				success: [
 					...getOadaTokenSequence,
@@ -76,6 +86,7 @@ export var setConnection = [
   set(state`Connections.open`, false),
   set(state`Connections.oada_domain`, state`Connections.oada_domain_text`),
   putInPouch(`Connections.oada_domain`),
+  set(props`domain`, state`Connections.oada_domain`), 
 	...getOadaTokenSequence,
 ];
 

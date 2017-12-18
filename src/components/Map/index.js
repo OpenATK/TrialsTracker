@@ -3,7 +3,7 @@ import { connect } from '@cerebral/react';
 import { CircleMarker, Marker, Map, TileLayer, GeoJSON } from 'react-leaflet';
 import './map.css';
 import uuid from 'uuid';
-import DrawingMessage from './DrawingMessage';
+//import DrawingMessage from './DrawingMessage';
 import {state, signal} from 'cerebral/tags'
 import LayerControl from './LayerControl'
 import LegendControl from './LegendControl'

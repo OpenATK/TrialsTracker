@@ -1,28 +1,38 @@
-import cache from '../../Cache'
-import Promise from 'bluebird'
+import recursiveGet from '../../OADA/factories/recursiveGet'
 
-function getYieldDataIndex({state, path}) {
+export default function getYieldDataIndex({state, path, oada}) {
   let token = state.get('Connections.oada_token');
-  let domain = state.get('Connections.oada_domain');
-  let url = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
-  let data = {};
-  let cropStatus = {};
-  return cache.get(url, token).then((crops) => {
-    return Promise.each(Object.keys(crops), (crop) => {
-      data[crop] = {};
-      return cache.get(url + crop + '/geohash-length-index', token).then((geohashLengthIndex) => {
-        return Promise.each(Object.keys(geohashLengthIndex), (ghLength) => {
-          data[crop][ghLength] = data[crop][ghLength] || {};
-          return cache.get(url + crop + '/geohash-length-index/' + ghLength + '/geohash-index', token).then((ghIndex) => {
-            return Promise.each(Object.keys(ghIndex), (bucket) => {
-              return data[crop][ghLength][bucket] = bucket;
-            })
-          })
-        })
-      })
-    })
-  }).then(() => {
-    return path.success({data, cropStatus});
-  })
+	let domain = state.get('Connections.oada_domain');
+  let setupTree = {
+	  harvest: {
+		  'tiled-maps': {
+		  	'_type': "application/vnd.oada.harvest.1+json",
+		  	'dry-yield-map': {
+		  		'_type': "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
+		  		'crop-index': {
+		  			'*': {
+		  		    "_type": "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
+		  				'geohash-length-index': {
+		  					'*': {
+		  						'geohash-index': {
+		  						}
+		  					}
+		  				}
+		  			}
+		  		}
+		  	}
+		  }
+	  }
+  }
+  let resPath = 'harvest/tiled-maps/dry-yield-map/crop-index/';
+	return recursiveGet.func(arguments)({
+		domain, 
+		token, 
+		path:'', 
+		setupTree, 
+		headers: {},
+		websocket: oada
+	}).then((data) => {
+		return path.success(data)
+	})
 }
-export default getYieldDataIndex;

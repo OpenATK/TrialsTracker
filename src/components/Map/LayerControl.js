@@ -26,7 +26,7 @@ class LayerControl extends React.Component {
     return (
       <LayersControl 
         position='topright'>
-				{/*Object.keys(this.props.fields).length ? <Overlay 
+				{Object.keys(this.props.fields).length ? <Overlay 
           checked 
           name='Fields'>
 				  <FeatureGroup>
@@ -36,7 +36,7 @@ class LayerControl extends React.Component {
               key={field}
 					  />)}
          </FeatureGroup>
-				</Overlay> : null */ }
+				</Overlay> : null }
 				{Object.keys(this.props.yieldDataIndex || {}).map(crop => 
 					<Overlay 
           checked={this.props.cropLayers[crop].visible}

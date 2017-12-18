@@ -86,6 +86,10 @@ class MenuBar extends React.Component {
                 primaryText="Edit Source Data"
                 onTouchTap={()=>this.props.connectionsClicked({})}
               />
+              <MenuItem 
+                primaryText="Sign Out"
+                onTouchTap={()=>this.props.signOutClicked({})}
+              />
             </IconMenu>
           </div>
         }

@@ -1,7 +1,6 @@
 import React from 'react';
 import {connect} from '@cerebral/react'
 import EditTagsBar from './editTagsBar.js';
-import uuid from 'uuid';
 import './note.css';
 import Color from 'color'; 
 import { props, state, signal } from 'cerebral/tags'
@@ -195,7 +194,7 @@ export default connect({
 						<div className={'comparisons-expander'}
 						  onClick={() => this.props.expandComparisonsClicked({path:this.props.path})}>
 							<hr className={'comp-hr'}/>
-							{'Yield Comparisons'}
+							{this.props.note.expanded ? 'Yield Comparisons \u25B2' : 'Yield Comparisons \u25BC'}
 							<hr className={'comp-hr'}/>
 						</div>
 					  <div className={'comparisons'}>

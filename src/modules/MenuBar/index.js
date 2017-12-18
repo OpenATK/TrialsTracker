@@ -1,5 +1,6 @@
 import {
 	showConnections,
+	signOut,
 } from '../Connections/chains'
 
 import {
@@ -20,6 +21,7 @@ export default {
 
   signals: {
     clearCacheButtonClicked: clearCache,
+    signOutClicked: signOut,
 		connectionsClicked: showConnections,
     menuBackgroundClicked: toggleMenuDropdown,
     mapLegendButtonClicked: toggleMapLegend,

@@ -18,6 +18,7 @@ import {
 	cancelNote,
 	drawComplete,
 	toggleComparisonsPane,
+	initialize,
 } from './chains';
 
 export default {
@@ -27,6 +28,7 @@ export default {
 	},
 
 	signals: {
+		initialize,
 		expandComparisonsClicked: toggleComparisonsPane,
     addNoteButtonClicked: addNewNote,
     cancelEditingButtonClicked: cancelNote,
