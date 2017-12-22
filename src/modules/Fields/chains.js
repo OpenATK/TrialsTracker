@@ -1,5 +1,5 @@
 import setFieldBoundingBoxes from './actions/setFieldBoundingBoxes';
-import computeFieldBoundingBoxes from './actions/computeFieldBoundingBoxes';
+import getFieldBoundingBoxes from './actions/getFieldBoundingBoxes';
 import setFieldBoundaries from './actions/setFieldBoundaries';
 import getFieldStats from './actions/getFieldStats';
 import setFieldStats from './actions/setFieldStats';
@@ -24,7 +24,7 @@ export var computeFieldYieldData = [
 ];
 
 export let handleFields = [
-  computeFieldBoundingBoxes, {
+  getFieldBoundingBoxes, {
 		success: [
 			setFieldBoundingBoxes,
 		],

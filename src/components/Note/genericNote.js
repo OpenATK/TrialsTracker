@@ -194,7 +194,7 @@ export default connect({
 						<div className={'comparisons-expander'}
 						  onClick={() => this.props.expandComparisonsClicked({path:this.props.path})}>
 							<hr className={'comp-hr'}/>
-							{this.props.note.expanded ? 'Yield Comparisons \u25B2' : 'Yield Comparisons \u25BC'}
+							{this.props.note.expanded ? 'Yield Comparisons \u25bc' : 'Yield Comparisons \u25b6'}
 							<hr className={'comp-hr'}/>
 						</div>
 					  <div className={'comparisons'}>

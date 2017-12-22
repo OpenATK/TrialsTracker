@@ -2,12 +2,13 @@ import computeBoundingBox from '../../Map/utils/computeBoundingBox.js'
 import gjArea from '@mapbox/geojson-area';
 import Promise from 'bluebird';
 
-function computeFieldBoundingBoxes({props, state, path}) {
+function getFieldBoundingBoxes({props, state, path}) {
   var bboxes = {};
-  var areas = {};
-  return Promise.map(Object.keys(props.fields), (field) => {
-    bboxes[field] = computeBoundingBox(props.fields[field].boundary.geojson);
-    areas[field] = gjArea.geometry(props.fields[field].boundary.geojson)/4046.86;
+	var areas = {};
+	console.log(props.fields)
+  return Promise.map(Object.keys(props.fields['fields-index']), (field) => {
+    bboxes[field] = computeBoundingBox(props.fields['fields-index'][field].boundary.geojson);
+    areas[field] = gjArea.geometry(props.fields['fields-index'][field].boundary.geojson)/4046.86;
     return true;
   }).then((result) => {
     return path.success({bboxes, areas})
@@ -15,4 +16,4 @@ function computeFieldBoundingBoxes({props, state, path}) {
     return path.error({err});
   })
 }
-export default computeFieldBoundingBoxes;
+export default getFieldBoundingBoxes;

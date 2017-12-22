@@ -29,9 +29,8 @@ function recursiveGetFactory ({path: resPath, domain, setupTree, token, headers,
 			*/
       return _oada.recursiveGet(_domain, _token, _resPath, _setupTree, _headers, oada)
 			.then((response) => {
-				console.log(response)
-        if (_path) return _path.success({response});
-        return {response};
+        if (_path) return _path.success(response);
+        return response;
       }).catch((error) => {
         if (_path) return _path.error({error});
         throw error;

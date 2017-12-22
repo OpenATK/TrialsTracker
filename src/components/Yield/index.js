@@ -21,7 +21,6 @@ class Yield extends React.Component {
 	//	}
 
   render() {
-    console.log(this.props.yieldDataIndex)
 		return (
       Object.keys(this.props.yieldDataIndex).forEach(crop => 
         <Overlay 

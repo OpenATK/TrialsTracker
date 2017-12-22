@@ -1,17 +1,26 @@
-import db from '../../Pouch';
-
-function putInPouch(app_state_location) {
-  function action({state}) {
-    var val = state.get(app_state_location);
-    if (val) {
-      return db().put({
-        doc: {val},
-        _id: app_state_location,
-      }).then(() => {
+function putInPouch(_id) {
+  function action({state, oada}) {
+    var val = state.get(_id);
+		if (val) {
+			let doc = {
+				val,
+				_id
+			}
+      return oada.cache.db.put(doc).then(() => {
         return null;
       }).catch(function(err) {
-        if (err.status !== 409) throw err;
+				if (err.status !== 409) throw err;
+				return oada.cache.db.upsert(_id, () => {
+          doc.counter = doc.counter || 0;
+	        doc.counter++;
+        	return doc;
+				}).then((res) => {
+					console.log(res)
+					return null
+				}).catch((err) => {
+					console.log('something else bad happened', err)
         return null;
+				})
       })
     } else return null
   }

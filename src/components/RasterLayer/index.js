@@ -3,10 +3,11 @@ import { GridLayer} from 'react-leaflet'
 import gh from 'ngeohash'
 import _ from 'lodash'
 import Promise from 'bluebird'
-import cache from '../../modules/Cache'
 import Color from 'color'
 import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
+import oadaCache from '../../modules/OADA/factories/cache'
+let cache = oadaCache(null, 'oada')
 
 export default connect({
   dataIndex: state`${props`data`}`,
@@ -16,7 +17,7 @@ export default connect({
   domain: state`Connections.oada_domain`,
 
   tileUnloaded: signal`App.tileUnloaded`,
-  newTileDrawn: signal`App.newTileDrawn`,
+	newTileDrawn: signal`App.newTileDrawn`,
 },
 
 class RasterLayer extends GridLayer {
@@ -73,10 +74,9 @@ class RasterLayer extends GridLayer {
     geohashes = geohashes.filter((geohash) => {
       return typeof(self.props.dataIndex['geohash-'+precision][geohash]) !== 'undefined';
     })
-    return Promise.map(geohashes, (geohash) => {
-      var url = this.props.url+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash.substring(0,geohash.length)+'/geohash-data/';
-      return cache.get(url, this.props.token)
-      .then((data) => {
+		return Promise.map(geohashes, (geohash) => {
+			let resPath =	'/harvest/tiled-maps/dry-yield-map/crop-index/'+this.props.layer+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash.substring(0, geohash.length)+'/geohash-data/';
+			return cache.get(this.props.domain, this.props.token, resPath).then((data) => {
         return self.recursiveDrawOnCanvas(coords, data, 0, canvas);
       })
     }).then((res) => {

@@ -2,7 +2,7 @@ import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
 import uuid from 'uuid';
 import rmc from 'random-material-color';
 import Color from 'color';
-import yieldDataStatsForPolygon from '../Yield/actions/yieldDataStatsForPolygon';
+import yieldDataStatsForPolygon from '../Yield/utils/yieldDataStatsForPolygon';
 import getFieldDataForNotes from '../Fields/actions/getFieldDataForNotes';
 import setFieldDataForNotes from '../Fields/actions/setFieldDataForNotes';
 import _ from 'lodash';
@@ -75,7 +75,7 @@ export let drawComplete = [
     success: [
 			setNoteStats, 
       set(state`Map.geohashPolygons`, props`geohashPolygons`),
-			set(props`notes`, {[props.id]: state`Note.notes.${props`id`}`}),
+			set(props`notes`, {[props`id`]: state`Note.notes.${props`id`}`}),
       getFieldDataForNotes, {
         success: [setFieldDataForNotes],
         error: [],
@@ -149,7 +149,7 @@ function computeNoteStats({props, state, path}) {
   let token = state.get('Connections.oada_token');
   let domain = state.get('Connections.oada_domain');
 	let availableGeohashes = state.get('Yield.data_index');
-  let baseUrl = 'https://' + domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
+  let baseUrl = domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   let geometry = state.get(`Note.notes.${props.id}.geometry`);
   return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
   .then((data) => {

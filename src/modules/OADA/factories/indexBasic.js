@@ -6,31 +6,33 @@ import URL from 'url'
 
 function doStuff(req, websocket) {
 	let domain = URL.parse(req.url).protocol + URL.parse(req.url).host
-	let request = (websocket === null || websocket.url !== domain) ? axios : websocket.http;
+	let request = (websocket === null || websocket.url() !== domain) ? axios : websocket.http;
   return request(req)
 }
 
-function recursiveGet(domain, token, pathString, data, headers, websocket) {
-	let returnData = {};
-	return websocket.cache.get(domain, token, pathString).then((result) => {
-		returnData = result;
-		return Promise.map(Object.keys(data), (key) => {
+
+function recursiveGet (domain, token, pathString, data, headers, websocket) {
+ 	let returnData = {};
+	return doStuff({
+		method: 'GET',
+		url: 'https://'+domain+'/bookmarks'+pathString,
+		headers: { Authorization: token }
+	}, websocket).then((result) => {
+		returnData = result.data;
+  	return Promise.map(Object.keys(data), (key) => {
       if (key.charAt(0) === '_') return false;
 // If data contains a *, this means we should get ALL content on the server
 // at this level and continue recursion for each returned key.
-			if (key === '*') {
-  			return Promise.map(Object.keys(result), (resKey) => {
+  		if (key === '*') {
+  			return Promise.map(Object.keys(result.data), (resKey) => {
   				return recursiveGet(domain, token, pathString+'/'+resKey, data[key], headers, websocket).then((res) => {
             return returnData[resKey] = res;
   				})
   			})
-			} else {
-        if (result[key]) {
-	  		  return recursiveGet(domain, token, pathString+'/'+key, data[key], headers, websocket).then((res) => {
-            return returnData[key] = res;
-			    })
-				}
-				return
+  		} else if (result.data[key]) {
+	  		return recursiveGet(domain, token, pathString+'/'+key, data[key], headers, websocket).then((res) => {
+          return returnData[key] = res;
+			  })
 			}
 		})
 	}).then(() => {
@@ -46,11 +48,10 @@ function treePut(domain, token, pathString, data, setupTree, headers, websocket)
 	let tokens = pointer.parse(pathString)
 	let setupTokens = tokens; 
 	return Promise.each(tokens, (token, i) => {
-		let pathToHere = setupTokens.slice(0, i);
-		if (pointer.has(setupTree, [...pathToHere, '*'])) {
+		if (pointer.has(setupTree, pointer.compile(setupTokens.slice(0, i)+'/*'))) {
 			setupTokens[i+1] = '*';
 		}
-		if (pointer.has(setupTree, [...pathToHere, '_type'])) {
+		if (pointer.has(setupTree, pointer.compile(setupTokens.slice(0, i)+'/_type'))) {
   		if (!pointer.has(data, pointer.compile(tokens.slice(0, i)+'/_id'))) {
 // Checking against the setupTree requires that we replace the token with a * 
 // if a * placeholder exists in the setupTree.
@@ -83,5 +84,5 @@ function createResource(domain, token, path, data, headers, websocket) {
 export default {
 	createResource,
 	treePut,
-	recursiveGet,
+  recursiveGet,
 }

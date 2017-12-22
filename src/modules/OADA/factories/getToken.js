@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import normalizeUrl from 'normalize-url';
 import url from 'url';
-import {redirectDomain, metadata} from '../../../config'
+import {redirect, metadata, scope} from '../../../config'
 let getAccessToken = Promise.promisify(require('oada-id-client').getAccessToken)
 
 /*
@@ -15,16 +15,16 @@ let getAccessToken = Promise.promisify(require('oada-id-client').getAccessToken)
 function getTokenFactory ({domain, funcMode}) {
   function getToken({state, resolve, path}) {
     let _path = funcMode ? null : path;
-    let _domain = resolve.value(domain);
+		let _domain = resolve.value(domain);
     let options = {
-      metadata: metadata,
-      scope: 'trellisfw:all',
-      redirect: redirectDomain
+      metadata,
+      scope,
+      redirect
     };
 
     _domain = url.parse(normalizeUrl(_domain));
 
-    return getAccessToken(_domain.hostname, options).then((accessToken) => {
+		return getAccessToken(_domain.hostname, options).then((accessToken) => {
       if (_path) return _path.success({accessToken: accessToken.access_token});
       return {accessToken: accessToken.access_token};
     }).catch((error) => {

@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import db from '../Pouch';
 import MobileDetect from 'mobile-detect';
 import { getConnections } from '../Connections/chains'
 
@@ -28,8 +27,8 @@ function setMobile({state}) {
   state.set(`App.is_mobile`, (md.mobile() !== null));
 }
 
-function destroyCache({path}) {
-  return db().destroy()
+function destroyCache({path, oada}) {
+  return oada.cache.destroy()
   .then((result) => {
     return path.success({result})
   }).catch((error) => {

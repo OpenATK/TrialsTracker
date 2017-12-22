@@ -5,8 +5,9 @@ export default function getYieldDataIndex({state, path, oada}) {
 	let domain = state.get('Connections.oada_domain');
   let setupTree = {
 	  harvest: {
+	  	'_type': "application/vnd.oada.harvest.1+json",
 		  'tiled-maps': {
-		  	'_type': "application/vnd.oada.harvest.1+json",
+		  	'_type': "application/vnd.oada.tiled-maps.1+json",
 		  	'dry-yield-map': {
 		  		'_type': "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
 		  		'crop-index': {
@@ -24,7 +25,6 @@ export default function getYieldDataIndex({state, path, oada}) {
 		  }
 	  }
   }
-  let resPath = 'harvest/tiled-maps/dry-yield-map/crop-index/';
 	return recursiveGet.func(arguments)({
 		domain, 
 		token, 
@@ -34,5 +34,8 @@ export default function getYieldDataIndex({state, path, oada}) {
 		websocket: oada
 	}).then((data) => {
 		return path.success(data)
+	}).catch((err) => {
+		console.log(err)
+    return path.error({error: err})
 	})
 }

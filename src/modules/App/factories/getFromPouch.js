@@ -1,9 +1,7 @@
-import db from '../../Pouch';
-
-export default function getFromPouch(app_state_location) {
-  function action({path}) {
-  //First, check if the domain is already in the cache;
-    return db().get(app_state_location)
+export default function getFromPouch(_id) {
+  function action({path, oada}) {
+		//First, check if the domain is already in the cache;
+    return oada.cache.db.get(_id)
     .then((result) => {return path.success({result})})
     .catch((err)=> { return path.error({err})})
   }

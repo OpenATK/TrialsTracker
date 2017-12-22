@@ -16,7 +16,8 @@ function getFactory ({path: resPath, domain, token, funcMode}) {
   function get({state, resolve, path, websocket}) {
     return Promise.resolve().then(() => {
       //Remove the path if we are running in function mode, so paths in original action work
-      let _path = (funcMode) ? null : path;
+			let _path = (funcMode) ? null : path;
+			console.log(resolve)
       //Resolve path, domain, and token values if they are tags
       let _resPath = resolve.value(resPath);
       let _domain = resolve.value(domain) || state.get('Connections.oada_domain');
@@ -33,7 +34,7 @@ function getFactory ({path: resPath, domain, token, funcMode}) {
 			}).catch(()=> {
 				// Cache lookup failed, try the server
 				let url = _domain+'/bookmarks/'+_resPath;
-			  let request = (websocket === null || websocket.url() !== _domain) ? axios : websocket.http;
+			  let request = (websocket === null || websocket.url !== _domain) ? axios : websocket.http;
         return request({
           method: 'GET',
           url: url,

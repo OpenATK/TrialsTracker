@@ -1,33 +1,32 @@
-import cache from '../../Cache'
-import Promise from 'bluebird'
+import recursiveGet from '../../OADA/factories/recursiveGet'
 
-function getOadaFields({state, path}) {
+function getOadaFields({state, path, oada}) {
   var token = state.get('Connections.oada_token');
-  var domain = state.get('Connections.oada_domain');
-  var url = 'https://' + domain + '/bookmarks/fields/fields-index/';
-  var fields = {};
-	return cache.get(url, token).then((fieldsIndex) => {
-		return Promise.map(Object.keys(fieldsIndex), (item) => {
-			return cache.get(url + item, token).then((fieldItem) => {
-        if (fieldItem['fields-index']) {
-					return cache.get(url + item + '/fields-index/', token).then((fieldKeys) => {
-						return Promise.map(Object.keys(fieldKeys), (key) => {
-							return cache.get(url + item + '/fields-index/'+key, token).then((field) => {
-                fields[key] = field;
-                return true;
-              })
-            })
-          })
-        } else {
-					return cache.get(url + item, token).then((field) => {
-            fields[item] = field;
-            return true;
-          })
-        }
-      })
-    })
-	}).then(() => {
-    return path.success({fields});
+	var domain = state.get('Connections.oada_domain');
+	var setupTree = {
+    fields: {
+			'_type': "application/vnd.oada.fields.1+json",
+			'fields-index': {
+        '*': {
+					'_type': "application/vnd.oada.field.1+json",
+					'fields-index': {
+						'*': {
+							'_type': "application/vnd.oada.field.1+json"
+						}
+					}
+				}
+			}
+		}
+	}
+	return recursiveGet.func(arguments)({
+		domain,
+		token,
+		path: '',
+		setupTree,
+    headers: {},
+		websocket: oada
+	}).then((data) => {
+    return path.success(data);
 	}).catch((error) => {
 		console.log(error)
     return path.error({error});
