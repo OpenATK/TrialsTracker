@@ -34,7 +34,8 @@ class NoteList extends React.Component {
     }
   }
 
-  render() {
+	render() {
+		//TODO: either make this a computed, or put this into actions
     let notes_array = Object.keys(this.props.notes).map((key) => {
 			let comparisons = Object.keys(this.props.notes[key].fields).map((field) => {
 				return {

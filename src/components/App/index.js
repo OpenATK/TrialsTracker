@@ -22,9 +22,11 @@ class App extends React.Component {
     return (
       <div className={'app'}>
 				<Connections />
-        <MenuBar />
+        <div className={'map-menu'}>
+          <MenuBar />
+					<TrialsMap />
+				</div>
 				<NoteList />
-				<TrialsMap />
       </div>
     )
   }

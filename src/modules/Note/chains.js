@@ -75,7 +75,7 @@ export let drawComplete = [
     success: [
 			setNoteStats, 
       set(state`Map.geohashPolygons`, props`geohashPolygons`),
-			set(props`notes`, {[props`id`]: state`Note.notes.${props`id`}`}),
+			set(props`notes.${props`id`}`, state`Note.notes.${props`id`}`),
       getFieldDataForNotes, {
         success: [setFieldDataForNotes],
         error: [],
@@ -207,7 +207,7 @@ function createNote({props, state}) {
     completions: [],
     selected: true,
     stats: {},
-    order: 1,
+    order: 0,
   };
   newNote.font_color = getFontColor(newNote.color);
   state.set(`Note.notes.${newNote.id}`, newNote);

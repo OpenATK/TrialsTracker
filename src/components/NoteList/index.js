@@ -8,6 +8,7 @@ import {Tabs, Tab, FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import _ from 'lodash'
 
 export default connect({
   notes: state`Note.notes`, 
@@ -35,13 +36,15 @@ class NoteList extends React.Component {
     }
   }
 
-  render() {
-    let notes_array = Object.keys(this.props.notes).map((key) => {
-			return (<Note 
-        id={key} 
-        key={key}
-      />)
-    });
+	render() {
+		console.log(_.values(this.props.notes))
+		let notes_array = _.sortBy(_.values(this.props.notes), 'order').map(obj => {
+			console.log(obj)
+			return <Note 
+        id={obj.id} 
+        key={obj.id}
+      />}
+    );
 
     let fields_array = Object.keys(this.props.fields || {}).map((field) => {
       return(<FieldNote 

@@ -1,6 +1,5 @@
 import {state, props} from 'cerebral/tags'
 import putInPouch from '../App/factories/putInPouch';
-import oadaIdClient from 'oada-id-client';
 import getFromPouch from '../App/factories/getFromPouch';
 import { set } from 'cerebral/operators';
 import { parallel } from 'cerebral';
@@ -9,8 +8,8 @@ import { computeFieldYieldData, getFields } from '../Fields/chains'
 import configureWebsocketProvider from './actions/configureWebsocketProvider'
 import getOadaBaseURI from '../OADA/factories/getOadaBaseURI'
 import getToken from '../OADA/factories/getToken'
+import getOadaConfiguration from '../OADA/factories/getOadaConfiguration'
 import head from '../OADA/factories/head'
-import axios from 'axios'
 import _ from 'lodash'
 
 export var signOut = [

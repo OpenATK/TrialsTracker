@@ -28,7 +28,7 @@ function setMobile({state}) {
 }
 
 function destroyCache({path, oada}) {
-  return oada.cache.destroy()
+  return oada.cache.db.destroy()
   .then((result) => {
     return path.success({result})
   }).catch((error) => {

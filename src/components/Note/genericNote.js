@@ -90,7 +90,8 @@ export default connect({
 		  let comps = [];
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.stats).forEach((crop) => {
-          let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+					console.log(comp)
 					let sign = (comp.comparison[crop].comparison.differenceMeans < 0 ^ this.props.type === 'note') ? '-' : '+';
           comps.push(
             <div
@@ -121,7 +122,7 @@ export default connect({
         <Card
 					onTouchTap={this.props.type === 'note' ? (e) => this.props.noteClicked({id:this.props.note.id}) : (e) => this.props.fieldClicked({id:this.props.note.id})}
           className={'note'}
-          style={{order: this.props.note.order || this.props.stats ? '0' : '1'}}>
+          style={{order: this.props.note.order ? this.props.order : this.props.stats ? '0' : '1'}}>
           <CardHeader
             className={'note-header'}
 						style={{

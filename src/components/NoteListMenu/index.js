@@ -17,7 +17,6 @@ export default connect({
   class NoteListMenu extends React.Component {
 
     render() {
-      console.log(this.props.editing)
       return ( 
         <div className={'sorting-tabs'}>
           <button 
