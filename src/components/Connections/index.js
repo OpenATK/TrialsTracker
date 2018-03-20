@@ -30,7 +30,7 @@ export default connect({
     ];
 		return(
 			<Dialog
-        title="At what OADA domain is your data stored?"
+        title="Where is your data stored?"
         actions={actions}
         modal={false}
 				open={this.props.open}

@@ -7,6 +7,7 @@ import Color from 'color'
 import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
 import oadaCache from '../../modules/OADA/factories/cache'
+import tiles from './tileManager.js'
 let cache = oadaCache(null, 'oada')
 
 export default connect({
@@ -16,8 +17,8 @@ export default connect({
   token: state`Connections.oada_token`,
   domain: state`Connections.oada_domain`,
 
-  tileUnloaded: signal`App.tileUnloaded`,
-	newTileDrawn: signal`App.newTileDrawn`,
+  tileUnloaded: signal`Yield.tileUnloaded`,
+	newTileDrawn: signal`Yield.newTileDrawn`,
 },
 
 class RasterLayer extends GridLayer {
@@ -28,8 +29,7 @@ class RasterLayer extends GridLayer {
     this.tileUnload = this.tileUnload.bind(this);
 //    this.drawTileGrid = this.drawTileGrid.bind(this);
 //    this.drawGeohashGrid = this.drawGeohashGrid.bind(this);
-    this.leafletElement.on('tileunload', this.tileUnload);
-    this.canvas = {};
+		this.leafletElement.on('tileunload', this.tileUnload);
   }
   
 //Inherited by CanvasTileLayer, this is called when a tile goes offscreen. Remove tile from geohashesOnScreen
@@ -51,14 +51,15 @@ class RasterLayer extends GridLayer {
     var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
     this.props.newTileDrawn({geohashes, coords, layer: this.props.layer});
 
-    var coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();
-    if (this.canvas[coordsIndex] && !this.props.geohashesToDraw[coordsIndex]) {
+		var coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();
+		var tile = tiles.get(coordsIndex);
+    if (tile && !this.props.geohashesToDraw[coordsIndex]) {
       setTimeout(function() {
-        done(null, self.canvas[coordsIndex]);
+        done(null, tile);
       }, 1000);
-      return this.canvas[coordsIndex];
+      return tile;
     }
-    var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+    tile = L.DomUtil.create('canvas', 'leaflet-tile');
     tile.height = 256;
     tile.width = 256;
 
@@ -81,47 +82,46 @@ class RasterLayer extends GridLayer {
       })
     }).then((res) => {
       var coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();
-      self.canvas[coordsIndex] = canvas;
+      tiles.set(coordsIndex, canvas);
       done(null, canvas);
     })
   }
 
 // This function recursively draws 100 yield data points
   recursiveDrawOnCanvas(coords, data, startIndex, canvas) {
-      var keys = Object.keys(data);
-      var self = this;
-      var stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
-      Promise.try(function() {
-        for (var i = startIndex; i < stopIndex; i++) {
-          var val = data[keys[i]];
-          var ghBounds = gh.decode_bbox(keys[i]); 
-          var swLatLng = new L.latLng(ghBounds[0], ghBounds[1]);
-          var neLatLng = new L.latLng(ghBounds[2], ghBounds[3]);
-          var levels = self.props.legend;
-          var sw = self.context.map.project(swLatLng, coords.z);
-          var ne = self.context.map.project(neLatLng, coords.z);
-          var w = sw.x - coords.x*256;
-          var n = ne.y - coords.y*256;
-          var e = ne.x - coords.x*256;
-          var s = sw.y - coords.y*256;
-          var width = Math.ceil(e-w);
-          var height = Math.ceil(s-n);
+		var keys = Object.keys(data);
+		var self = this;
+		var stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
+		return Promise.try(function() {
+			for (var i = startIndex; i < stopIndex; i++) {
+				var val = data[keys[i]];
+				var ghBounds = gh.decode_bbox(keys[i]); 
+				var swLatLng = new L.latLng(ghBounds[0], ghBounds[1]);
+				var neLatLng = new L.latLng(ghBounds[2], ghBounds[3]);
+				var levels = self.props.legend;
+				var sw = self.context.map.project(swLatLng, coords.z);
+				var ne = self.context.map.project(neLatLng, coords.z);
+				var w = sw.x - coords.x*256;
+				var n = ne.y - coords.y*256;
+				var e = ne.x - coords.x*256;
+				var s = sw.y - coords.y*256;
+				var width = Math.ceil(e-w);
+				var height = Math.ceil(s-n);
 
-          //Fill the entire geohash aggregate with the appropriate color
-          var context = canvas.getContext('2d');
-          context.lineWidth = 0;
-          var col = self.colorForvalue(val.weight.sum/val.area.sum, levels);
-          context.beginPath();
-          context.rect(w, n, width, height);
-          context.fillStyle = Color(col).hexString();
-          context.fill();
-        }
-        return canvas;
-      })
-      if (stopIndex !== keys.length) {
-        return self.recursiveDrawOnCanvas(coords, data, stopIndex, canvas);
-      } 
-      return canvas;
+				//Fill the entire geohash aggregate with the appropriate color
+				var context = canvas.getContext('2d');
+				context.lineWidth = 0;
+				var col = self.colorForvalue(val.weight.sum/val.area.sum, levels);
+				context.beginPath();
+				context.rect(w, n, width, height);
+				context.fillStyle = Color(col).hexString();
+				context.fill();
+			}
+			if (stopIndex !== keys.length) {
+				return self.recursiveDrawOnCanvas(coords, data, stopIndex, canvas);
+			} 
+			return canvas;
+		})
   }
 
   colorForvalue(val, levels) {

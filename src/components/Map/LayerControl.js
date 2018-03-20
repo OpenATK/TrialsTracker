@@ -3,7 +3,7 @@ import { connect } from '@cerebral/react';
 import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 const { Overlay } = LayersControl;
 import './map.css';
-import RasterLayer from '../RasterLayer';
+import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
 
 export default connect({
@@ -47,7 +47,7 @@ class LayerControl extends React.Component {
             key={'RasterLayer-'+crop}
             data={'Yield.data_index.'+crop}
             layer={crop}
-            url={'https://'+this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
+            url={this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             geohashGridlines={false}
             tileGridlines={false}
 					/>

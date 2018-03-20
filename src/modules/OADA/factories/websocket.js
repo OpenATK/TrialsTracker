@@ -1,26 +1,44 @@
-import Promise  from 'bluebird';
+const Promise = require('bluebird');
 const uuid = require('uuid/v4');
+let WebSocket = require('ws');
+let isWindow = false;
+if (typeof window !== 'undefined' && window.WebSocket) {
+	WebSocket = window.WebSocket;
+	isWindow = true;
+}
+
 
 function websocket(url) {
-	return new Promise((resolve, reject) => {
-		//Create the message queue
-		var messages = [];
-		//Create the socket
-		url = url.replace('https://', 'wss://').replace('http://', 'ws://');
-		url = url.indexOf('ws') !== 0 ? url + 'wss://' : url;
-		var socket = new WebSocket(url);
-		var connected = false;
-		var httpCallbacks = {};
-		var watchCallbacks = {};
+	//Create the message queue
+	var messages = [];
+	//Create the socket
+	url = url.replace('https://', 'wss://').replace('http://', 'ws://');
+	//	url = url.indexOf('ws') !== 0 ? url + 'wss://' : url;
+	var socket = new WebSocket(url);
+	var connected = false;
+	var httpCallbacks = {};
+	var watchCallbacks = {};
 
+	function sendMessages() {
+		if (!connected) return;
+		messages.forEach((message) => {
+			socket.send(JSON.stringify(message));
+		});
+		messages = [];
+	}
+
+	return new Promise((resolve, reject) => {
 		socket.onopen = function(event) {
 			connected = true;
 			sendMessages();
 			resolve(socket)
 		}
+		if (!isWindow) socket.on('open', socket.onopen)
+
 		socket.onclose = function(event) {
 
 		}
+		if (!isWindow) socket.on('close', socket.onclose)
 		socket.onmessage = function(event) {
 			var response = JSON.parse(event.data);
 			//Look for id in httpCallbacks
@@ -56,20 +74,14 @@ function websocket(url) {
 						delete watchCallbacks[response.requestId]['resolve'];
 						delete watchCallbacks[response.requestId]['reject'];
 					} else {
-						if (watchCallbacks[response.requestId].func == null) throw new Error('The given watch function is undefined:', watchCallbacks[response.requestId]);
-						watchCallbacks[response.requestId].func(response);
+						if (watchCallbacks[response.requestId].callback == null) throw new Error('The given watch function has an undefined callback:', watchCallbacks[response.requestId]);
+						watchCallbacks[response.requestId].callback(response);
 					}
 				}
 			}
 		}
-
-		function sendMessages() {
-			if (!connected) return;
-			messages.forEach((message) => {
-				socket.send(JSON.stringify(message));
-			});
-			messages = [];
-		}
+		if (!isWindow) socket.on('message', socket.onclose)
+	}).then(() => {
 
 		function _http(request) {
 			//Do a HTTP request
@@ -79,14 +91,13 @@ function websocket(url) {
 					requestId: uuid(),
 					method: request.method.toLowerCase(),
 					path: request.url,
-					data: request.data
+					data: request.data,
+					headers: Object.entries(request.headers).map(([key, value]) => {
+						return {[key.toLowerCase()]: value}
+					}).reduce((a,b) => {
+						return {...a, ...b}
+					})
 				};
-				if (request.headers && request.headers.Authorization) {
-					message.authorization = request.headers.Authorization;
-				}
-				if (request.headers && request.headers['Content-Type']) {
-					message.contentType = request.headers['Content-Type'];
-				}
 				messages.push(message);
 				httpCallbacks[message.requestId] = {
 					request: request,
@@ -103,14 +114,16 @@ function websocket(url) {
 				let message = {
 					requestId: uuid(),
 					method: 'watch',
-					path: request.url
+					path: request.url,
+					headers: Object.entries(request.headers).map(([key, value]) => {
+						return {[key.toLowerCase()]: value}
+					}).reduce((a,b) => {
+						return {...a, ...b}
+					})
 				};
-				if (request.headers && request.headers.Authorization) {
-					message.authorization = request.headers.Authorization;
-				}
 				messages.push(message);
 				watchCallbacks[message.requestId] = {resolve, reject, callback};
-				 sendMessages();
+				sendMessages();
 			});
 		}
 
@@ -133,4 +146,4 @@ function websocket(url) {
 	})
 }
 
-export default websocket;
+module.exports = websocket;

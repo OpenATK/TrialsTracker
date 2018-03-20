@@ -41,27 +41,6 @@ var tree = {
   },
 };
 
-var btree = {
-  a: {
-    _type: 'application/vnd.oada.harvest.1+json',
-    'b': {
-      _type: 'application/vnd.oada.as-harvested.1+json',
-      'c': {
-        _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-        'd': {}
-      },
-    },
-    'e': {
-       _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-      'f': {
-         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-        'g': {},
-      },
-    },
-  },
-};
-
-
 module.exports = function(yield_data_directory, domain, token) {
   TOKEN = token;
   DOMAIN = domain;
@@ -81,6 +60,7 @@ module.exports = function(yield_data_directory, domain, token) {
     }).then(() => {
       return Promise.map(Object.keys(tree), (key) => {
 				return _Setup.putLinkedTree(tree[key], key).then((res) => {
+					console.log(res)
           let pathString = '/bookmarks/'+key
           return axios({
             method: 'put',
@@ -237,6 +217,7 @@ createAggregates = function(levels) {
 						},
 						'sum-yield-squared-area': Math.pow(weight/pt.area, 2)*pt.area,
 					};
+					console.log(additionalStats)
           //Handle new crop types
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
@@ -317,6 +298,7 @@ recomputeStats = function(currentStats, additionalStats) {
   currentStats.weight.sum = currentStats.weight.sum + additionalStats.weight.sum;
 	currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] + additionalStats.weight['sum-of-squares'];
 	currentStats['sum-yield-squared-area'] = currentStats['sum-yield-squared-area'] + additionalStats['sum-yield-squared-area'];
+	console.log(currentStats['sum-yield-squared-area']);
   return currentStats;
 };
 

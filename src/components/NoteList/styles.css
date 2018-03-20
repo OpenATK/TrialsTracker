@@ -18,7 +18,6 @@
   flex-direction: column;
   flex: 2;
   padding: 5px 5px 0px 5px;
-  overflow: scroll;
 }
 .note-tag-headings {
   background-color: #cde69c;

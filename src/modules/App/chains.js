@@ -7,14 +7,6 @@ export var initialize = [
 	...getConnections,
 ];
 
-export var removeGeohashes = [
-  unregisterGeohashes,
-];
-
-export var addGeohashes = [
-  registerGeohashes,
-];
-
 export var clearCache = [
   destroyCache, {
     success: [],
@@ -35,15 +27,3 @@ function destroyCache({path, oada}) {
     return path.error({error})
   })
 };
-
-function registerGeohashes({props, state}) {
-// This case occurs before a token is available. Just save all geohashes and
-// filter them later when the list of available geohashes becomes known.
-  let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-  state.set(`Map.geohashesOnScreen.${props.layer}`, {[coordsIndex]: props.geohashes})
-}
-
-function unregisterGeohashes({props, state}) {
-  var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-  state.unset(`Map.geohashesOnScreen.${props.layer}.${coordsIndex}`);
-}

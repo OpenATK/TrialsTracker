@@ -8,7 +8,6 @@ import { computeFieldYieldData, getFields } from '../Fields/chains'
 import configureWebsocketProvider from './actions/configureWebsocketProvider'
 import getOadaBaseURI from '../OADA/factories/getOadaBaseURI'
 import getToken from '../OADA/factories/getToken'
-import getOadaConfiguration from '../OADA/factories/getOadaConfiguration'
 import head from '../OADA/factories/head'
 import _ from 'lodash'
 
@@ -19,11 +18,11 @@ export var signOut = [
 ]
 
 export var getData = [
-	parallel([
-    ...getOadaYieldData,
-		...getFields,
-	]),
-	...computeFieldYieldData,
+		parallel([
+			...getOadaYieldData,
+			...getFields,
+		]),
+		...computeFieldYieldData,
 ]
 
 export var getOadaTokenSequence = [
@@ -87,7 +86,10 @@ export var setConnection = [
   set(state`Connections.oada_domain`, state`Connections.oada_domain_text`),
   putInPouch(`Connections.oada_domain`),
   set(props`domain`, state`Connections.oada_domain`), 
-	...getOadaTokenSequence,
+	configureWebsocketProvider, {
+		success: [...getOadaTokenSequence],
+		error: [],
+	}
 ];
 
 export var cancelConnection = [

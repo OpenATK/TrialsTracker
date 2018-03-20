@@ -1,5 +1,8 @@
 import {
-  initializeYield,
+	initializeYield,
+	dataReceived,
+  addGeohashes,
+  removeGeohashes,
 } from './chains'
 
 export default {
@@ -8,6 +11,9 @@ export default {
 	},
 
 	signals: {
-    initialize: initializeYield,
+		initialize: initializeYield,
+		dataReceived,
+    newTileDrawn: addGeohashes,
+    tileUnloaded: removeGeohashes,
   }
 }

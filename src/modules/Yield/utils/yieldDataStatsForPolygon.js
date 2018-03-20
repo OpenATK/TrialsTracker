@@ -1,10 +1,11 @@
-import cache from '../../Cache';
 import gh from 'ngeohash';
 import gju from 'geojson-utils';
 import _ from 'lodash'
 import Promise from 'bluebird';
+import oadaCache from '../../../modules/OADA/factories/cache'
+let cache = oadaCache(null, 'oada');
 
-export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohashes, baseUrl, token) {
+export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohashes, domain, token) {
   let newPoly = _.clone(polygon);
   newPoly.push(polygon[0])
   //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
@@ -17,7 +18,7 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
 	  stats: {},
 	  geohashPolygons: []
 	};
-  return Promise.each(Object.keys(availableGeohashes), (crop) => {
+  return Promise.map(Object.keys(availableGeohashes || {}), (crop) => {
     stuff.stats[crop] = { 
 			area: {
 				sum: 0,
@@ -30,9 +31,8 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
       count: 0,
 			yield: { mean: 0, variance: 0, standardDeviation: 0},
 			'sum-yield-squared-area': 0,
-    };
-    return recursiveGeohashSum(newPoly, commonString, {stats:stuff.stats[crop], geohashPolygons:stuff.geohashPolygons}, availableGeohashes[crop], baseUrl+crop+'/geohash-length-index/', token)
-			.then((results) => {
+		};
+		return recursiveGeohashSum(newPoly, commonString, {stats:stuff.stats[crop], geohashPolygons:stuff.geohashPolygons}, availableGeohashes[crop], domain, '/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/', token).then((results) => {
       stuff.stats[crop].area.sum = results.stats.area.sum;
       stuff.stats[crop].area.sum_of_squares = results.stats.area.sum_of_squares;
       stuff.stats[crop].weight.sum = results.stats.weight.sum;
@@ -51,8 +51,9 @@ export default function yieldDataStatsForPolygon(polygon, bbox, availableGeohash
   })
 }
 
-function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUrl, token) {
-  return Promise.try(() => {
+function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, domain, baseUrl, token) {
+	//return Promise.resolve(() => {
+	  return Promise.try(() => {
     //TODO: available geohashes could begin with e.g. geohash-3, but the greatest common prefix may only be a single character
     if (!availableGeohashes['geohash-'+geohash.length]) {
       return stuff;
@@ -77,29 +78,27 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUr
         if (gju.lineStringsIntersect(lineA, lineB)) {
           if (geohash.length === 7) { // the aggregates themselves are the only option
             // Get the geohash 8s via geohash 6 bucket.  Then 
-            let url = baseUrl + 'geohash-6/geohash-index/' + geohash.substring(0, 6) + '/geohash-data/';
-            return cache.get(url, token).then((geohashes) => {
-              geohashes = _.pickBy(geohashes, function(value, key) {
+            let url = baseUrl+'geohash-6/geohash-index/' + geohash.substring(0, 6);
+            return cache.get(domain, token, url).then((res) => {
+              let geohashes = _.pickBy(res['geohash-data'], function(value, key) {
                 return key.substring(0, geohash.length) === geohash;
               });
-              return Promise.map(Object.keys(geohashes), (g) => {
-                return recursiveAggregateStats(polygon, g, stuff, geohashes, baseUrl, token)
-                .then((results) => {
+              return Promise.map(Object.keys(geohashes || {}), (g) => {
+                return recursiveAggregateStats(polygon, g, stuff, geohashes, domain, baseUrl, token).then((results) => {
                   if (results.stats === null) return stuff;
                   return results;
                 })
-              }, { concurrency: 1 })
+              })
             })
           }
 // Get deeper geohash bucket
           let geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
           return Promise.map(geohashes, (g) => {
-            return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, baseUrl, token)
-            .then((results) => {
+            return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, domain, baseUrl, token).then((results) => {
               if (results.stats === null) return stuff;
               return results;
             })
-          }, { concurrency: 1 }).then(() => {
+          }).then(() => {
             return stuff;
           })
         } 
@@ -110,15 +109,18 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUr
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
 		if (gju.pointInPolygon(pt, poly)) {
-			var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
-      return cache.get(url, token).then((data) => {
-        stuff.stats.area.sum += data.area.sum;
-        stuff.stats.area.sum_of_squares += data.area['sum-of-squares'];
-        stuff.stats.weight.sum += data.weight.sum;
-        stuff.stats.weight.sum_of_squares += data.weight['sum-of-squares'];
-        stuff.stats.count += data.count;
-				stuff.stats['sum-yield-squared-area'] += data['sum-yield-squared-area'];
-        stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
+			var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2);
+			return cache.get(domain, token, url).then((res) => {
+				let data = res['geohash-data'][geohash];
+				if (data) {
+					stuff.stats.area.sum += data.area.sum;
+					stuff.stats.area.sum_of_squares += data.area['sum-of-squares'];
+					stuff.stats.weight.sum += data.weight.sum;
+					stuff.stats.weight.sum_of_squares += data.weight['sum-of-squares'];
+					stuff.stats.count += data.count;
+					stuff.stats['sum-yield-squared-area'] += data['sum-yield-squared-area'];
+					stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
+				}
         return stuff;
       })
     }
@@ -126,44 +128,35 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUr
 //   need be tested because no lines intersect in Step 1 and geohash
 //   isn't contained by the polygon in step 2. 
     pt = {"type":"Point","coordinates": polygon[0]};
-    poly = {"type":"Polygon","coordinates": [geohashPolygon]};
+		poly = {"type":"Polygon","coordinates": [geohashPolygon]};
     if (gju.pointInPolygon(pt, poly)) {
       if (geohash.length === 7) { // Finest size bucket, get geohashes in this bucket and see if they're in or out
-        let url = baseUrl + 'geohash-6/geohash-index/' + geohash.substring(0, 6) + '/geohash-data/';
-        return cache.get(url, token).then((geohashes) => {
-          geohashes = _.pickBy(geohashes, function(value, key) {
+				let url = baseUrl + 'geohash-6/geohash-index/' + geohash.substring(0, 6);
+        return cache.get(domain, token, url).then((res) => {
+          let geohashes = _.pickBy(res['geohash-data'], function(value, key) {
             return key.substring(0, geohash.length) === geohash;
           });
-          return Promise.map(Object.keys(geohashes), (g) => {
-            return recursiveAggregateStats(polygon, g, stuff, geohashes, baseUrl, token)
-            .then((results) => {
-              if (results.stats === null) {
-                return stuff;
-              }
+					return Promise.map(Object.keys(geohashes || {}), (g) => {
+            return recursiveAggregateStats(polygon, g, stuff, geohashes, domain, baseUrl, token).then((results) => {
+              if (results.stats === null) return stuff;
               return results;
             })
-          }, { concurrency: 1 })
+          })
         })
       }
       let geohashes = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
-      return Promise.map(geohashes, (g) => {
-        return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, baseUrl, token)
-        .then((results) => {
-          if (results.stats === null) {
-            return stuff;
-          }
+			return Promise.map(geohashes || [], (g) => {
+        return recursiveGeohashSum(polygon, g, stuff, availableGeohashes, domain, baseUrl, token).then((results) => {
+          if (results.stats === null) return stuff;
           return results;
         })
-      }, { concurrency: 1 }).then(() => {
+      }).then(() => {
         return stuff;
       })
     }
 //4. The geohash and polygon are non-overlapping.
-    return stuff;
-  }).catch((error) => {
-    console.log(error);
-    return error
-  })
+	return stuff;
+})
 }
 
 // 1. get all of the geohash-8s aggregates from the geohash-6
@@ -171,8 +164,9 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, baseUr
 // 3. if the geohash isn't contained by the polygon, get the available geohash-9s and loop over the 32 geohash-9s
 // 4. Get all of the geohash-9s 
 
-function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, baseUrl, token) {
-  return Promise.try(() => {
+function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, domain, baseUrl, token) {
+
+	return Promise.resolve(() => {
     if (!availableGeohashes[geohash]) {
       return stuff;
     }
@@ -194,18 +188,17 @@ function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, ba
         if (gju.lineStringsIntersect(lineA, lineB)) {
           if (geohash.length === 9) return stuff
             // smallest possible geohash not completely contained; omit it
-          let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1) + '/geohash-data/';
-          return cache.get(url, token).then((geohashes) => {
-            geohashes = _.pickBy(geohashes, function(value, key) {
+          let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1);
+          return cache.get(domain, token, url).then((res) => {
+            let geohashes = _.pickBy(res['geohash-data'], function(value, key) {
               return key.substring(0, geohash.length) === geohash;
             });
-            return Promise.map(Object.keys(geohashes), (g) => {
-              return recursiveAggregateStats(polygon, g, stuff, geohashes, baseUrl, token) 
-              .then((results) => {
+            return Promise.map(Object.keys(geohashes || {}), (g) => {
+              return recursiveAggregateStats(polygon, g, stuff, geohashes, domain, baseUrl, token).then((results) => {
                 if (results.stats === null) return stuff;
                 return results;
               })
-            }, { concurrency: 1 }).then(() => {
+            }).then(() => {
               return stuff;
             })
           })
@@ -217,15 +210,18 @@ function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, ba
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
     if (gju.pointInPolygon(pt, poly)) {
-      var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2) +'/geohash-data/'+geohash;
-      return cache.get(url, token).then((data) => {
-        stuff.stats.area.sum += data.area.sum;
-        stuff.stats.area.sum_of_squares += data.area.sum_of_squares;
-        stuff.stats.weight.sum += data.weight.sum;
-        stuff.stats.weight.sum_of_squares += data.weight.sum_of_squares;
-        stuff.stats.count += data.count;
-				stuff.stats['sum-yield-squared-area'] += data['sum-yield-squared-area'];
-        stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
+      var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2);
+			return cache.get(domain, token, url).then((res) => {
+				let data = res['geohash-data'][geohash];
+				if (data) {
+					stuff.stats.area.sum += data.area.sum;
+					stuff.stats.area.sum_of_squares += data.area.sum_of_squares;
+					stuff.stats.weight.sum += data.weight.sum;
+					stuff.stats.weight.sum_of_squares += data.weight.sum_of_squares;
+					stuff.stats.count += data.count;
+					stuff.stats['sum-yield-squared-area'] += data['sum-yield-squared-area'];
+					stuff.geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
+				}
         return stuff;
       })
     }
@@ -237,18 +233,17 @@ function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, ba
     if (gju.pointInPolygon(pt, poly)) {
       if (geohash.length === 9) return stuff;
         // smallest possible geohash not completely contained; omit it
-      let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1) + '/geohash-data/';
-      return cache.get(url, token).then((geohashes) => {
-        geohashes = _.pickBy(geohashes, function(value, key) {
+      let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1);
+      return cache.get(domain, token, url).then((res) => {
+        let geohashes = _.pickBy(res['geohash-data'], function(value, key) {
           return key.substring(0, geohash.length) === geohash;
         });
-        return Promise.map(Object.keys(geohashes), (g) => {
-          return recursiveAggregateStats(polygon, g, stuff, geohashes, baseUrl, token) 
-          .then((results) => {
+        return Promise.map(Object.keys(geohashes || {}), (g) => {
+          return recursiveAggregateStats(polygon, g, stuff, geohashes, domain, baseUrl, token).then((results) => {
             if (results.stats === null) return stuff;
             return results;
           })
-        }, { concurrency: 1 }).then(() => {
+        }).then(() => {
           return stuff;
         })
       })

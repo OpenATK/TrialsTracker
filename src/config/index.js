@@ -3,7 +3,7 @@ var overrides = require('./config.dev.js').default;
 //----------- Define default configs here ----------
 
 export const title = 'TrialsTracker';
-export const scope = 'oada.awesome:all';
+export const scope = 'oada.yield:all';
 const defaults = {
 	scope,
   title,

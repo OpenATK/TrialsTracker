@@ -6,12 +6,13 @@ var cachedProvider = null;
 
 function wrapWebsocket(context, url) {
 	return websocket(url).then((provider) => {
-   	let oldWatch = provider.watch;
-   	provider.watch = (request, signalPath) => {
- 	    oldWatch(request, (response) => {
-        let signal = context.controller.getSignal(signalPath);
-        if (signal == null) throw new Error('Signal at path `'+signalPath+'` is not defined.');
- 		    signal({response});
+		let oldWatch = provider.watch;
+   	provider.watch = (request, signalPath, payload) => {
+      let signal = context.controller.getSignal(signalPath);
+      if (signal == null) throw new Error('Signal at path `'+signalPath+'` is not defined.');
+			return oldWatch(request, (response) => {
+				payload.response = response;
+ 		    signal(payload);
  		  })
 		}
 	  return provider

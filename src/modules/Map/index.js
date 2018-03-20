@@ -16,6 +16,7 @@ import {
 export default {
 
 	state: {
+		//center: [40.739618459,-79.685532363],
 		center: [40.98551896940516, -86.18823766708374],
 		moving: false,
 		geohashPolygons: [],

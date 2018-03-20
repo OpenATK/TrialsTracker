@@ -149,9 +149,8 @@ function computeNoteStats({props, state, path}) {
   let token = state.get('Connections.oada_token');
   let domain = state.get('Connections.oada_domain');
 	let availableGeohashes = state.get('Yield.data_index');
-  let baseUrl = domain + '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/';
   let geometry = state.get(`Note.notes.${props.id}.geometry`);
-  return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, baseUrl, token)
+  return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, domain, token)
   .then((data) => {
     return path.success({geohashPolygons: data.geohashPolygons, stats: data.stats, ids:[props.id]});
   })

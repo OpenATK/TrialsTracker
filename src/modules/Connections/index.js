@@ -8,7 +8,7 @@ export default {
 
 	state : {
 		open: false,
-		oada_domain_text: '',
+		oada_domain_text: 'https://yield.trialstracker.com',
 		oada_domain: '',
 	}, 
 

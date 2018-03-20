@@ -1,9 +1,7 @@
 import stateTree from './stateTree.js';
 
 import { 
-  addGeohashes,
   initialize,
-  removeGeohashes,
 } from './chains';
 
 export default {
@@ -12,7 +10,5 @@ export default {
 
   signals: {
     init: initialize,
-    newTileDrawn: addGeohashes,
-    tileUnloaded: removeGeohashes,
   }
 }
