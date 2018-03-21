@@ -10,6 +10,8 @@ import getOadaBaseURI from '../OADA/factories/getOadaBaseURI'
 import getToken from '../OADA/factories/getToken'
 import head from '../OADA/factories/head'
 import _ from 'lodash'
+import url from 'url'
+import normalizeUrl from 'normalize-url'
 
 export var signOut = [
   set(state`Connections.oada_token`, ''),
@@ -83,7 +85,9 @@ export var updateOadaDomain = [
 
 export var setConnection = [
   set(state`Connections.open`, false),
-  set(state`Connections.oada_domain`, state`Connections.oada_domain_text`),
+	//	fixOadaDomain,
+	//set(state`Connections.oada_domain`, props`domain`),
+	set(state`Connections.oada_domain`, state`Connections.oada_domain_text`),
   putInPouch(`Connections.oada_domain`),
   set(props`domain`, state`Connections.oada_domain`), 
 	configureWebsocketProvider, {
@@ -100,3 +104,13 @@ export var cancelConnection = [
 export var showConnections = [
   set(state`Connections.open`, true),
 ]
+
+function fixOadaDomain({state, props}) {
+  let domain = state.get('Connections.oada_domain_text');
+  let site = url.parse(normalizeUrl(domain));
+  if (!site.protocol || !/^http:\/\//.test(domain)) {
+    return {domain: 'https://'+site.hostname}
+  } else {
+    return {domain:site.protocol+'//'+site.hostname}
+  }
+}
