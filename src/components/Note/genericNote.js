@@ -91,7 +91,6 @@ export default connect({
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.comparison).forEach((crop) => {
 					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-					console.log(crop, comp)
 					let sign = (comp.comparison[crop].comparison.differenceMeans < 0 ^ this.props.type === 'note') ? '-' : '+';
           comps.push(
             <div

@@ -63,7 +63,6 @@ function registerWatches({props, state, oada, path}) {
 		let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
 		return Promise.map(props.geohashes, (geohash) => {
 			let url = '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+props.layer+'/geohash-length-index/geohash-'+geohash.length.toString()+'/geohash-index/'+geohash;
-			console.log(url)
 			return oada.watch({
 				url,
 				headers: { 'Authorization': 'Bearer '+token},
