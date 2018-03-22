@@ -155,8 +155,8 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, domain
       })
     }
 //4. The geohash and polygon are non-overlapping.
-	return stuff;
-})
+		return stuff;
+  })
 }
 
 // 1. get all of the geohash-8s aggregates from the geohash-6
@@ -165,9 +165,8 @@ function recursiveGeohashSum(polygon, geohash, stuff, availableGeohashes, domain
 // 4. Get all of the geohash-9s 
 
 function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, domain, baseUrl, token) {
-
-	return Promise.resolve(() => {
-    if (!availableGeohashes[geohash]) {
+	return Promise.try(() => {
+		if (!availableGeohashes[geohash]) {
       return stuff;
     }
 
@@ -184,11 +183,11 @@ function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, do
     for (let i = 0; i < polygon.length-1; i++) {
       for (let j = 0; j < geohashPolygon.length-1; j++) {
         let lineA = {"type": "LineString", "coordinates": [polygon[i], polygon[i+1]]};
-        let lineB = {"type": "LineString", "coordinates": [geohashPolygon[j], geohashPolygon[j+1]]};
-        if (gju.lineStringsIntersect(lineA, lineB)) {
+				let lineB = {"type": "LineString", "coordinates": [geohashPolygon[j], geohashPolygon[j+1]]};
+				if (gju.lineStringsIntersect(lineA, lineB)) {
           if (geohash.length === 9) return stuff
             // smallest possible geohash not completely contained; omit it
-          let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1);
+					let url = baseUrl + 'geohash-'+(geohash.length-1)+'/geohash-index/' + geohash.substring(0, geohash.length-1);
           return cache.get(domain, token, url).then((res) => {
             let geohashes = _.pickBy(res['geohash-data'], function(value, key) {
               return key.substring(0, geohash.length) === geohash;
@@ -209,7 +208,7 @@ function recursiveAggregateStats(polygon, geohash, stuff, availableGeohashes, do
 //   need be tested because no lines intersect in Step 1.
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
-    if (gju.pointInPolygon(pt, poly)) {
+		if (gju.pointInPolygon(pt, poly)) {
       var url = baseUrl + 'geohash-' + (geohash.length-2) + '/geohash-index/'+ geohash.substring(0, geohash.length-2);
 			return cache.get(domain, token, url).then((res) => {
 				let data = res['geohash-data'][geohash];

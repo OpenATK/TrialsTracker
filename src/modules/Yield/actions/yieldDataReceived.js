@@ -4,13 +4,46 @@ import {CRS, Transformation, latLng} from 'leaflet'
 import Color from 'color'
 import Promise from 'bluebird'
 
-export default function yieldDataReceved({state, path, props, oada}) {
+//Outcomes:
+//1. Update yieldDataIndex in the state
+//2. Update pouchdb data that has been previously requested, else forget it
+//3. Update canvas tiles (purely functional with new data coming in)
+//4. Update notes (need to decide if it included previous data, else simply sum new data in)
+//5. 
+
+export function updateYieldDataCache({state, path, props, oada}) {
+
+}
+
+export function updatePolygons({state, path, props, oada}) {
+	let notes = state.get('Notes.notes')
+	if (props.response.change.type === 'merge') {
+		return Promise.map(Object.keys(props.response.change.body['geohash-index'] || {}), (geohash) => {
+			let data = props.response.change.body['geohash-index'][geohash]['geohash-data'];
+			console.log(data);
+			return Promise.map(Object.keys(notes), (note) => {
+
+			})
+		}).then(() => {
+			return path.success({})
+		})
+	}
+}
+
+export function upd({state, path, props, oada}) {
+	props.polygons.forEach((note) => {
+		state.set(`Notes.notes.${note}.stats.${props.crop}`, props.polygon[note].stats)
+	})
+}
+
+export function yieldDataReceved({state, path, props, oada}) {
 	console.log('received data', props.crop)
 	let legend = state.get(`App.view.legends.${props.crop}`);
 	let geohashesOnScreen = state.get(`Map.geohashesOnScreen.${props.crop}`);
 	if (props.response.change.type === 'merge') {
 		return Promise.map(Object.keys(props.response.change.body['geohash-index'] || {}), (geohash) => {
 			let data = props.response.change.body['geohash-index'][geohash]['geohash-data'];
+			console.log(data);
 			return Promise.map(Object.keys(geohashesOnScreen[geohash] || {}), (tile) => {
 				return recursiveDrawOnCanvas(geohashesOnScreen[geohash][tile].coords, data, 0, tiles.get(tile), legend).then((canvas) => {                 
 					tiles.set(tiles, canvas);

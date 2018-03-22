@@ -149,6 +149,20 @@ function computeNoteStats({props, state, path}) {
   let token = state.get('Connections.oada_token');
   let domain = state.get('Connections.oada_domain');
 	let availableGeohashes = state.get('Yield.data_index');
+	let geohashPolygons = {};
+	let stats = {};
+	if (Array.isArray(props.id)) {
+		return Promise.map(props.id, (noteId) => {
+			let geometry = state.get(`Note.notes.${noteId}.geometry`);
+			return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, domain, token).then((data) => {
+				geohashPolygons[noteId] = data.geohashPolygons;
+				stats[noteId] = data.stats
+				return
+			})
+		}).then(() => {
+			return path.success({geohashPolygons, stats});
+		})
+	}
   let geometry = state.get(`Note.notes.${props.id}.geometry`);
   return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, domain, token)
   .then((data) => {
