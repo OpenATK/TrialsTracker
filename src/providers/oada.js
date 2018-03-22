@@ -1,7 +1,7 @@
 import PouchDB from 'pouchdb';
-PouchDB.plugin(require('pouchdb-upsert'))
 import websocket from '../modules/OADA/factories/websocket'
 import cache from '../modules/OADA/factories/cache'
+PouchDB.plugin(require('pouchdb-upsert'))
 var cachedProvider = null;
 
 function wrapWebsocket(context, url) {

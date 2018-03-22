@@ -6,8 +6,8 @@ import controller from './controller';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import Promise from 'bluebird'
-injectTapEventPlugin();
 import './index.css'
+injectTapEventPlugin();
 global.Promise = Promise;
 Promise.config({
     // Enables all warnings except forgotten return statements.

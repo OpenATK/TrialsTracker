@@ -1,10 +1,10 @@
 import React from 'react';
 import { connect } from '@cerebral/react';
 import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
-const { Overlay } = LayersControl;
 import './map.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
+const { Overlay } = LayersControl;
 
 export default connect({
   cropLayers: state`Map.crop_layers`,

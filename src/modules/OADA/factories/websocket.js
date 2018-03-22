@@ -1,11 +1,14 @@
 const Promise = require('bluebird');
 const uuid = require('uuid/v4');
-let WebSocket = require('ws');
+//let WebSocket = require('ws');
+let WebSocket = window.WebSocket;
+/*
 let isWindow = false;
 if (typeof window !== 'undefined' && window.WebSocket) {
 	WebSocket = window.WebSocket;
 	isWindow = true;
 }
+*/
 
 
 function websocket(url) {
@@ -33,12 +36,12 @@ function websocket(url) {
 			sendMessages();
 			resolve(socket)
 		}
-		if (!isWindow) socket.on('open', socket.onopen)
+//		if (!isWindow) socket.on('open', socket.onopen)
 
 		socket.onclose = function(event) {
 
 		}
-		if (!isWindow) socket.on('close', socket.onclose)
+//		if (!isWindow) socket.on('close', socket.onclose)
 		socket.onmessage = function(event) {
 			var response = JSON.parse(event.data);
 			//Look for id in httpCallbacks
@@ -80,7 +83,7 @@ function websocket(url) {
 				}
 			}
 		}
-		if (!isWindow) socket.on('message', socket.onclose)
+//		if (!isWindow) socket.on('message', socket.onclose)
 	}).then(() => {
 
 		function _http(request) {

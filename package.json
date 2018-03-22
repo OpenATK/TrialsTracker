@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "react-scripts": "0.9.5"
+    "react-scripts": "1.1.1"
   },
   "dependencies": {
     "@cerebral/react": "^2.5.0",
@@ -38,7 +38,7 @@
     "superagent-promise": "^1.1.0",
     "togeojson": "^0.16.0",
     "wellknown": "^0.5.0",
-    "ws": "^4.1.0"
+    "ws": "^5.1.0"
   },
   "scripts": {
     "start": "PORT=8000 react-scripts start",
