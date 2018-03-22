@@ -29,7 +29,6 @@ class LayerControl extends React.Component {
       <LayersControl 
 				position='topright'>
 				{this.props.geohashPolygons.length ? <Overlay 
-          checked 
           name='Geohash Polygons'>
 				  <FeatureGroup>
 					  {this.props.geohashPolygons.map(polygon => <GeoJSON 
