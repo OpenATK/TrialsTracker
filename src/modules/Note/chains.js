@@ -1,4 +1,5 @@
 import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
+import gh from 'ngeohash'
 import uuid from 'uuid';
 import rmc from 'random-material-color';
 import Color from 'color';
@@ -7,6 +8,10 @@ import getFieldDataForNotes from '../Fields/actions/getFieldDataForNotes';
 import setFieldDataForNotes from '../Fields/actions/setFieldDataForNotes';
 import _ from 'lodash';
 import {state, props, } from 'cerebral/tags'
+import geohashNoteIndexManager from '../Yield/utils/geohashNoteIndexManager.js';
+import oadaCache from '../../modules/OADA/factories/cache';
+let cache = oadaCache(null, 'oada');
+
 
 export var toggleComparisonsPane = [
   toggle(state`${props`path`}.expanded`)
@@ -71,16 +76,22 @@ export var selectNote = [
 export let drawComplete = [
 	set(state`App.view.editing`, false), 
 	set(state`Note.notes.${props`id`}.stats.computing`, true),
-  computeNoteStats, {
-    success: [
-			setNoteStats, 
+  getNoteGeohashes, {
+		success: [
+			addNoteToGeohashIndex,
+			computeNoteStats, {
+				success: [
+					setNoteStats,
+						getFieldDataForNotes, {
+			      success: [setFieldDataForNotes],
+						error: [],
+					}
+				],
+				error: [],
+			},
       set(state`Map.geohashPolygons`, props`geohashPolygons`),
 			set(props`notes.${props`id`}`, state`Note.notes.${props`id`}`),
-      getFieldDataForNotes, {
-        success: [setFieldDataForNotes],
-        error: [],
-      }
-    ],
+	  ],
 		error: [
       unset(state`Note.notes.${props`id`}.stats.computing`)
   	],
@@ -145,29 +156,81 @@ export var handleNoteClick = [
   },
 ];
 
-function computeNoteStats({props, state, path}) {
-  let token = state.get('Connections.oada_token');
-  let domain = state.get('Connections.oada_domain');
-	let availableGeohashes = state.get('Yield.data_index');
-	let geohashPolygons = {};
-	let stats = {};
-	if (Array.isArray(props.id)) {
-		return Promise.map(props.id, (noteId) => {
-			let geometry = state.get(`Note.notes.${noteId}.geometry`);
-			return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, domain, token).then((data) => {
-				geohashPolygons[noteId] = data.geohashPolygons;
-				stats[noteId] = data.stats
-				return
-			})
-		}).then(() => {
-			return path.success({geohashPolygons, stats});
-		})
-	}
+function addNoteToGeohashIndex({props, state, path}) {
+	props.geohashes.forEach((geohash) => {
+		geohashNoteIndexManager.set(geohash, props.id);
+	})
+}
+
+function getNoteGeohashes({props, state, path}) {
   let geometry = state.get(`Note.notes.${props.id}.geometry`);
-  return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox, availableGeohashes, domain, token)
-  .then((data) => {
-    return path.success({geohashPolygons: data.geohashPolygons, stats: data.stats, ids:[props.id]});
+	return yieldDataStatsForPolygon(geometry.geojson.coordinates[0], geometry.bbox).then((geohashes) => {
+		let geohashPolygons = geohashes.map((geohash) => {
+			let ghBox = gh.decode_bbox(geohash);
+			//create an array of vertices in the order [nw, ne, se, sw]
+			let geohashPolygon = [
+				[ghBox[1], ghBox[2]],
+				[ghBox[3], ghBox[2]],
+				[ghBox[3], ghBox[0]],
+				[ghBox[1], ghBox[0]],
+				[ghBox[1], ghBox[2]],
+			];
+			return {"type":"Polygon","coordinates": [geohashPolygon]}
+		})
+    return path.success({geohashes, geohashPolygons, ids:[props.id]});
   })
+}
+
+function computeNoteStats({props, state, path}) {
+	let token = state.get('Connections.oada_token');
+	let domain = state.get('Connections.oada_domain');
+	let stats = {};
+	let availableGeohashes = state.get('Yield.data_index');
+	return Promise.map(Object.keys(availableGeohashes), (crop) => {
+		stats[crop] = { 
+			area: {
+				sum: 0,
+				sum_of_squares: 0,
+			},
+			weight: {
+				sum: 0,
+				sum_of_squares: 0,
+			},
+      count: 0,
+			yield: { mean: 0, variance: 0, standardDeviation: 0},
+			'sum-yield-squared-area': 0,
+		}; 
+		return Promise.map(props.geohashes, async (geohash) => {
+			if (geohash.length < 3) {
+				//TODO: handle this.  You' can't get aggregates of geohash-1 and 2
+			}
+			if (!availableGeohashes[crop]['geohash-'+(geohash.length-2)]) return
+			if (!availableGeohashes[crop]['geohash-'+(geohash.length-2)][geohash.substring(0, geohash.length-2)]) return
+			let url = '/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length-2)+'/geohash-index/'+geohash.substring(0, geohash.length-2);
+			let data = await cache.get(domain, token, url)
+			data = data['geohash-data'][geohash]
+			if (!data) return
+			stats[crop].area.sum += data.area.sum;
+			stats[crop].area.sum_of_squares += data.area['sum-of-squares'];
+			stats[crop].weight.sum += data.weight.sum;
+			stats[crop].weight.sum_of_squares += data.weight['sum-of-squares'];
+			stats[crop].count += data.count;
+			stats[crop]['sum-yield-squared-area'] += data['sum-yield-squared-area'];
+			return
+		}).then(() => {
+		  stats[crop].yield = {}
+			stats[crop].yield.mean = stats[crop].weight.sum/stats[crop].area.sum;
+			stats[crop].yield.variance = (stats[crop]['sum-yield-squared-area']/stats[crop].area.sum) - Math.pow(stats[crop].yield.mean, 2);
+			stats[crop].yield.standardDeviation = Math.pow(stats[crop].yield.variance,  0.5);
+			stats[crop]['sum-yield-squared-area'] = stats[crop]['sum-yield-squared-area'];
+			if (stats[crop].count === 0) delete stats[crop]
+			return
+		})
+	}).then(() => {
+		return path.success({stats})
+	}).catch((err) => {
+		throw err
+	})
 }
 
 function setNoteStats({props, state}) {

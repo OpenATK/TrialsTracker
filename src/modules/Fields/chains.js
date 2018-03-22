@@ -10,6 +10,7 @@ import { set } from 'cerebral/operators'
 import { state, props } from 'cerebral/tags'
 
 export var computeFieldYieldData = [
+	/*
   getFieldStats, {
     success: [
 			setFieldStats,
@@ -20,7 +21,8 @@ export var computeFieldYieldData = [
       }
     ],
     error: [],
-  },
+	},
+	*/
 ];
 
 export let handleFields = [
