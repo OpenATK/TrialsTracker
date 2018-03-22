@@ -55,7 +55,7 @@ export default connect({
               <span
                 key={this.props.note.id+'-yield-text-'+crop+'-value'}
                 className={'yield-text-value'}>
-                  {this.props.stats[crop].yield.mean.toFixed(1) + ' bu/ac'}
+                  {this.props.stats[crop].yield.mean.toFixed(2) + ' bu/ac'}
               </span>
             </div>
           )
@@ -109,7 +109,7 @@ export default connect({
               <span
                 key={this.props.note.id+'-'+comp.text+'-'+crop+'-value'}
                 className={'comparison-value'}>
-                {comp.stats[crop].yield.mean.toFixed(1) +
+                {comp.stats[crop].yield.mean.toFixed(2) +
                 ' (' + sign + Math.abs(comp.comparison[crop].comparison.differenceMeans).toFixed(2) + ') bu/ac' }
               </span>
             </div>

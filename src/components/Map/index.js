@@ -68,13 +68,6 @@ class TrialsMap extends React.Component {
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
 		/>})
 
-    let geohashPolygons = this.props.geohashPolygons.map(gjson => <GeoJSON
-      className={'geohash-polygon'}
-      data={gjson} 
-      style={{fillOpacity:0.0, strokeWidth: 1}}
-      key={uuid.v4()}
-    />)
-
     let markerList = [];
     if (this.props.editing) {
       let note = this.props.notes[this.props.selectedNote];
@@ -132,7 +125,6 @@ class TrialsMap extends React.Component {
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
           {notePolygons}
-          {geohashPolygons}
           {markerList}
           <LayerControl />
         </Map> 
