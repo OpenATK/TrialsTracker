@@ -208,7 +208,7 @@ processRawData = function(csvJson, filename) {
 
 		stuff.num = i;
 		
-		return Promise.delay(0).then(() => {
+		return Promise.delay(1000).then(() => {
 			return axios({
 				method: 'PUT',
 				headers: {

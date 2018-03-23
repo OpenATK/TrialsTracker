@@ -4,6 +4,7 @@ import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 import './map.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
+import uuid from 'uuid'
 const { Overlay } = LayersControl;
 
 export default connect({
@@ -15,6 +16,7 @@ export default connect({
   fields: state`Fields`,
   domain: state`Connections.oada_domain`,
 	isLoading: state`Map.isLoading`,
+	geohashPolygons: state`Map.geohashPolygons`,
 
   toggleCropLayer: signal`Map.toggleCropLayer`,
 },
@@ -25,7 +27,19 @@ class LayerControl extends React.Component {
 
     return (
       <LayersControl 
-        position='topright'>
+				position='topright'>
+				{this.props.geohashPolygons.length ? <Overlay 
+          name='Geohash Polygons'>
+				  <FeatureGroup>
+					  {this.props.geohashPolygons.map(polygon => <GeoJSON 
+              className={'geohash-polygon'}
+							data={polygon} 
+							style={{fillOpacity:0.0, strokeWidth: 1}}                                  
+              key={uuid.v4()}
+					  />)}
+         </FeatureGroup>
+				</Overlay> : null }
+
 				{Object.keys(this.props.fields).length ? <Overlay 
           checked 
           name='Fields'>

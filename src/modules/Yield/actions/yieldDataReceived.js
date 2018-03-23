@@ -4,8 +4,14 @@ import {CRS, Transformation, latLng} from 'leaflet'
 import Color from 'color'
 import Promise from 'bluebird'
 
-export default function yieldDataReceved({state, path, props, oada}) {
-	console.log('received data', props.crop)
+//Outcomes:
+//✔ 1. Update yieldDataIndex in the state
+//  2. Update pouchdb data that has been previously requested, else forget it
+//✔ 3. Update canvas tiles (purely functional with new data coming in)
+//  4. Update notes (need to decide if it included previous data, else simply sum new data in)
+//  5. 
+
+export default function updateYieldTiles({state, path, props, oada}) {
 	let legend = state.get(`App.view.legends.${props.crop}`);
 	let geohashesOnScreen = state.get(`Map.geohashesOnScreen.${props.crop}`);
 	if (props.response.change.type === 'merge') {

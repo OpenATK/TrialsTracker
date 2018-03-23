@@ -9,7 +9,6 @@ import configureWebsocketProvider from './actions/configureWebsocketProvider'
 import getOadaBaseURI from '../OADA/factories/getOadaBaseURI'
 import getToken from '../OADA/factories/getToken'
 import head from '../OADA/factories/head'
-import _ from 'lodash'
 import url from 'url'
 import normalizeUrl from 'normalize-url'
 

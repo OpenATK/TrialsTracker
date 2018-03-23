@@ -53,7 +53,42 @@ function cache(websocket, dbName) {
 		})
 	}
 
+	function put(resPath, _id, merge) {
+		return db.get('/bookmarks'+resPath).then((oadaId) => {
+			return db.get(oadaId.doc).then((res) => {
+				_.merge(res, merge)
+				//Document indeed already exists, we're going to need a _rev to put
+				if (!res._rev) throw new Error('document already exists, need _rev to perform pouch put');
+				return db.put({
+					_id,
+					doc: res, 
+					_rev: res._rev
+				}).then((response) => {
+					return response
+				}).catch((error) => {
+					console.log(error);
+					throw error;
+				})
+			})
+		}).catch((err) => {
+			//Document doesn't yet exist, create it;
+			return db.bulkDocs([{
+				_id: '/bookmarks' + resPath,
+				doc: _id
+			}, {
+				_id,
+				doc: merge,
+			}]).then((response) => {
+				return response
+			}).catch((error) => {
+				console.log(error);
+				throw error;
+			})
+		})
+	}
+
 	return {
+		put,
 		get,
 		db
 	}
