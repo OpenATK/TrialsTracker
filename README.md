@@ -6,7 +6,7 @@ Link to the [DEMO](https://trialstracker.oada-dev.com)
 INSTALLATION AND USAGE
 ---
 
-1. Install [node](https://nodejs.org/en/download/) (latest tested/working with node v6.4.0).
+1. Install [node](https://nodejs.org/en/download/).
 - Clone or download the oada-api-server from [Github](https://github.com/OADA/oada-api-server).
 - Navigate to inside the root directory of oada-api-server.
 - Run `npm install` to install dependancies. 
