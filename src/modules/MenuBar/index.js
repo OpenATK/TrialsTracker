@@ -1,3 +1,4 @@
+import { Module } from 'cerebral'
 import {
 	showConnections,
 	signOut,

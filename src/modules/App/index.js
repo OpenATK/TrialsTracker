@@ -1,4 +1,5 @@
 import stateTree from './stateTree.js';
+import { Module } from 'cerebral';
 
 import { 
   initialize,

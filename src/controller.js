@@ -1,4 +1,6 @@
 import { Controller } from 'cerebral';
+//import root from './modules/root'
+import {devtoolsPort} from './config';
 import App from './modules/App'
 import Map from './modules/Map'
 import Note from './modules/Note'
@@ -7,7 +9,7 @@ import MenuBar from './modules/MenuBar'
 import Fields from './modules/Fields'
 import Yield from './modules/Yield'
 import oada from './providers/oada'
-import {devtoolsPort} from './config';
+
 
 const Devtools = (
 	process.env.NODE_ENV === 'production' ? null : require('cerebral/devtools').default)
@@ -18,7 +20,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const controller = Controller({
-  modules: {
+
+	modules: {
     App,
     Map,
     Note,
@@ -27,9 +30,11 @@ const controller = Controller({
 		Fields,
 		Yield,
 	},
+
 	providers: [
 		oada,
 	],
+
 	devtools: Devtools && Devtools({host:'localhost:8787'})//+devPort}),
 })
 

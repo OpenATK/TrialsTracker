@@ -1,5 +1,5 @@
 import Promise from 'bluebird';  
-import yieldDataStatsForPolygon from '../../Yield/utils/yieldDataStatsForPolygon.js';
+import { yieldDataStatsForPolygon } from '../../Yield/utils/yieldDataStatsForPolygon.js';
 
 Promise.longStackTraces = true;
 

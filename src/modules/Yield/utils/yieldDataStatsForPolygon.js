@@ -4,7 +4,7 @@ import _ from 'lodash'
 import Promise from 'bluebird';
 import geohashNoteIndexManager from './geohashNoteIndexManager';
 
-export default function yieldDataStatsForPolygon(polygon, bbox) {
+export function yieldDataStatsForPolygon(polygon, bbox) {
   let newPoly = _.clone(polygon);
   newPoly.push(polygon[0])
   //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
@@ -18,7 +18,7 @@ export default function yieldDataStatsForPolygon(polygon, bbox) {
   })
 }
 
-function recursiveGeohashSearch(polygon, geohash, geohashes) {
+export function recursiveGeohashSearch(polygon, geohash, geohashes) {
 	return Promise.try(() => {
     //TODO: available geohashes could begin with e.g. geohash-3, but the greatest common prefix may only be a single character
     let ghBox = gh.decode_bbox(geohash);
@@ -38,6 +38,8 @@ function recursiveGeohashSearch(polygon, geohash, geohashes) {
         if (gju.lineStringsIntersect(lineA, lineB)) {
 					if (geohash.length === 9) return geohashes; // Can't go any deeper, omit.
 					let gs = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
+					// fix precision errors. geohashes should start with the given geohash
+					gs = gs.filter((item) => item.substring(0, geohash.length) === geohash);
 					return Promise.map(gs, (g) => {
 						return recursiveGeohashSearch(polygon, g, geohashes).then((results) => {
 							if (results === null) return geohashes;
@@ -48,7 +50,7 @@ function recursiveGeohashSearch(polygon, geohash, geohashes) {
 					})
 				}
       }
-    }
+		}
 //2. If geohash is completely inside polygon, use the stats. Only one point
 //   need be tested because no lines intersect in Step 1.
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
@@ -65,6 +67,7 @@ function recursiveGeohashSearch(polygon, geohash, geohashes) {
     if (gju.pointInPolygon(pt, poly)) {
       if (geohash.length === 9) return geohashes;
       let gs = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
+			gs = gs.filter((item) => item.substring(0, geohash.length) === geohash);
 			return Promise.map(gs || [], (g) => {
         return recursiveGeohashSearch(polygon, g, geohashes).then((results) => {
           if (results === null) return geohashes;
@@ -80,7 +83,7 @@ function recursiveGeohashSearch(polygon, geohash, geohashes) {
 }
 
 //http://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings
-function longestCommonPrefix(strings) {
+export function longestCommonPrefix(strings) {
   let A = strings.concat().sort(), 
   a1= A[0], 
   a2= A[A.length-1], 
@@ -89,33 +92,3 @@ function longestCommonPrefix(strings) {
   while(i < L && a1.charAt(i) === a2.charAt(i)) i++;
   return a1.substring(0, i);
 }
-
-	/*
-function doStuff({}) {
-stuff.stats[crop] = { 
-			area: {
-				sum: 0,
-				sum_of_squares: 0,
-			},
-			weight: {
-				sum: 0,
-				sum_of_squares: 0,
-			},
-      count: 0,
-			yield: { mean: 0, variance: 0, standardDeviation: 0},
-			'sum-yield-squared-area': 0,
-		};
-
-	if (!availableGeohashes['geohash-'+geohash.length]) {
-    return stuff;
-  }
-  if (!availableGeohashes['geohash-'+geohash.length][geohash]) {
-    return stuff;
-	}
-
-	let baseUrl = '/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/';
-	let url = baseUrl+'geohash-6/geohash-index/' + geohash.substring(0, 6);
-	return cache.get(domain, token, url).then((res) => {
-	})
-}
-*/

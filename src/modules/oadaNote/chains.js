@@ -9,7 +9,8 @@ import setFieldDataForNotes from '../Fields/actions/setFieldDataForNotes';
 import _ from 'lodash';
 import {state, props, } from 'cerebral/tags'
 import geohashNoteIndexManager from '../Yield/utils/geohashNoteIndexManager.js';
-import oadaCache from '../../modules/OADA/factories/cache';
+import oadaCache from '../../modules/OADA/factories/cache'
+import { fetchTree } from 'cerebral-module-oada'
 let cache = oadaCache(null, 'oada');
 
 
@@ -18,7 +19,13 @@ export var toggleComparisonsPane = [
 ]
 
 export var initialize = [
-  
+	set(props`url`, state`Connections.oada_domain`),
+	fetchTree, {
+		succes: [
+			mapOadaToNotes,
+		],
+		error: [],
+	},
 ]
 
 export var cancelNote = [
