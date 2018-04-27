@@ -8,7 +8,7 @@ import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
   tagNote: state`App.model.tags.${props.id}`,
-  notes: state`Note`,
+  notes: state`notes`,
   isMobile: state`App.is_mobile`,
 
   fieldClicked: signal`App.fieldNoteClicked`,

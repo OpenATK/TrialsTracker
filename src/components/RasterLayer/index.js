@@ -6,7 +6,7 @@ import Promise from 'bluebird'
 import Color from 'color'
 import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
-import oadaCache from '../../modules/OADA/factories/cache'
+import oadaCache from '../../modules/oada/factories/cache'
 import tiles from './tileManager.js'
 let cache = oadaCache(null, 'oada')
 

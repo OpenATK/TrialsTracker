@@ -9,8 +9,8 @@ import LayerControl from './LayerControl'
 import LegendControl from './LegendControl'
 
 export default connect({
-  notes: state`Note.notes`,
-  selectedNote: state`Note.selected_note`,
+  notes: state`notes.notes`,
+  selectedNote: state`notes.selected_note`,
   editing: state`App.view.editing`,
   legends: state`App.view.legends`,
   legendVisible: state`App.view.legend.visible`,
@@ -31,7 +31,7 @@ export default connect({
   locationFound: signal`Map.locationFound`,
   mapMoved: signal`Map.mapMoved`,
 	gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
-  noteClicked: signal`Note.noteClicked`,        
+  noteClicked: signal`notes.noteClicked`,        
 },
 
 class TrialsMap extends React.Component {

@@ -9,11 +9,11 @@ const { Overlay } = LayersControl;
 
 export default connect({
   cropLayers: state`Map.crop_layers`,
-  notes: state`Note.notes`,
-  selectedNote: state`Note.selected_note`,
+  notes: state`notes.notes`,
+  selectedNote: state`notes.selected_note`,
   editing: state`App.view.editing`,
   yieldDataIndex: state`Yield.data_index`,
-  fields: state`Fields`,
+  fields: state`fields`,
   domain: state`Connections.oada_domain`,
 	isLoading: state`Map.isLoading`,
 	geohashPolygons: state`Map.geohashPolygons`,

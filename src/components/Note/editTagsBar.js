@@ -7,16 +7,16 @@ import { state, signal, props } from 'cerebral/tags'
 let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
-	  tags: state`Note.notes.${props`id`}.tags`,
-	  selected: state`Note.notes.${props`id`}.selected`,
+	  tags: state`notes.notes.${props`id`}.tags`,
+	  selected: state`notes.notes.${props`id`}.selected`,
     allTags: state`App.model.tags`,
     editing: state`App.view.editing`,
 	  tagInput: state`App.model.tag_input_text`,
-	  error: state`Note.notes.${props`id`}.tag_error`,
+	  error: state`notes.notes.${props`id`}.tag_error`,
 
-    tagAdded: signal`Note.tagAdded`,
-    tagRemoved: signal`Note.tagRemoved`,
-    tagInputTextChanged: signal`Note.tagInputTextChanged`,
+    tagAdded: signal`notes.tagAdded`,
+    tagRemoved: signal`notes.tagRemoved`,
+    tagInputTextChanged: signal`notes.tagInputTextChanged`,
 },
 
   class EditTagsBar extends React.Component {

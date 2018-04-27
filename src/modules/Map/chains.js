@@ -100,7 +100,7 @@ function undo({props, state}) {
 }
 
 function mapToFieldPolygon({props, state}) {
-  var field = state.get(`Fields.${props.id}`);
+  var field = state.get(`fields.${props.id}`);
   if (field) state.set('Map.center', field.boundary.centroid);
 }
 

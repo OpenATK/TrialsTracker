@@ -14,7 +14,7 @@ import {
   undoDrawPoint,
 } from './chains';
 
-export default {
+export default Module({
 
 	state: {
 		//center: [40.739618459,-79.685532363],
@@ -44,4 +44,4 @@ export default {
     toggleCropLayer: toggleCropLayerVisibility,
     undoButtonClicked: undoDrawPoint,
   }
-}
+})

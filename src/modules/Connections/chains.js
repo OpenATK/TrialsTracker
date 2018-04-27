@@ -3,12 +3,12 @@ import putInPouch from '../App/factories/putInPouch';
 import getFromPouch from '../App/factories/getFromPouch';
 import { set } from 'cerebral/operators';
 import { parallel } from 'cerebral';
-import { getOadaYieldData } from '../Yield/chains.js'
-import { computeFieldYieldData, getFields } from '../Fields/chains'
+import { getOadaYieldData } from '../Yield/sequences'
+import { computeFieldYieldData, getFields } from '../fields/sequences'
 import configureWebsocketProvider from './actions/configureWebsocketProvider'
-import getOadaBaseURI from '../OADA/factories/getOadaBaseURI'
-import getToken from '../OADA/factories/getToken'
-import head from '../OADA/factories/head'
+import getOadaBaseURI from '../oada/factories/getOadaBaseURI'
+import getToken from '../oada/factories/getToken'
+import head from '../oada/factories/head'
 import url from 'url'
 import normalizeUrl from 'normalize-url'
 
@@ -19,11 +19,11 @@ export var signOut = [
 ]
 
 export var getData = [
-		parallel([
-			...getOadaYieldData,
-			...getFields,
-		]),
-		...computeFieldYieldData,
+	//		parallel([
+	//			...getOadaYieldData,
+	//			...getFields,
+	//		]),
+	//		...computeFieldYieldData,
 ]
 
 export var getOadaTokenSequence = [

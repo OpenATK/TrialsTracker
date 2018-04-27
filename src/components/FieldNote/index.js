@@ -6,7 +6,7 @@ import { Card, CardHeader } from 'material-ui'
 import {state, signal, props} from 'cerebral/tags'
 
 export default connect({
-  fieldNote: state`Fields.${props`id`}`,
+  fieldNote: state`fields.${props`id`}`,
   notes: state`Notes`,
   isMobile: state`App.is_mobile`,
 

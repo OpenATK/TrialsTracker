@@ -5,7 +5,7 @@ import {
 	updateOadaDomain,
 } from './chains';
 
-export default {
+export default Module({
 
 	state : {
 		open: false,
@@ -18,4 +18,4 @@ export default {
 		cancelClicked: cancelConnection,
 		oadaDomainChanged: updateOadaDomain,
   }
-}
+})

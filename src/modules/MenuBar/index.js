@@ -15,7 +15,7 @@ import {
 } from './chains'
 
 
-export default {
+export default Module({
 	state: {
     open: false
   },
@@ -29,4 +29,4 @@ export default {
     showMenuDropdown: toggleMenuDropdown,
     downloadNotesButtonClicked: downloadNotes,
   }
-}
+})

@@ -1,10 +1,16 @@
 import _ from 'lodash';
 import MobileDetect from 'mobile-detect';
 import { getConnections } from '../Connections/chains'
+import * as oada from '../oada/sequences'
+import { sequence } from 'cerebral'
 
-export var initialize = [
-  setMobile,
+export var init = [
+	sequence('init', [
+		setMobile,
+		oada.authorize,
+
 	//	...getConnections,
+	]),
 ];
 
 export var clearCache = [

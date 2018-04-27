@@ -1,13 +1,6 @@
 import { Controller } from 'cerebral';
-//import root from './modules/root'
 import {devtoolsPort} from './config';
 import App from './modules/App'
-import Map from './modules/Map'
-import Note from './modules/Note'
-import Connections from './modules/Connections'
-import MenuBar from './modules/MenuBar'
-import Fields from './modules/Fields'
-import Yield from './modules/Yield'
 import oada from './providers/oada'
 
 
@@ -19,22 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 	//	console.log('Cerebral DevTools running on port:', devPort)
 }
 
-const controller = Controller({
-
-	modules: {
-    App,
-    Map,
-    Note,
-    Connections,
-		MenuBar,
-		Fields,
-		Yield,
-	},
-
-	providers: [
-		oada,
-	],
-
+const controller = Controller(App, {
 	devtools: Devtools && Devtools({host:'localhost:8787'})//+devPort}),
 })
 

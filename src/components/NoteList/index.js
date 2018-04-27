@@ -1,33 +1,37 @@
 import React from 'react'
 import {connect} from '@cerebral/react'
-import Note from '../Note/'
-import FieldNote from '../FieldNote/'
+import Note from '../Note'
 import Header from './Header'
 import './styles.css'
-import {Tabs, Tab, FloatingActionButton} from 'material-ui';
+import {FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
-import _ from 'lodash'
 
 export default connect({
-  notes: state`Note.notes`, 
+  notes: state`notes.notes`, 
   tags: state`App.model.tags`,
   sortMode: state`App.view.sort_mode`, 
   isMobile: state`App.is_mobile`,
   editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
-  fields: state`Fields`,
+  selectedNote: state`notes.selected_note`,
+  fields: state`fields`,
 
-  sortingTabClicked: signal`Note.sortingTabClicked`,
-  noteListClicked: signal`Note.noteListClicked`,
-  addNoteButtonClicked: signal`Note.addNoteButtonClicked`,
-  doneClicked: signal`Note.doneEditingButtonClicked`,
+  init: signal`notes.init`,
+  sortingTabClicked: signal`notes.sortingTabClicked`,
+  noteListClicked: signal`notes.noteListClicked`,
+  addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
+  doneClicked: signal`notes.doneEditingButtonClicked`,
 },
 
 class NoteList extends React.Component {
 
-  handleClick(evt) {
+	componentWillMount() {
+		this.props.init({});
+	}
+	
+	
+	handleClick(evt) {
     // call only for note-list element, not children note elements;
     if (!this.props.editing) {
       if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
@@ -37,19 +41,47 @@ class NoteList extends React.Component {
   }
 
 	render() {
-		console.log(_.values(this.props.notes))
-		let notes_array = _.sortBy(_.values(this.props.notes), 'order').map(obj => {
-			console.log(obj)
-			return <Note 
-        id={obj.id} 
-        key={obj.id}
-      />}
-    );
+		//TODO: either make this a computed, or put this into actions
+    let notes_array = Object.keys(this.props.notes).map((key) => {
+			let comparisons = Object.keys(this.props.notes[key].fields).map((field) => {
+				return {
+					text: field,
+					stats: this.props.fields[field].stats,
+					comparison: this.props.notes[key].fields[field]
+				}
+			})
+			return (<Note 
+        id={key} 
+				key={key}
+				comparisons={comparisons}
+				color={this.props.notes[key].color}
+				area={this.props.notes[key].geometry.area}
+				type='note'
+				path={`notes.notes.${key}`}
+				selected={this.props.notes[key].selected}
+				text={this.props.notes[key].text}
+				stats={this.props.notes[key].stats}
+      />)
+    });
 
-    let fields_array = Object.keys(this.props.fields || {}).map((field) => {
-      return(<FieldNote 
+		let fields_array = Object.keys(this.props.fields || {}).map((field) => {
+			let comparisons = [];
+      Object.keys(this.props.notes).forEach((id) => {                          
+				if (this.props.notes[id].fields[field]) comparisons.push({
+					text: this.props.notes[id].text,
+					stats: this.props.notes[id].stats,
+					comparison: this.props.notes[id].fields[field]
+				}) 
+			})
+      return(<Note 
         id={field} 
-        key={field}
+				key={field}
+				comparisons={comparisons}
+				area={this.props.fields[field].boundary.area}
+				type='field'
+				path={`fields.${field}`}
+				text={field}
+				stats={this.props.fields[field].stats}
       />)  
     })
 

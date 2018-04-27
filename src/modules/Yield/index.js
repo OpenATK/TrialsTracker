@@ -4,9 +4,9 @@ import {
 	dataReceived,
   addGeohashes,
   removeGeohashes,
-} from './chains'
+} from './sequences'
 
-export default {
+export default Module({
 
 	state : {
 	},
@@ -17,4 +17,4 @@ export default {
     newTileDrawn: addGeohashes,
     tileUnloaded: removeGeohashes,
   }
-}
+})

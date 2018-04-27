@@ -1,4 +1,4 @@
-import recursiveGet from '../../OADA/factories/recursiveGet'
+import recursiveGet from '../../oada/factories/recursiveGet'
 
 export default function getYieldDataIndex({state, path, oada}) {
   let token = state.get('Connections.oada_token');
