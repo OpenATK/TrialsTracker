@@ -8,10 +8,9 @@ let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
 	  tags: state`notes.notes.${props`id`}.tags`,
-	  selected: state`notes.notes.${props`id`}.selected`,
-    allTags: state`App.model.tags`,
-    editing: state`App.view.editing`,
-	  tagInput: state`App.model.tag_input_text`,
+    allTags: state`app.model.tags`,
+    editing: state`app.view.editing`,
+	  tagInput: state`app.model.tag_input_text`,
 	  error: state`notes.notes.${props`id`}.tag_error`,
 
     tagAdded: signal`notes.tagAdded`,
@@ -53,7 +52,7 @@ export default connect({
             className={'input'}
 						hintText={this.props.error ? null : 'Add a new tag...'}
 						errorText={this.props.error ? this.props.error : null}
-						dataSource={Object.keys(this.props.allTags).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
+						dataSource={Object.keys(this.props.allTags || {}).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
             onUpdateInput={(value) => this.props.tagInputTextChanged({value, noteId:this.props.id})}
             onNewRequest={(text, id) => this.props.tagAdded({text, noteId:this.props.id})}
             searchText={this.props.tagInput}

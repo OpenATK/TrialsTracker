@@ -10,5 +10,5 @@ export var downloadNotes = [
 ]
 
 export var toggleMapLegend = [
-  toggle(state`App.view.legend.visible`)
+  toggle(state`app.view.legend.visible`)
 ]

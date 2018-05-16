@@ -1,9 +1,9 @@
 import {state, props} from 'cerebral/tags'
-import putInPouch from '../App/factories/putInPouch';
-import getFromPouch from '../App/factories/getFromPouch';
+import putInPouch from '../app/factories/putInPouch';
+import getFromPouch from '../app/factories/getFromPouch';
 import { set } from 'cerebral/operators';
 import { parallel } from 'cerebral';
-import { getOadaYieldData } from '../Yield/sequences'
+import { getOadaYieldData } from '../yield/sequences'
 import { computeFieldYieldData, getFields } from '../fields/sequences'
 import configureWebsocketProvider from './actions/configureWebsocketProvider'
 import getOadaBaseURI from '../oada/factories/getOadaBaseURI'

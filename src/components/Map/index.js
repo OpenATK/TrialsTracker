@@ -11,26 +11,26 @@ import LegendControl from './LegendControl'
 export default connect({
   notes: state`notes.notes`,
   selectedNote: state`notes.selected_note`,
-  editing: state`App.view.editing`,
-  legends: state`App.view.legends`,
-  legendVisible: state`App.view.legend.visible`,
-  currentLocation: state`App.model.current_location`,
-  mapZoom: state`Map.zoom`,
-  moving: state`Map.moving`,
-  dragging: state`Map.dragging_marker`,
-  isLoading: state`Map.isLoading`,
-  isMobile: state`App.is_mobile`,
-	geohashPolygons: state`Map.geohashPolygons`,
-	center: state`Map.center`,
+  editing: state`app.view.editing`,
+  legends: state`app.view.legends`,
+  legendVisible: state`app.view.legend.visible`,
+  currentLocation: state`app.model.current_location`,
+  mapZoom: state`map.zoom`,
+  moving: state`map.moving`,
+  dragging: state`map.dragging_marker`,
+  isLoading: state`map.isLoading`,
+  isMobile: state`app.is_mobile`,
+	geohashPolygons: state`map.geohashPolygons`,
+	center: state`map.center`,
 
-  mapMoveStarted: signal`Map.mapMoveStarted`,
-  mouseDownOnMap: signal`Map.mouseDownOnMap`,
-  markerDragStarted: signal`Map.markerDragStarted`,
-  markerDragEnded: signal`Map.markerDragEnded`,
-  markerDragged: signal`Map.markerDragged`,
-  locationFound: signal`Map.locationFound`,
-  mapMoved: signal`Map.mapMoved`,
-	gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
+  mapMoveStarted: signal`map.mapMoveStarted`,
+  mouseDownOnMap: signal`map.mouseDownOnMap`,
+  markerDragStarted: signal`map.markerDragStarted`,
+  markerDragEnded: signal`map.markerDragEnded`,
+  markerDragged: signal`map.markerDragged`,
+  locationFound: signal`map.locationFound`,
+  mapMoved: signal`map.mapMoved`,
+	gpsButtonClicked: signal`map.currentLocationButtonClicked`,
   noteClicked: signal`notes.noteClicked`,        
 },
 
@@ -55,9 +55,11 @@ class TrialsMap extends React.Component {
   }
 
 	render() {
-		let notePolygons = Object.keys(this.props.notes).filter(id => {
-			return this.props.notes[id].geometry.geojson.coordinates[0].length > 0
-		}).map(id => {
+		let notePolygons = Object.keys(this.props.notes).filter(id => 
+			this.props.notes[id].geometry 
+			&& this.props.notes[id].geometry.geojson 
+			&& this.props.notes[id].geometry.geojson.coordinates[0].length > 0
+		).map(id => {
 			return <GeoJSON 
       className={'note-polygon'}
       data={this.props.notes[id].geometry.geojson} 
@@ -69,9 +71,9 @@ class TrialsMap extends React.Component {
 		/>})
 
     let markerList = [];
-    if (this.props.editing) {
-      let note = this.props.notes[this.props.selectedNote];
-      if (note.geometry.geojson.coordinates[0].length > 0) {
+    if (this.props.editing && this.props.selectedNote) {
+			let note = this.props.notes[this.props.selectedNote];
+      if (note.geometry && note.geometry.geojson && note.geometry.geojson.coordinates[0].length > 0) {
         markerList = [];
         note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
            markerList.push(<Marker

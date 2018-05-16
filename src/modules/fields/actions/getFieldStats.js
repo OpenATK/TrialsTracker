@@ -1,11 +1,11 @@
 import Promise from 'bluebird';  
-import { yieldDataStatsForPolygon } from '../../Yield/utils/yieldDataStatsForPolygon.js';
+import { yieldDataStatsForPolygon } from '../../yield/utils/yieldDataStatsForPolygon.js';
 
 Promise.longStackTraces = true;
 
 function getFieldStats({state, path}) {
   let fields = state.get('fields');
-  let availableGeohashes = state.get('Yield.data_index');
+  let availableGeohashes = state.get('yield.data_index');
   if (!(fields && availableGeohashes)) return path.error({});
   let token = state.get('Connections.oada_token');
   let domain = state.get('Connections.oada_domain');

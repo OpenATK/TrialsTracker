@@ -6,13 +6,13 @@ import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  dataIndex: state`Yield.data_index`,
-  currentLocation: state`App.model.current_location`,
+  dataIndex: state`yield.data_index`,
+  currentLocation: state`app.model.current_location`,
   selectedNote: state`Note.notes.${state`Note.selected_note`}`,
   open: state`MenuBar.open`,
-  editing: state`App.view.editing`,
-  isMobile: state`App.is_mobile`,
-  legendVisible: state`App.view.legend.visible`,
+  editing: state`app.view.editing`,
+  isMobile: state`app.is_mobile`,
+  legendVisible: state`app.view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
   clearCacheButtonClicked: signal`MenuBar.clearCacheButtonClicked`,

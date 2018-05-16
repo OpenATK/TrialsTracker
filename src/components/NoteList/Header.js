@@ -5,13 +5,13 @@ import {Tabs, Tab} from 'material-ui';
 import {state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`App.view.sort_mode`,
-  isMobile: state`App.is_mobile`,
-  editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
+  sortMode: state`app.view.sort_mode`,
+  isMobile: state`app.is_mobile`,
+  editing: state`app.view.editing`,
+  selectedNote: state`notes.selected_note`,
 
-  sortingTabClicked: signal`Note.sortingTabClicked`,
-  doneClicked: signal`Note.doneEditingButtonClicked`,
+  sortingTabClicked: signal`notes.sortingTabClicked`,
+  doneClicked: signal`notes.doneEditingButtonClicked`,
 },
 
 class Header extends React.Component {

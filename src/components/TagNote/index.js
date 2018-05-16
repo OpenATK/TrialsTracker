@@ -7,11 +7,11 @@ import Color from 'color';
 import { props, state, signal } from 'cerebral/tags'
 
 export default connect({
-  tagNote: state`App.model.tags.${props.id}`,
+  tagNote: state`app.model.tags.${props.id}`,
   notes: state`notes`,
-  isMobile: state`App.is_mobile`,
+  isMobile: state`app.is_mobile`,
 
-  fieldClicked: signal`App.fieldNoteClicked`,
+  fieldClicked: signal`app.fieldNoteClicked`,
 },
 
   class TagNote extends React.Component {

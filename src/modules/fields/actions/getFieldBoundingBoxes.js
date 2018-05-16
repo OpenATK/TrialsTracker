@@ -1,4 +1,4 @@
-import computeBoundingBox from '../../Map/utils/computeBoundingBox.js'
+import computeBoundingBox from '../../map/utils/computeBoundingBox.js'
 import gjArea from '@mapbox/geojson-area';
 import Promise from 'bluebird';
 

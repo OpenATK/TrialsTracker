@@ -3,7 +3,7 @@ import _ from 'lodash';
 import {
 	recursiveGeohashSearch,
 	longestCommonPrefix 
-} from '../src/modules/Yield/utils/yieldDataStatsForPolygon.js';
+} from '../src/modules/yield/utils/yieldDataStatsForPolygon.js';
 
 
 it('longest common prefix should correct identify containing geohash', () => {

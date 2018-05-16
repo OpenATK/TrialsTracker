@@ -4,9 +4,9 @@ import {
 	signOut,
 } from '../Connections/chains'
 
-import {
-	clearCache,
-} from '../App/chains'
+//import {
+	//	clearCache,
+//} from '../App/chains'
 
 import {
   toggleMenuDropdown,
@@ -21,7 +21,7 @@ export default Module({
   },
 
   signals: {
-    clearCacheButtonClicked: clearCache,
+		clearCacheButtonClicked: [],//clearCache,
     signOutClicked: signOut,
 		connectionsClicked: showConnections,
     menuBackgroundClicked: toggleMenuDropdown,

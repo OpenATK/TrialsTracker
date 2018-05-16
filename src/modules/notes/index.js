@@ -22,6 +22,8 @@ import {
 	init,
 } from './sequences';
 
+console.log(init)
+
 export default Module({
 
 	state: {
@@ -56,9 +58,9 @@ export default Module({
 function initial_notes() { 
   let notes_list = {};
   for (let i = 1; i<3;i++) {
-    let time = new Date(2015, 5, 17, 15);
+    let created = new Date(2015, 5, 17, 15);
     let note = {
-      time: time,
+      created,
       text: 'n-serve test',
       tags: [],//['application', 
       fields: {},
@@ -107,13 +109,12 @@ function initial_notes() {
       },
       tags_modal_visibility: false,
       completions: [],
-      selected: false,
     };
     if (i === 2) {
-      let time = new Date(2015, 9, 22, 18);
+      let created = new Date(2015, 9, 22, 18);
       note = {
         text: 'rootworm damage',
-        time: time,
+        created,
         tags: ['low area'],
         color: '#607d8b',
 			  expanded: false,
@@ -156,7 +157,6 @@ function initial_notes() {
         },
         tags_modal_visibility: false,
         completions: [],
-        selected: false,
       }
     }
     note.order = i;

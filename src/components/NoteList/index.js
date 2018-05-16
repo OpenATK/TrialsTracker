@@ -7,21 +7,21 @@ import {FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import _ from 'lodash';
 
 export default connect({
   notes: state`notes.notes`, 
-  tags: state`App.model.tags`,
-  sortMode: state`App.view.sort_mode`, 
-  isMobile: state`App.is_mobile`,
-  editing: state`App.view.editing`,
+  tags: state`app.model.tags`,
+  sortMode: state`app.view.sort_mode`, 
+  isMobile: state`app.is_mobile`,
+  editing: state`app.view.editing`,
   selectedNote: state`notes.selected_note`,
   fields: state`fields`,
 
-  init: signal`notes.init`,
+	init: signal`notes.init`,
   sortingTabClicked: signal`notes.sortingTabClicked`,
   noteListClicked: signal`notes.noteListClicked`,
   addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
-  doneClicked: signal`notes.doneEditingButtonClicked`,
 },
 
 class NoteList extends React.Component {
@@ -42,31 +42,34 @@ class NoteList extends React.Component {
 
 	render() {
 		//TODO: either make this a computed, or put this into actions
-    let notes_array = Object.keys(this.props.notes).map((key) => {
-			let comparisons = Object.keys(this.props.notes[key].fields).map((field) => {
+		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}).map(key => 
+			this.props.notes[key]), ['date'])
+    let notes_array = sorted_notes.map((note, i) => {
+			let comparisons = Object.keys(note.fields || {}).map((field) => {
 				return {
 					text: field,
 					stats: this.props.fields[field].stats,
-					comparison: this.props.notes[key].fields[field]
+					comparison: note.fields[field]
 				}
 			})
 			return (<Note 
-        id={key} 
-				key={key}
+				order={i}
+        id={note.id} 
+				key={'notekey'+note.id}
 				comparisons={comparisons}
-				color={this.props.notes[key].color}
-				area={this.props.notes[key].geometry.area}
+				color={note.color}
+				area={note.geometry && note.geometry.area ? note.geometry.area : ''}
 				type='note'
-				path={`notes.notes.${key}`}
-				selected={this.props.notes[key].selected}
-				text={this.props.notes[key].text}
-				stats={this.props.notes[key].stats}
+				path={`notes.notes.${note.id}`}
+				selected={this.props.selectedNote === note.id|| false}
+				text={note.text || ''}
+				stats={note.stats}
       />)
     });
 
 		let fields_array = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
-      Object.keys(this.props.notes).forEach((id) => {                          
+      Object.keys(this.props.notes || {}).forEach((id) => {                          
 				if (this.props.notes[id].fields[field]) comparisons.push({
 					text: this.props.notes[id].text,
 					stats: this.props.notes[id].stats,

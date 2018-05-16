@@ -8,17 +8,17 @@ import uuid from 'uuid'
 const { Overlay } = LayersControl;
 
 export default connect({
-  cropLayers: state`Map.crop_layers`,
+  cropLayers: state`map.crop_layers`,
   notes: state`notes.notes`,
   selectedNote: state`notes.selected_note`,
-  editing: state`App.view.editing`,
-  yieldDataIndex: state`Yield.data_index`,
+  editing: state`app.view.editing`,
+  yieldDataIndex: state`yield.data_index`,
   fields: state`fields`,
   domain: state`Connections.oada_domain`,
-	isLoading: state`Map.isLoading`,
-	geohashPolygons: state`Map.geohashPolygons`,
+	isLoading: state`map.isLoading`,
+	geohashPolygons: state`map.geohashPolygons`,
 
-  toggleCropLayer: signal`Map.toggleCropLayer`,
+  toggleCropLayer: signal`map.toggleCropLayer`,
 },
 
 class LayerControl extends React.Component {
@@ -59,7 +59,7 @@ class LayerControl extends React.Component {
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            data={'Yield.data_index.'+crop}
+            data={'yield.data_index.'+crop}
             layer={crop}
             url={this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             geohashGridlines={false}

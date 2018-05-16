@@ -1,4 +1,4 @@
-import polygonsIntersect from '../../Map/utils/polygonsIntersect.js';
+import polygonsIntersect from '../../map/utils/polygonsIntersect.js';
 import { Promise } from 'bluebird';  
 import gaussian from 'gaussian';
 let dist = gaussian(0,1);

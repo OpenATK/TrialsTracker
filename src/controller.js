@@ -1,7 +1,6 @@
 import { Controller } from 'cerebral';
 import {devtoolsPort} from './config';
-import App from './modules/App'
-import oada from './providers/oada'
+import app from './modules/app'
 
 
 const Devtools = (
@@ -12,8 +11,8 @@ if (process.env.NODE_ENV !== 'production') {
 	//	console.log('Cerebral DevTools running on port:', devPort)
 }
 
-const controller = Controller(App, {
-	devtools: Devtools && Devtools({host:'localhost:8787'})//+devPort}),
+const controller = Controller(app, {
+	devtools: Devtools && Devtools({host:'localhost:8686'})//+devPort}),
 })
 
 export default controller

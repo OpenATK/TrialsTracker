@@ -7,10 +7,10 @@ import {state, signal} from 'cerebral/tags'
 
 export default connect({
   cropLayers: state`Map.crop_layers`,
-  yieldDataIndex: state`Yield.data_index`,
+  yieldDataIndex: state`yield.data_index`,
   domain: state`Connections.oada_domain`,
 
-	initialize: signal`Yield.initialize`,
+	initialize: signal`yield.initialize`,
   toggleCropLayer: signal`map.toggleCropLayer`,
 },
 
@@ -30,7 +30,7 @@ class Yield extends React.Component {
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            data={'Yield.data_index.'+crop}
+            data={'yield.data_index.'+crop}
             layer={crop}
             url={'https://'+self.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             token={self.props.token}

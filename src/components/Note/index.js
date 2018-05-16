@@ -8,11 +8,11 @@ import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } 
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-	note: state`${props`path`}`,
-  editing: state`App.view.editing`,
-  isMobile: state`App.is_mobile`,
-  noteDropdownVisible: state`App.view.note_dropdown.visible`,
-  noteDropdown: state`App.view.note_dropdown.note`,
+	note: state`notes.notes.${props`id`}`,
+  editing: state`app.view.editing`,
+  isMobile: state`app.is_mobile`,
+  noteDropdownVisible: state`app.view.note_dropdown.visible`,
+  noteDropdown: state`app.view.note_dropdown.note`,
 
   deleteNoteButtonClicked: signal`notes.deleteNoteButtonClicked`,
   editNoteButtonClicked: signal`notes.editNoteButtonClicked`,
@@ -121,7 +121,7 @@ export default connect({
         <Card
 					onTouchTap={this.props.type === 'note' ? (e) => this.props.noteClicked({id:this.props.note.id}) : (e) => this.props.fieldClicked({id:this.props.note.id})}
           className={'note'}
-          style={{order: this.props.note.order ? this.props.order : this.props.stats ? '0' : '1'}}>
+          style={{order: this.props.order}}>
           <CardHeader
             className={'note-header'}
 						style={{
@@ -201,7 +201,7 @@ export default connect({
 							{this.props.note.expanded ? comps : null}
             </div>
           </div> : null }
-          {(this.props.editing && this.props.selected) || (this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar id={this.props.note.id}/> : null }
+          {(this.props.editing && this.props.selected) || (this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar selected={this.props.selected} id={this.props.note.id}/> : null }
         </Card>
       )
     }

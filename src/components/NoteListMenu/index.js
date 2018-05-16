@@ -5,13 +5,13 @@ import FontAwesome from 'react-fontawesome';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`App.view.sort_mode`,
-  editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
+  sortMode: state`app.view.sort_mode`,
+  editing: state`app.view.editing`,
+  selectedNote: state`notes.selected_note`,
 
-  sortingTabClicked: signal`note.sortingTabClicked`,
-  doneClicked: signal`note.doneEditingButtonClicked`,
-  cancelClicked: signal`note.cancelEditingButtonClicked`,
+  sortingTabClicked: signal`notes.sortingTabClicked`,
+  doneClicked: signal`notes.doneEditingButtonClicked`,
+  cancelClicked: signal`notes.cancelEditingButtonClicked`,
 },
 
   class NoteListMenu extends React.Component {

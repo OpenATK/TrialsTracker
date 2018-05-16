@@ -7,6 +7,7 @@ import {
 export default Module ({
 
 	state: {
+		bookmarks: {},
 		token: '',
 		isAuthenticated: false,
 		hostname: 'vip3.ecn.purdue.edu',

@@ -13,12 +13,12 @@ let cache = oadaCache(null, 'oada')
 export default connect({
   dataIndex: state`${props`data`}`,
   geohashesToDraw: state`Map.geohashesToDraw.${props`layer`}`,
-  legend: state`App.view.legends.${props`layer`}`,
+  legend: state`app.view.legends.${props`layer`}`,
   token: state`Connections.oada_token`,
   domain: state`Connections.oada_domain`,
 
-  tileUnloaded: signal`Yield.tileUnloaded`,
-	newTileDrawn: signal`Yield.newTileDrawn`,
+  tileUnloaded: signal`yield.tileUnloaded`,
+	newTileDrawn: signal`yield.newTileDrawn`,
 },
 
 class RasterLayer extends GridLayer {

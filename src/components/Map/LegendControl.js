@@ -7,10 +7,10 @@ import './legend.css';
 import { state } from 'cerebral/tags'
 
 export default connect({
-  legends: state`App.view.legends`,
-  yieldDataIndex: state`Yield.data_index`,
-  cropLayers: state`Map.crop_layers`,
-  isMobile: state`App.is_mobile`,
+  legends: state`app.view.legends`,
+  yieldDataIndex: state`yield.data_index`,
+  cropLayers: state`map.crop_layers`,
+  isMobile: state`app.is_mobile`,
 },
 
 class LegendControl extends React.Component {  
