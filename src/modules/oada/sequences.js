@@ -5,6 +5,8 @@ import { props, state } from 'cerebral/tags';
 import { when, set } from 'cerebral/operators';
 import { sequence } from 'cerebral';
 
+//TODO: 5/16/2018 - make recursive fetch take a setup tree.  If no tree, get it all
+
 export let authorize = sequence('oada.authorize', [
 	({state, oada, path}) => { 
 		return oada.authorize({
@@ -36,7 +38,7 @@ export let fetchTree = sequence('oada.fetchTree', [
 		token: state.get('oada.token'),
 		url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
 	}),
-	fetch, {
+	newFetch, {
 		success: sequence('fetchTreeSuccess', [
 			({state, props}) => {
 				state.unset('oada.'+props.path.split('/').filter(n=>n&&true).join('.'))
@@ -117,6 +119,41 @@ function upsertTree({oada, props, state, path}) {
 
 }
 
+function newFetch({oada, props, state, path}) {
+	let recursiveGet = (url, setupTree) => {
+		let returnData = {};
+		return oada.get({
+			url,
+			token: props.token 
+		}).then((response) => {
+			returnData = response.data;
+			return Promise.map(Object.keys(setupTree || returnData), (key) => {
+				if (key === '_type') return //.charAt(0) === '_') return;
+				// If setupTree contains a *, this means we should get ALL content on the server
+				// at this level and continue recursion for each returned key.
+				if (key === '*') {
+					return Promise.map(Object.keys(returnData), (resKey) => {
+						return recursiveGet(url+'/'+resKey, setupTree[key] || {}).then((res) => {
+							return returnData[resKey] = res;
+						})
+					})
+				} else {
+					return recursiveGet(url+'/'+key, setupTree[key] || {}).then((res) => {
+						return returnData[key] = res;
+					})
+				}
+			})
+		}).then(() => {
+			return returnData
+		})
+	}
+	return recursiveGet(props.url, props.setupTree).then((result) => {
+		return path.success({result})
+	}).catch((error) => {
+		return path.error({result: {}})
+	})
+}
+
 function fetch({oada, props, state, path}) {
 	let recursiveGet = (url, token, obj) => {
 		return Promise.map(Object.keys(obj) || {}, (key) => {
@@ -158,7 +195,6 @@ function fetch({oada, props, state, path}) {
 
 export const oadaDelete = sequence('oada.delete', [
 	({oada, state, props}) => {
-		console.log(state.get('oada.token'))
 		return oada.delete({
 			url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
 			token: state.get('oada.token'),
@@ -196,7 +232,7 @@ export const oadaDelete = sequence('oada.delete', [
 //
 // contentType : The necessary Content-Type header oada uses to verify write
 //							 permission.
-export let createResourceAndLink = sequence('oada.createResourceAndLink', [
+export const createResourceAndLink = sequence('oada.createResourceAndLink', [
 	({state, props}) => ({
 		putPath: props.path,
 		path: '/resources',
@@ -212,4 +248,17 @@ export let createResourceAndLink = sequence('oada.createResourceAndLink', [
 		//		linking: true
 	}),
 	put,
+])
+
+export const registerWatch = sequence('oada.registerWatch', [
+	({state, props, oada}) => {
+		return oada.watch({
+			token: state.get('oada.token'),
+			url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
+			
+		}).then((result) => {
+
+		})
+	},
+	set(state`oada.watches`, {}),
 ])

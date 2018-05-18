@@ -5,7 +5,7 @@ import Color from 'color'
 import { 
   updateNoteText,
   updateTagText,
-  changeSortMode,
+  changeTab,
   changeShowHideState,
   addNewNote,
   removeNote,
@@ -22,11 +22,10 @@ import {
 	init,
 } from './sequences';
 
-console.log(init)
-
 export default Module({
 
 	state: {
+		tab: 0,//0. notes, 1. fields, 2. tags
 		notes: initial_notes(),
 	},
 
@@ -48,7 +47,7 @@ export default Module({
     noteTextChanged: updateNoteText,
     showHideButtonClicked: changeShowHideState,
     showNoteDropdown: toggleNoteDropdown,
-    sortingTabClicked: changeSortMode,
+    tabClicked: changeTab,
     tagAdded: addTag, 
     tagInputTextChanged: updateTagText,
     tagRemoved: removeTag,

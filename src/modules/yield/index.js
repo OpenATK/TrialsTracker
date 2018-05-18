@@ -1,12 +1,10 @@
 import { Module } from 'cerebral'
-		/*
 import {
-	initializeYield,
+	init,
 	dataReceived,
   addGeohashes,
   removeGeohashes,
 } from './sequences'
-*/
 
 export default Module({
 
@@ -14,11 +12,9 @@ export default Module({
 	},
 
 	signals: {
-		/*
-		initialize: initializeYield,
+		init: init,
 		dataReceived,
     newTileDrawn: addGeohashes,
 		tileUnloaded: removeGeohashes,
-		*/
   }
 })

@@ -11,8 +11,9 @@ export default connect({
   cropLayers: state`map.crop_layers`,
   notes: state`notes.notes`,
   selectedNote: state`notes.selected_note`,
-  editing: state`app.view.editing`,
-  yieldDataIndex: state`yield.data_index`,
+	editing: state`app.view.editing`,
+	//TODO: Uncomment here
+  index: state`yield.index.nope`,
   fields: state`fields`,
   domain: state`Connections.oada_domain`,
 	isLoading: state`map.isLoading`,
@@ -51,7 +52,7 @@ class LayerControl extends React.Component {
 					  />)}
          </FeatureGroup>
 				</Overlay> : null }
-				{Object.keys(this.props.yieldDataIndex || {}).map(crop => 
+				{Object.keys(this.props.index || {}).map(crop => 
 					<Overlay 
           checked={this.props.cropLayers[crop].visible}
           onChange={()=>this.props.toggleCropLayer({crop})}
@@ -59,7 +60,7 @@ class LayerControl extends React.Component {
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            data={'yield.data_index.'+crop}
+            data={'yield.index.'+crop}
             layer={crop}
             url={this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             geohashGridlines={false}

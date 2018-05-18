@@ -1,50 +1,9 @@
-import tiles from '../../../components/RasterLayer/tileManager.js';
+import Promise from 'bluebird'
 import gh from 'ngeohash'
 import {CRS, Transformation, latLng} from 'leaflet'
 import Color from 'color'
-import Promise from 'bluebird'
 
-//Outcomes:
-//✔ 1. Update yieldDataIndex in the state
-//  2. Update pouchdb data that has been previously requested, else forget it
-//✔ 3. Update canvas tiles (purely functional with new data coming in)
-//  4. Update notes (need to decide if it included previous data, else simply sum new data in)
-//  5. 
-
-export default function updateYieldTiles({state, path, props, oada}) {
-	let legend = state.get(`app.view.legends.${props.crop}`);
-	let geohashesOnScreen = state.get(`Map.geohashesOnScreen.${props.crop}`);
-	if (props.response.change.type === 'merge') {
-		return Promise.map(Object.keys(props.response.change.body['geohash-index'] || {}), (geohash) => {
-			let data = props.response.change.body['geohash-index'][geohash]['geohash-data'];
-			return Promise.map(Object.keys(geohashesOnScreen[geohash] || {}), (tile) => {
-				return recursiveDrawOnCanvas(geohashesOnScreen[geohash][tile].coords, data, 0, tiles.get(tile), legend).then((canvas) => {                 
-					tiles.set(tiles, canvas);
-					return 
-				})
-			})
-		}).then(() => {
-			return path.success({})
-		})
-	} 
-	if (props.response.change.type === 'delete') {
-    Object.keys(props.response.delete['geohash-length-index'][props.ghLen]['geohash-index']).forEach((geohash) => {
-			state.set(`yield.data_index.${props.crop}.${props.ghLen}.${geohash}`, {
-				'_id': props.response.resourceId,
-				'_rev': props.response.delete['geohash-length-index'][props.ghLen]['geohash-index'][geohash]._rev
-			})
-		})
-	}
-}
-	/*
-// Set new rev to induce a cache update
-state.set(`yield.data_index.${props.crop}.${props.ghLen}.${geohash}`, {
-	'_id': props.response.resourceId,
-	'_rev': props.response.change.body['geohash-index'][geohash]._rev
-})
-*/
-
-function recursiveDrawOnCanvas(coords, data, startIndex, canvas, legend) {
+export function recursiveDrawOnCanvas(coords, data, startIndex, canvas, legend) {
 	var keys = Object.keys(data || {});
 	var stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
 	return Promise.try(function() {
@@ -111,4 +70,3 @@ function blendColors(c1, c2, percent) {
 //      a:   a1 * percent +   a2 * (1-percent),
 	};
 }
-

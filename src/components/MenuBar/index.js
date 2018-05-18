@@ -6,7 +6,7 @@ import { MenuItem, AppBar, IconButton, IconMenu, Divider } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
-  dataIndex: state`yield.data_index`,
+  index: state`yield.index`,
   currentLocation: state`app.model.current_location`,
   selectedNote: state`Note.notes.${state`Note.selected_note`}`,
   open: state`MenuBar.open`,
@@ -44,7 +44,7 @@ class MenuBar extends React.Component {
         title="TrialsTracker"
         showMenuIconButton={false}
         iconElementRight={<div>
-          {Object.keys(this.props.dataIndex || {}).length > 0 ? 
+          {Object.keys(this.props.index || {}).length > 0 ? 
             <IconButton
               key={1}
               onTouchTap={() => this.props.mapLegendButtonClicked({})}

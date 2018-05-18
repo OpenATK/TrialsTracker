@@ -6,13 +6,14 @@ import Color from 'color';
 import { props, state, signal } from 'cerebral/tags'
 import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
+import { Compute } from 'cerebral'
 
 export default connect({
-	note: state`notes.notes.${props`id`}`,
+	note: state`notes.${props`type`}.${props`id`}`,
   editing: state`app.view.editing`,
-  isMobile: state`app.is_mobile`,
   noteDropdownVisible: state`app.view.note_dropdown.visible`,
-  noteDropdown: state`app.view.note_dropdown.note`,
+	noteDropdown: state`app.view.note_dropdown.note`,
+	selected: Compute(state`notes.selected_note` === props`id`),
 
   deleteNoteButtonClicked: signal`notes.deleteNoteButtonClicked`,
   editNoteButtonClicked: signal`notes.editNoteButtonClicked`,
@@ -30,14 +31,14 @@ export default connect({
 			const inputField = this.props.type === 'note' && this.props.selected && this.props.editing ? input => {
         if (input) setTimeout(() => input.focus(), 100);
 			} : null;
-			let color = Color(this.props.color || '#000').alpha(0.4).rgb();
+			let color = Color(this.props.note.color || '#fff').alpha(0.4).rgb();
 
       let yields = [];
-      if (this.props.stats && this.props.stats.computing) {
+      if (this.props.note.stats && this.props.note.stats.computing) {
         yields.push(
           <span
             key={'yield-waiting-'+this.props.note.id}
-            className={this.props.stats.computing ? 'blinker': 'hidden'}>
+            className={this.props.note.stats.computing ? 'blinker': 'hidden'}>
               {'Computing average yield...'}
           </span>
         )
@@ -75,7 +76,7 @@ export default connect({
               className={'area-header'}>
               Area  <div
 								style={{
-									color: this.props.type === 'note' ? this.props.color : '#000',
+									color: this.props.type === 'note' ? this.props.note.color : '#000',
 									backgroundColor: this.props.type === 'note' ? `rgba(${color.r },${color.g},${color.b},${color.a})` : '#fff'}}
                 className={'note-area-box'}
               />
@@ -87,7 +88,8 @@ export default connect({
           </div>
       }
 
-		  let comps = [];
+			let comps = [];
+
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.comparison).forEach((crop) => {
 					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
@@ -126,7 +128,7 @@ export default connect({
             className={'note-header'}
 						style={{
 							padding: '0px 0px 0px 10px',
-							backgroundColor: this.props.color || '#000', 
+							backgroundColor: this.props.note.color || '#000', 
 							color: this.props.type === 'field' ? '#fff' : '#000', 
 							fontWeight: this.props.selected ? 'bold' : 'normal',
 						}}
@@ -145,7 +147,7 @@ export default connect({
 							}}
 							inputStyle={{display: 'flex'}}
 							ref={inputField}
-              value={this.props.text} 
+              value={this.props.note.text} 
               onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.note.id})}
 							tabIndex={1}
 							hintText='Type note description here...'
@@ -155,7 +157,7 @@ export default connect({
 						: 
 						<div
 						  className={'note-text'}>
-							{this.props.text}
+							{this.props.note.text}
 					  </div>
 						}
 					</div>
@@ -192,7 +194,8 @@ export default connect({
 					{comps.length ? <div
 				  	className={'comparison-container'}>
 						<div className={'comparisons-expander'}
-						  onClick={() => this.props.expandComparisonsClicked({path:this.props.path})}>
+						  onClick={() => this.props.expandComparisonsClicked({type:this.props.type, id:this.props.id})}>
+
 							<hr className={'comp-hr'}/>
 							{this.props.note.expanded ? 'Yield Comparisons \u25bc' : 'Yield Comparisons \u25b6'}
 							<hr className={'comp-hr'}/>

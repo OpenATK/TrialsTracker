@@ -1,5 +1,5 @@
 //var serverSetup = require('./serverSetupBatch.js');
-var serverSetup = require('./serverSetup3.js');
+var serverSetup = require('./serverSetup.js');
 /*
 	Obtain token for OADA server
 	- obtain from https://client.oada-dev.com after running OADA server.

@@ -5,14 +5,14 @@ import {
   handleCurrentLocationButton,
   handleFieldNoteClick,
   handleLocationFound,
-  handleMapClick,
+	handleMapClick,
   handleMapMoved,
   markerDragging,
   startMarkerDrag,
   startMovingMap,
   toggleCropLayerVisibility,
   undoDrawPoint,
-} from './chains';
+} from './sequences';
 
 export default Module({
 

@@ -12,25 +12,18 @@ import _ from 'lodash';
 export default connect({
   notes: state`notes.notes`, 
   tags: state`app.model.tags`,
-  sortMode: state`app.view.sort_mode`, 
+  tab: state`notes.tab`, 
   isMobile: state`app.is_mobile`,
   editing: state`app.view.editing`,
-  selectedNote: state`notes.selected_note`,
-  fields: state`fields`,
+	fields: state`notes.fields`,
 
-	init: signal`notes.init`,
-  sortingTabClicked: signal`notes.sortingTabClicked`,
+  tabClicked: signal`notes.tabClicked`,
   noteListClicked: signal`notes.noteListClicked`,
   addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
 },
 
 class NoteList extends React.Component {
 
-	componentWillMount() {
-		this.props.init({});
-	}
-	
-	
 	handleClick(evt) {
     // call only for note-list element, not children note elements;
     if (!this.props.editing) {
@@ -44,7 +37,7 @@ class NoteList extends React.Component {
 		//TODO: either make this a computed, or put this into actions
 		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}).map(key => 
 			this.props.notes[key]), ['date'])
-    let notes_array = sorted_notes.map((note, i) => {
+    let notes = sorted_notes.map((note, i) => {
 			let comparisons = Object.keys(note.fields || {}).map((field) => {
 				return {
 					text: field,
@@ -56,18 +49,12 @@ class NoteList extends React.Component {
 				order={i}
         id={note.id} 
 				key={'notekey'+note.id}
+				type='notes'
 				comparisons={comparisons}
-				color={note.color}
-				area={note.geometry && note.geometry.area ? note.geometry.area : ''}
-				type='note'
-				path={`notes.notes.${note.id}`}
-				selected={this.props.selectedNote === note.id|| false}
-				text={note.text || ''}
-				stats={note.stats}
       />)
     });
 
-		let fields_array = Object.keys(this.props.fields || {}).map((field) => {
+		let fields = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
       Object.keys(this.props.notes || {}).forEach((id) => {                          
 				if (this.props.notes[id].fields[field]) comparisons.push({
@@ -79,12 +66,8 @@ class NoteList extends React.Component {
       return(<Note 
         id={field} 
 				key={field}
+				type='fields'
 				comparisons={comparisons}
-				area={this.props.fields[field].boundary.area}
-				type='field'
-				path={`fields.${field}`}
-				text={field}
-				stats={this.props.fields[field].stats}
       />)  
     })
 
@@ -93,8 +76,8 @@ class NoteList extends React.Component {
 				className={'note-list'}>
 				<Header />
         <SwipeableViews
-          index={this.props.sortMode}
-          onChangeIndex={(val) => this.props.sortingTabClicked({newSortMode: val})}>
+          index={this.props.tab}
+          onChangeIndex={(tab) => this.props.tabClicked({tab})}>
           <div
             className={'notes-container'}
             onTouchTap={(evt) => {this.handleClick(evt)}}>
@@ -103,11 +86,11 @@ class NoteList extends React.Component {
               onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
               Create a new note...
             </div>
-            {notes_array} 
+            {notes} 
           </div>
           <div
             className={'notes-container'}>
-            {fields_array} 
+            {fields} 
           </div>
           <div>
             TAG CARDS
@@ -115,7 +98,7 @@ class NoteList extends React.Component {
         </SwipeableViews>
         <FloatingActionButton
           className={'add-note-button'}
-          style={(this.props.editing && this.props.sortMode === 0) ? {display: 'none'} : null}
+          style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : null}
           onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <ContentAdd />
         </FloatingActionButton>

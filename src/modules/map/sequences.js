@@ -57,6 +57,11 @@ export let handleMapMoved = [
   setMapLocation,
 ];
 
+export function mapToNotePolygon({props, state}) {
+  var note = state.get(`notes.notes.${props.id}`);
+  if (note && note.geometry.centroid) state.set('map.center', note.geometry.centroid);
+}
+
 function setMapToCurrentLocation({state}) {
   let loc = state.get('app.model.current_location');
   if (loc) state.set('map.center', [loc.lat, loc.lng]);
@@ -76,26 +81,26 @@ function setCurrentLocation({props, state}) {
 }
 
 function setMarkerPosition({props, state}) {
-  let id = state.get('Note.selected_note');
-  state.set(`Note.notes.${id}.geometry.geojson.coordinates.0.${props.idx}`, [props.lng, props.lat])
+  let id = state.get('notes.selected_note');
+  state.set(`notes.notes.${id}.geometry.geojson.coordinates.0.${props.idx}`, [props.lng, props.lat])
 }
 
 function recalculateArea({state}) {
-  let id = state.get('Note.selected_note');
-  let note = state.get(`Note.notes.${id}`);
+  let id = state.get('notes.selected_note');
+  let note = state.get(`notes.notes.${id}`);
   if (note.geometry.geojson) {
     if (note.geometry.geojson.coordinates[0].length > 2) {
       let area = gjArea.geometry(note.geometry.geojson)/4046.86;
-      state.set(`Note.notes.${id}.geometry.area`, area);
+      state.set(`notes.notes.${id}.geometry.area`, area);
     }
   }
 }
 
 function undo({props, state}) {
-  let id = state.get('Note.selected_note');
-	let points = state.get(`Note.notes.${id}.geometry.geojson.coordinates.0`);
+  let id = state.get('notes.selected_note');
+	let points = state.get(`notes.notes.${id}.geometry.geojson.coordinates.0`);
   if (points.length > 0) {
-    state.pop(`Note.notes.${id}.geometry.geojson.coordinates.0`);
+    state.pop(`notes.notes.${id}.geometry.geojson.coordinates.0`);
   }
 }
 
@@ -109,15 +114,15 @@ function toggleCropLayer({props, state}) {
   state.set(`map.crop_layers${props.crop}.visible`, !vis);
 }
 
-function getNoteBoundingBox({props, state}) {
-  let selectedNote = state.get('Note.selected_note');
-  let notes = state.get('Note.notes');
+export function getNoteBoundingBox({props, state}) {
+  let selectedNote = state.get('notes.selected_note');
+  let notes = state.get('notes.notes');
   let bbox = computeBoundingBox(notes[selectedNote].geometry.geojson);
-  state.set(`Note.notes.${selectedNote}.geometry.bbox`, bbox);
-  state.set(`Note.notes.${selectedNote}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
+  state.set(`notes.notes.${selectedNote}.geometry.bbox`, bbox);
+  state.set(`notes.notes.${selectedNote}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
 }
 
 function dropPoint ({props, state}) {
-  let id = state.get('Note.selected_note');
-  state.push(`Note.notes.${id}.geometry.geojson.coordinates.0`, props.pt);
+  let id = state.get('notes.selected_note');
+  state.push(`notes.notes.${id}.geometry.geojson.coordinates.0`, props.pt);
 }

@@ -2,22 +2,6 @@ import gh from 'ngeohash';
 import gju from 'geojson-utils';
 import _ from 'lodash'
 import Promise from 'bluebird';
-import geohashNoteIndexManager from './geohashNoteIndexManager';
-
-export function yieldDataStatsForPolygon(polygon, bbox) {
-	if (_.isEmpty(polygon)) return Promise.resolve([]);
-  let newPoly = _.clone(polygon);
-  newPoly.push(polygon[0])
-  //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
-  let strings = [gh.encode(bbox.north, bbox.west, 9),
-    gh.encode(bbox.north, bbox.east, 9),
-    gh.encode(bbox.south, bbox.east, 9),
-    gh.encode(bbox.south, bbox.west, 9)];
-	let commonString = longestCommonPrefix(strings);
-	return recursiveGeohashSearch(newPoly, commonString, []).then((geohashes) => {
-    return geohashes
-  })
-}
 
 export function recursiveGeohashSearch(polygon, geohash, geohashes) {
 	return Promise.try(() => {

@@ -8,10 +8,11 @@ import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
 import oadaCache from '../../modules/oada/factories/cache'
 import tiles from './tileManager.js'
+import { recursiveDrawOnCanvas } from './draw'
 let cache = oadaCache(null, 'oada')
 
 export default connect({
-  dataIndex: state`${props`data`}`,
+  index: state`${props`data`}`,
   geohashesToDraw: state`Map.geohashesToDraw.${props`layer`}`,
   legend: state`app.view.legends.${props`layer`}`,
   token: state`Connections.oada_token`,
@@ -63,7 +64,7 @@ class RasterLayer extends GridLayer {
     tile.height = 256;
     tile.width = 256;
 
-    if (this.props.dataIndex) {
+    if (this.props.index) {
       this.drawTile(coords, precision, tile, geohashes, done);
     }
 
@@ -73,7 +74,7 @@ class RasterLayer extends GridLayer {
   drawTile(coords, precision, canvas, geohashes, done) {
     var self = this;
     geohashes = geohashes.filter((geohash) => {
-      return typeof(self.props.dataIndex['geohash-'+precision][geohash]) !== 'undefined';
+      return typeof(self.props.index['geohash-'+precision][geohash]) !== 'undefined';
     })
 		return Promise.map(geohashes, (geohash) => {
 			let resPath =	'/harvest/tiled-maps/dry-yield-map/crop-index/'+this.props.layer+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash.substring(0, geohash.length)+'/geohash-data/';
@@ -85,75 +86,6 @@ class RasterLayer extends GridLayer {
       tiles.set(coordsIndex, canvas);
       done(null, canvas);
     })
-  }
-
-// This function recursively draws 100 yield data points
-  recursiveDrawOnCanvas(coords, data, startIndex, canvas) {
-		var keys = Object.keys(data);
-		var self = this;
-		var stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
-		return Promise.try(function() {
-			for (var i = startIndex; i < stopIndex; i++) {
-				var val = data[keys[i]];
-				var ghBounds = gh.decode_bbox(keys[i]); 
-				var swLatLng = new L.latLng(ghBounds[0], ghBounds[1]);
-				var neLatLng = new L.latLng(ghBounds[2], ghBounds[3]);
-				var levels = self.props.legend;
-				var sw = self.context.map.project(swLatLng, coords.z);
-				var ne = self.context.map.project(neLatLng, coords.z);
-				var w = sw.x - coords.x*256;
-				var n = ne.y - coords.y*256;
-				var e = ne.x - coords.x*256;
-				var s = sw.y - coords.y*256;
-				var width = Math.ceil(e-w);
-				var height = Math.ceil(s-n);
-
-				//Fill the entire geohash aggregate with the appropriate color
-				var context = canvas.getContext('2d');
-				context.lineWidth = 0;
-				var col = self.colorForvalue(val.weight.sum/val.area.sum, levels);
-				context.beginPath();
-				context.rect(w, n, width, height);
-				context.fillStyle = Color(col).hexString();
-				context.fill();
-			}
-			if (stopIndex !== keys.length) {
-				return self.recursiveDrawOnCanvas(coords, data, stopIndex, canvas);
-			} 
-			return canvas;
-		})
-  }
-
-  colorForvalue(val, levels) {
-    if (val <= levels[0].value) {
-      return levels[0].color;
-    }
-    if (val >= levels[levels.length-1].value) {
-      return levels[levels.length-1].color;
-    }
-    for (let i = 0; i < levels.length-1; i++) {
-      let bottom = levels[i];
-      let top = levels[i+1];
-      if (val > bottom.value && val <= top.value) {
-        let percentIntoRange = (val - bottom.value) / (top.value - bottom.value);
-        return this.blendColors(top.color, bottom.color, percentIntoRange);
-      }
-    }
-
-    console.log('ERROR: val = ', val, ', but did not find color!');
-    return null;
-  }
-
-  blendColors(c1, c2, percent) {
-//    let a1 = (typeof c1.a === 'undefined') ? 255 : c1.a; // Defualt opaque
-//    let a2 = (typeof c1.b === 'undefined') ? 255 : c1.b;
-    return { 
-      r: c1.r * percent + c2.r * (1-percent),
-      g: c1.g * percent + c2.g * (1-percent),
-      b: c1.b * percent + c2.b * (1-percent),
-      a: 0.9999,
-//      a:   a1 * percent +   a2 * (1-percent),
-    };
   }
 
   getGeohashLevel(zoom, sw, ne) { 
