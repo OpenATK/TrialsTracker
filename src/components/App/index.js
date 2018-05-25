@@ -13,7 +13,7 @@ export default connect({
 
 class App extends React.Component {
  
-  componentWillMount() {
+  componentDidMount() {
 		this.props.init({});
   }
 

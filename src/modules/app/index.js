@@ -13,18 +13,18 @@ import * as signals from './sequences';
 export default Module({
 
 	modules: {
+		yield: yieldModule,
+		fields,
     map,
 		notes,
 		oada: oadaModule,
     Connections,
 		MenuBar,
-		fields,
-		yield: yieldModule,
 	},
 
   state : stateTree,
 
-  signals,
+	signals,
 
 	providers: {
 		oada,

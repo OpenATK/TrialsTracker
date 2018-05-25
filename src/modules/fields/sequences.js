@@ -1,48 +1,31 @@
 import polygonsIntersect from '../map/utils/polygonsIntersect';
-import uuid from 'uuid'
 import rmc from 'random-material-color'
-import recursiveGet from '../oada/factories/recursiveGet';
 import gaussian from 'gaussian';
 import { sequence } from 'cerebral'
 import { set, when } from 'cerebral/operators'
 import { state, props } from 'cerebral/tags'
 import Promise from 'bluebird';
 import computeBoundingBox from '../map/utils/computeBoundingBox'
-import * as yieldMod from '../yield/sequences';
+import {getPolygonStats, polygonToGeohashes } from '../yield/sequences.js';
 import gjArea from '@mapbox/geojson-area';
 import * as oada from '../oada/sequences'
+import * as notes from '../notes/sequences'
 
 //TODO: create transform from field to notes.fields entry
 
 let setupTree = {
-	'_type': "application/vnd.oada.fields.1+json",
+	//	'_type': "application/vnd.oada.fields.1+json",
 	'fields-index': {
 		'*': {
-			'_type': "application/vnd.oada.field.1+json",
+			//			'_type': "application/vnd.oada.field.1+json",
 			'fields-index': {
 				'*': {
-					'_type': "application/vnd.oada.field.1+json"
+					//					'_type': "application/vnd.oada.field.1+json"
 				}
 			}
 		}
 	}
 }
-
-export var computeFieldYieldData = [
-	/*
-  getFieldStats, {
-    success: [
-			setFieldStats,
-			set(props`notes`, state`Note.notes`),
-      getFieldDataForNotes, {
-        success: [setFieldDataForNotes],
-        error: [],
-      }
-    ],
-    error: [],
-	},
-	*/
-];
 
 export const fetch = sequence('fields.fetch', [
 	({state, props}) => ({
@@ -55,31 +38,28 @@ export const fetch = sequence('fields.fetch', [
 			mapOadaToFields,
 			mapFieldsToNotes,
 			set(state`notes.fields`, props`notes`),
-			//			linkNotesToFields,
 		]),
 		false: sequence('fetchFieldsFailed', []),
 	},
 ])
 
+console.log('before fields init', getPolygonStats)
 export const init = sequence('fields.init', [
-	fetch
+	set(state`fields.loading`, true),
+	fetch,
+	set(state`fields.loading`, false),
+	set(props`type`, 'fields'),
+	notes.getAllStats,
+	getPolygonStats,
 ])
+console.log('after fields init', getPolygonStats)
 
 export const selectField = [];
-
-export function linkFieldsToNotes({state, props}) {
-	/*
-	data: {
-		tags: note.tags,
-		color: note.color,
-	}
-	*/
-}
 
 //export const mapFieldsToNotes = sequence('fields.mapFieldsToNotes', [
 //	({state, props}) => {
 function mapFieldsToNotes({state, props}) {
-		let fields = state.get('fields');
+		let fields = state.get('fields.records');
 		let notes = {};
 		return Promise.map(Object.keys(fields || {}), (key) => {
 			return notes[key] = {
@@ -108,14 +88,14 @@ function mapFieldsToNotes({state, props}) {
 //])
 
 export function getFieldStats({state, path}) {
-  let fields = state.get('fields');
+  let fields = state.get('fields.records');
   let availableGeohashes = state.get('yield.index');
   if (!(fields && availableGeohashes)) return path.error({});
   let token = state.get('Connections.oada_token');
   let domain = state.get('Connections.oada_domain');
 	let stats = {};
 	return Promise.map(Object.keys(fields || {}), (field, idx) => {
-		return yieldMod.geohashesForPolygon(fields[field].boundary.geojson.coordinates[0], fields[field].boundary.bbox, availableGeohashes, domain, token).then((fieldStats) => {
+		return polygonToGeohashes(fields[field].boundary.geojson.coordinates[0], fields[field].boundary.bbox, availableGeohashes, domain, token).then((fieldStats) => {
       stats[field] = fieldStats.stats;
       return stats;
     })
@@ -146,7 +126,7 @@ let dist = gaussian(0,1);
 
 export function getFieldDataForNotes({props, state, path}) {
 	var notes = props.notes;
-  var fields = state.get('fields');
+  var fields = state.get('fields.records');
   if (fields && props.notes) {
 		var noteFields = {};
     return Promise.map(Object.keys(props.notes), (noteId) => {
@@ -190,7 +170,7 @@ export function mapOadaToFields({props, state}) {
   if (fields) {
 		Object.keys(fields['fields-index']).forEach((fieldGroup) => {
 		  Object.keys(fields['fields-index'][fieldGroup]['fields-index']).forEach((field) => {
-			  state.set(`fields.${field}`, { 
+			  state.set(`fields.records.${field}`, { 
 			  	boundary: fields['fields-index'][fieldGroup]['fields-index'][field].boundary,
 			  	id: field,
 			  });
@@ -213,9 +193,9 @@ export function setFieldDataForNotes({props, state}) {
 export function setFieldBoundingBoxes({props, state}) {
 //TODO: need to check for valid data source
   Object.keys(props.bboxes).forEach((field) => {
-    state.set(`fields.${field}.boundary.area`, props.areas[field]);
-    state.set(`fields.${field}.boundary.bbox`, props.bboxes[field]);
-    state.set(`fields.${field}.boundary.centroid`, [(props.bboxes[field].north + props.bboxes[field].south)/2, (props.bboxes[field].east + props.bboxes[field].west)/2]);
+    state.set(`fields.records.${field}.boundary.area`, props.areas[field]);
+    state.set(`fields.records.${field}.boundary.bbox`, props.bboxes[field]);
+    state.set(`fields.records..${field}.boundary.centroid`, [(props.bboxes[field].north + props.bboxes[field].south)/2, (props.bboxes[field].east + props.bboxes[field].west)/2]);
   })
 }
 
@@ -223,7 +203,7 @@ export function setFieldStats({props, state}) {
 	if (props.stats) {
     Object.keys(props.stats).forEach((field) => {
       Object.keys(props.stats[field]).forEach((crop) => {
-        state.set(`fields.${field}.stats.${crop}`, props.stats[field][crop]);
+        state.set(`fields.records.${field}.stats.${crop}`, props.stats[field][crop]);
       })
 		})
 	}

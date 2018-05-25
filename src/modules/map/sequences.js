@@ -1,5 +1,4 @@
 import { set } from 'cerebral/operators';
-import _ from 'lodash';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import { state } from 'cerebral/tags'
 import gjArea from '@mapbox/geojson-area';
@@ -123,6 +122,14 @@ export function getNoteBoundingBox({props, state}) {
 }
 
 function dropPoint ({props, state}) {
-  let id = state.get('notes.selected_note');
-  state.push(`notes.notes.${id}.geometry.geojson.coordinates.0`, props.pt);
+	let id = state.get('notes.selected_note');
+	let note = state.get(`notes.notes.${id}`);
+	if (!note.geometry.geojson) {
+		state.set(`notes.notes.${id}.geometry.geojson`, {
+			type: "Polygon",
+			coordinates: [[props.pt]]
+		});
+	} else {
+		state.push(`notes.notes.${id}.geometry.geojson.coordinates.0`, props.pt);
+	}
 }

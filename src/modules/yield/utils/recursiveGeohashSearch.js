@@ -1,6 +1,5 @@
 import gh from 'ngeohash';
 import gju from 'geojson-utils';
-import _ from 'lodash'
 import Promise from 'bluebird';
 
 export function recursiveGeohashSearch(polygon, geohash, geohashes) {
@@ -41,7 +40,8 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes) {
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
 		if (gju.pointInPolygon(pt, poly)) {
-			geohashes.push(geohash)
+			geohashes[geohash.slice(0, geohash.length-2)] = geohashes[geohash.slice(0,geohash.length-2)] || {};
+			geohashes[geohash.slice(0, geohash.length-2)][geohash] = geohash;
       return geohashes;
     }
 //3. If polygon is completely inside geohash, dig deeper. Only one point

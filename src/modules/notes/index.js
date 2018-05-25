@@ -26,7 +26,7 @@ export default Module({
 
 	state: {
 		tab: 0,//0. notes, 1. fields, 2. tags
-		notes: initial_notes(),
+		notes: {},//initial_notes(),
 	},
 
 	signals: {

@@ -73,7 +73,7 @@ class TrialsMap extends React.Component {
     let markerList = [];
     if (this.props.editing && this.props.selectedNote) {
 			let note = this.props.notes[this.props.selectedNote];
-      if (note.geometry && note.geometry.geojson && note.geometry.geojson.coordinates[0].length > 0) {
+      if (note && note.geometry && note.geometry.geojson && note.geometry.geojson.coordinates[0].length > 0) {
         markerList = [];
         note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
            markerList.push(<Marker

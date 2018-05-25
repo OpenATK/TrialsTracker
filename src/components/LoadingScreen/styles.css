@@ -1,0 +1,9 @@
+.loading-screen {
+	display: flex;
+	position: absolute;
+	background: #0000005e;
+	height: 100%;
+	width: 30%;
+	justify-content: center;
+	align-items: center;
+}

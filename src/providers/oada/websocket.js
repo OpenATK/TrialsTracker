@@ -1,6 +1,5 @@
 const Promise = require('bluebird');
 const uuid = require('uuid/v4');
-let WebSocket = require('ws');
 let isWindow = false;
 if (typeof window !== 'undefined' && window.WebSocket) {
 	WebSocket = window.WebSocket;
@@ -13,7 +12,6 @@ function websocket(url) {
 	var messages = [];
 	//Create the socket
 	url = url.replace('https://', 'wss://').replace('http://', 'ws://');
-	//	url = url.indexOf('ws') !== 0 ? url + 'wss://' : url;
 	var socket = new WebSocket(url);
 	var connected = false;
 	var httpCallbacks = {};

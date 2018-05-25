@@ -12,6 +12,5 @@ export default function computeBoundingBox(geojsonPolygon) {
     if (coords[j][0] < west) west = coords[j][0];
   }
   bbox = {north, south, east, west};
-
   return bbox;
 };

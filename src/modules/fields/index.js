@@ -5,7 +5,7 @@ import {
 export default Module({
 
 	state : {
-
+		records: {},
 	},
 
 	signals: {

@@ -13,8 +13,8 @@ export default connect({
   selectedNote: state`notes.selected_note`,
 	editing: state`app.view.editing`,
 	//TODO: Uncomment here
-  index: state`yield.index.nope`,
-  fields: state`fields`,
+  index: state`yield.index`,
+  fields: state`fields.records`,
   domain: state`Connections.oada_domain`,
 	isLoading: state`map.isLoading`,
 	geohashPolygons: state`map.geohashPolygons`,
@@ -45,7 +45,7 @@ class LayerControl extends React.Component {
           checked 
           name='Fields'>
 				  <FeatureGroup>
-					  {Object.keys(this.props.fields).map(field => <GeoJSON 
+					  {Object.keys(this.props.fields || {}).map(field => <GeoJSON 
               className={'field-polygon'}
               data={this.props.fields[field].boundary.geojson} 
               key={field}
@@ -60,9 +60,7 @@ class LayerControl extends React.Component {
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            data={'yield.index.'+crop}
             layer={crop}
-            url={this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             geohashGridlines={false}
             tileGridlines={false}
 					/>

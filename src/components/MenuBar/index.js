@@ -15,7 +15,7 @@ export default connect({
   legendVisible: state`app.view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
-  clearCacheButtonClicked: signal`MenuBar.clearCacheButtonClicked`,
+  clearCacheButtonClicked: signal`clearCacheButtonClicked`,
   gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
@@ -35,7 +35,7 @@ class MenuBar extends React.Component {
     rfs.call(el);
   }
 
-  render() {
+	render() {
     let undoEnabled = this.props.selectedNote ?
       this.props.selectedNote.geometry.geojson.coordinates[0].length > 0 : false;
     return (
@@ -68,7 +68,7 @@ class MenuBar extends React.Component {
             key={4}
             iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
             onRequestChange={()=>{this.props.showMenuDropdown()}}
-            onItemTouchTap={()=>{this.props.showMenuDropdown()}}
+            onTouchTap={()=>{this.props.showMenuDropdown()}}
             open={this.props.menuDropdownVisible}
             targetOrigin={{horizontal: 'right', vertical: 'top'}}
             anchorOrigin={{horizontal: 'right', vertical: 'top'}}>

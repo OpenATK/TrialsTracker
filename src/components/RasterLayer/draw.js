@@ -2,30 +2,79 @@ import Promise from 'bluebird'
 import gh from 'ngeohash'
 import {CRS, Transformation, latLng} from 'leaflet'
 import Color from 'color'
+import tiles from './tileManager.js'
+import L from 'leaflet'
+
+//export function drawTile(coords, precision, canvas, geohashes, done) {
+export function drawTile({state, props, oada}) {
+	let domain = state.get('oada.domain');
+	let token = state.get('oada.token');
+  let tileSwPt = new L.Point(props.coords.x*256, (props.coords.y*256)+256);
+  let tileNePt = new L.Point((props.coords.x*256)+256, props.coords.y*256);
+	let sw = CRS.EPSG3857.pointToLatLng(tileSwPt, props.coords.z);
+	let ne = CRS.EPSG3857.pointToLatLng(tileNePt, props.coords.z);
+  let precision = getGeohashLevel(props.coords.z, sw, ne);
+	let geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
+	let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
+	let tile = tiles.get(coordsIndex)
+
+	// Only get those that we know to be available (this "available" list can also
+	// be utilized to filter what is drawn).
+	geohashes = geohashes.filter((geohash) => {
+		return (props.index['geohash-'+geohash.length][geohash]) ? true : false;
+	})
+	// GET the relevant tiles and draw them on the canvas
+	return Promise.map(geohashes, (geohash) => {
+	//	return Promise.try(() => geohashes[0]).then((geohash) => {
+		if (!geohash) throw new Error
+		let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+props.layer+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
+		return oada.get({
+			url: domain+path, 
+			token,
+		}).then((data) => {
+			return recursiveDrawOnCanvas(props.coords, data.data['geohash-data'], 0, tile, props.legend);
+		})
+	}).then(() => {
+		//Save the tile and call done
+		tiles.set(coordsIndex, tile);
+		return { geohashes }
+	}).catch((err) => {
+		console.log(err)
+	})
+}
+
+function getGeohashLevel(zoom, sw, ne) {
+  if (zoom >= 15) return 7;
+  if (zoom >= 12) return 6;
+  if (zoom >= 8) return 5;
+  if (zoom >= 6) return 4;
+  if (zoom <= 5) return 3;
+}
+
 
 export function recursiveDrawOnCanvas(coords, data, startIndex, canvas, legend) {
-	var keys = Object.keys(data || {});
-	var stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
+	let keys = Object.keys(data || {});
+	let stopIndex = (keys.length < startIndex+200) ? keys.length : startIndex+200;
 	return Promise.try(function() {
-		for (var i = startIndex; i < stopIndex; i++) {
-			var val = data[keys[i]];
-			var ghBounds = gh.decode_bbox(keys[i]);
-			var swLatLng = new latLng(ghBounds[0], ghBounds[1]);
-			var neLatLng = new latLng(ghBounds[2], ghBounds[3]);
-			var levels = legend;
-			var sw = CRS.EPSG3857.latLngToPoint(swLatLng, coords.z);
-			var ne = CRS.EPSG3857.latLngToPoint(neLatLng, coords.z);
-			var w = sw.x - coords.x*256;
-			var n = ne.y - coords.y*256;
-			var e = ne.x - coords.x*256;
-			var s = sw.y - coords.y*256;
-			var width = Math.ceil(e-w);
-			var height = Math.ceil(s-n);
+		for (let i = startIndex; i < stopIndex; i++) {
+			let val = data[keys[i]];
+			let ghBounds = gh.decode_bbox(keys[i]);
+			let swLatLng = new latLng(ghBounds[0], ghBounds[1]);
+			let neLatLng = new latLng(ghBounds[2], ghBounds[3]);
+			let levels = legend;
+			let sw = CRS.EPSG3857.latLngToPoint(swLatLng, coords.z);
+			let ne = CRS.EPSG3857.latLngToPoint(neLatLng, coords.z);
+			let w = sw.x - coords.x*256;
+			let n = ne.y - coords.y*256;
+			let e = ne.x - coords.x*256;
+			let s = sw.y - coords.y*256;
+			let width = Math.ceil(e-w);
+			let height = Math.ceil(s-n);
 
 			//Fill the entire geohash aggregate with the appropriate color
-			var context = canvas.getContext('2d');
+			let context = canvas.getContext('2d');
 			context.lineWidth = 0;
-			var col = colorForvalue(val.weight.sum/val.area.sum, levels);
+			let col = colorForvalue(val.weight.sum/val.area.sum, levels);
 			context.beginPath();
 			context.rect(w, n, width, height);
 			context.fillStyle = Color(col).hexString();

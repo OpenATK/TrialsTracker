@@ -7,6 +7,7 @@ import {FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import LoadingScreen from '../LoadingScreen';
 import _ from 'lodash';
 
 export default connect({
@@ -16,6 +17,7 @@ export default connect({
   isMobile: state`app.is_mobile`,
   editing: state`app.view.editing`,
 	fields: state`notes.fields`,
+	loading: state`notes.loading`,
 
   tabClicked: signal`notes.tabClicked`,
   noteListClicked: signal`notes.noteListClicked`,
@@ -35,9 +37,9 @@ class NoteList extends React.Component {
 
 	render() {
 		//TODO: either make this a computed, or put this into actions
-		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}).map(key => 
-			this.props.notes[key]), ['date'])
-    let notes = sorted_notes.map((note, i) => {
+		let notesArray = Object.keys(this.props.notes || {}).map(key => this.props.notes[key]);
+		let sorted_notes = _.sortBy(notesArray, ['date'])
+		let notes = sorted_notes.map((note, i) => {
 			let comparisons = Object.keys(note.fields || {}).map((field) => {
 				return {
 					text: field,
@@ -57,7 +59,7 @@ class NoteList extends React.Component {
 		let fields = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
       Object.keys(this.props.notes || {}).forEach((id) => {                          
-				if (this.props.notes[id].fields[field]) comparisons.push({
+				if (this.props.notes[id].fields && this.props.notes[id].fields[field]) comparisons.push({
 					text: this.props.notes[id].text,
 					stats: this.props.notes[id].stats,
 					comparison: this.props.notes[id].fields[field]
@@ -65,7 +67,7 @@ class NoteList extends React.Component {
 			})
       return(<Note 
         id={field} 
-				key={field}
+				key={'notekey'+field}
 				type='fields'
 				comparisons={comparisons}
       />)  
@@ -101,7 +103,8 @@ class NoteList extends React.Component {
           style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : null}
           onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <ContentAdd />
-        </FloatingActionButton>
+				</FloatingActionButton>
+				{this.props.loading ? <LoadingScreen /> : null}
       </div>
     );
   }
