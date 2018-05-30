@@ -127,6 +127,7 @@ function fetch({oada, props, state, path}) {
 		return oada.get({
 			url,
 			token: props.token 
+
 		}).then((response) => {
 			returnData = response.data;
 			return Promise.map(Object.keys(setupTree || returnData), (key) => {
@@ -146,6 +147,9 @@ function fetch({oada, props, state, path}) {
 					})
 				}
 			})
+		}).catch((err) => {
+			// 404s and such handled here. This will return an empty string as its data
+			return err.response
 		}).then(() => {
 			return returnData
 		})
@@ -218,10 +222,9 @@ export const registerWatch = sequence('oada.registerWatch', [
 	({state, props, oada}) => {
 		return oada.watch({
 			token: state.get('oada.token'),
-			url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
-			
-		}).then((result) => {
-
+			url: ((props.path[0] === '/') ? '':'/')+props.path,
+			signalName: props.signalPath,
+			payload: {},
 		})
 	},
 	set(state`oada.watches`, {}),

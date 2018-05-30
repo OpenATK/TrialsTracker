@@ -20,7 +20,7 @@ export default connect({
   fieldClicked: signal`fields.fieldClicked`,
   noteTextChanged: signal`notes.noteTextChanged`,
   backgroundClicked: signal`notes.noteBackgroundClicked`,
-	showNoteDropdown: signal`notes.showNoteDropdown`,
+	toggleNoteDropdown: signal`notes.toggleNoteDropdown`,
 	expandComparisonsClicked: signal`notes.expandComparisonsClicked`,
 },
 
@@ -31,10 +31,10 @@ export default connect({
 			const inputField = this.props.type === 'note' && this.props.selectedNote && this.props.editing ? input => {
         if (input) setTimeout(() => input.focus(), 100);
 			} : null;
-			let color = Color(this.props.note.color || '#fff').alpha(0.4).rgb();
+			let color = this.props.note ? Color(this.props.note.color || '#fff').alpha(0.4).rgb() : null;
 
       let yields = [];
-      if (this.props.note.stats && this.props.note.stats.computing) {
+      if (this.props.note && this.props.note.stats && this.props.note.stats.computing) {
         yields.push(
           <span
             key={'yield-waiting-'+this.props.note.id}
@@ -42,7 +42,7 @@ export default connect({
               {'Computing average yield...'}
           </span>
         )
-			} else {
+			} else if (this.props.note) {
 				Object.keys(this.props.note.stats || {}).forEach((crop) => {
           yields.push(
             <div
@@ -67,7 +67,7 @@ export default connect({
 			}
 
       let areaContent = null;
-      if (this.props.note.geometry.area) {
+      if (this.props.note && this.props.note.geometry && this.props.note.geometry.area) {
         areaContent = 
           <div
             key={'area'}
@@ -76,8 +76,8 @@ export default connect({
               className={'area-header'}>
               Area  <div
 								style={{
-									color: this.props.type === 'notes' ? this.props.note.color : '#000',
-									backgroundColor: this.props.type === 'notes' ? `rgba(${color.r },${color.g},${color.b},${color.a})` : '#fff'}}
+									color: this.props.type === 'notes' && this.props.note ? this.props.note.color : '#000',
+									backgroundColor: this.props.type === 'notes' && this.props.note ? `rgba(${color.r },${color.g},${color.b},${color.a})` : '#fff'}}
                 className={'note-area-box'}
               />
             </span>
@@ -121,14 +121,14 @@ export default connect({
 
       return (
         <Card
-					onTouchTap={this.props.type === 'notes' ? (e) => this.props.noteClicked({id:this.props.note.id, type: this.props.type}) : (e) => this.props.fieldClicked({id:this.props.note.id, type: this.props.type})}
+					onClick={() => this.props.noteClicked({id:this.props.id, type: this.props.type})}
           className={'note'}
           style={{order: this.props.order}}>
           <CardHeader
             className={'note-header'}
 						style={{
 							padding: '0px 0px 0px 10px',
-							backgroundColor: this.props.note.color || '#000', 
+							backgroundColor: (this.props.note) ? this.props.note.color || '#000' : '#000', 
 							color: this.props.type === 'field' ? '#fff' : '#000', 
 							fontWeight: selected ? 'bold' : 'normal',
 						}}
@@ -157,7 +157,7 @@ export default connect({
 						: 
 						<div
 						  className={'note-text'}>
-							{this.props.note.text}
+							{this.props.note ? this.props.note.text: ''}
 					  </div>
 						}
 					</div>
@@ -166,27 +166,27 @@ export default connect({
 							iconButtonElement={
 								<IconButton 
 									style={{height:'25px', padding: '0px'}}
-									onTouchTap={(e)=>{e.stopPropagation()}}>
+									onClick={(e)=>{e.stopPropagation()}}>
 									<MoreVertIcon />
 								</IconButton>
 							}
-              onRequestChange={()=>{this.props.showNoteDropdown({id:this.props.note.id, type:this.props.type})}}
+              onRequestChange={()=>{this.props.toggleNoteDropdown({id:this.props.note.id, type:this.props.type})}}
               open={this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.note.id}
               targetOrigin={{horizontal: 'right', vertical: 'top'}}
               anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
 							{selected && this.props.editing ? null : <MenuItem 
                 primaryText="Edit" 
-                onTouchTap={(e)=>{this.props.editNoteButtonClicked({id:this.props.note.id, type:this.props.type})}}
+                onClick={(e)=>{this.props.editNoteButtonClicked({id:this.props.note.id, type:this.props.type})}}
               /> }
 							{selected && this.props.editing ? null : <Divider /> }
               <MenuItem 
                 primaryText="Delete"
-                onTouchTap={(e) => {this.props.deleteNoteButtonClicked({id:this.props.note.id, type:this.props.type})}}
+                onClick={(e) => {this.props.deleteNoteButtonClicked({id:this.props.note.id, type:this.props.type})}}
               />
             </IconMenu>
           </CardHeader>
           <div
-						className={this.props.note.geometry.area ? 'note-main-info' : 'hidden'}>
+						className={this.props.note && this.props.note.geometry && this.props.note.geometry.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
@@ -204,7 +204,7 @@ export default connect({
 							{this.props.note.expanded ? comps : null}
             </div>
           </div> : null }
-          {(this.props.editing && selected) || (this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar selected={selected} id={this.props.note.id}/> : null }
+          {(this.props.editing && selected) || (this.props.note && this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar selected={selected} id={this.props.note.id}/> : null }
         </Card>
       )
     }

@@ -1,13 +1,12 @@
 import { sequence } from 'cerebral'
-import { set, wait } from 'cerebral/operators'
+import { set } from 'cerebral/operators'
 import { state, props } from 'cerebral/tags'
 import gh from 'ngeohash';
 import _ from 'lodash';
-import recursiveGet from '../oada/factories/recursiveGet'
 import {longestCommonPrefix, recursiveGeohashSearch } from './utils/recursiveGeohashSearch'
 import Promise from 'bluebird'
 import geohashNoteIndexManager from './utils/geohashNoteIndexManager';
-import * as fields from '../fields/sequences';
+//import * as fields from '../fields/sequences';
 import * as oadaMod from '../oada/sequences'
 import tiles from '../../components/RasterLayer/tileManager';
 import { recursiveDrawOnCanvas, drawTile } from '../../components/RasterLayer/draw';
@@ -53,12 +52,7 @@ export const init = sequence('yield.init', [
 	fetch
 ])
 
-export const getGeohashPolygons = [
-	geohashesToGeojson,
-	set(state`map.geohashPolygons`, props`geohashPolygons`),
-]
-
-export let getPolygonStats = [
+export const getPolygonStats = [
 	({props}) => {
 		t = Date.now();
 		if (!props.ids && props.id) {
@@ -73,11 +67,11 @@ export let getPolygonStats = [
 		}
 	},
 	polygonToGeohashes,
-	//	getGeohashPolygons,
-	//	addNoteToGeohashIndex,
+	//	geohashesToGeojson,
+	addNoteToGeohashIndex,
 	getStatsForGeohashes,
 	setStats,
-	({}) => {
+	() => {
 		let d = Date.now()
 		console.log((d - t)/1000)
 	},
@@ -87,8 +81,6 @@ export let getPolygonStats = [
 	fields.setFieldDataForNotes,
 	*/
 ]
-
-console.log('RIGHT AFTER', JSON.stringify(getPolygonStats))
 
 //Outcomes:
 //✔ 1. Update yieldDataIndex in the state
@@ -122,22 +114,26 @@ export const createTile = [
 export function mapOadaToYieldIndex({props, state}) {
 	let harvest = state.get('oada.bookmarks.harvest')
   if (harvest) {
-		Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index']).forEach((crop) => {
+		return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'] || {}), (crop) => {
       state.set(`map.crop_layers.${crop}`, {visible: true});
       state.set(`map.geohashesToDraw.${crop}`, {});
       state.set(`yield.index.${crop}`, {});
-			Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index']).forEach((ghLength) => {
-				state.set(`yield.index.${crop}.${ghLength}`, harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index']);
+			return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'] || {}), (ghLength) => {
+				return state.set(`yield.index.${crop}.${ghLength}`, harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index']);
       })
-    })
+		}).then(() => {
+			return
+		})
   }
 }
 
 function setStats({props, state}) {
 	return Promise.map(props.polygons || [], (obj) => {
-		state.set(`notes.${obj.type}.${obj.id}.stats`, obj.stats);
-		state.unset(`notes.${obj.type}.${obj.id}.stats.computing`);
-		return obj
+		if (!_.isEmpty(obj.stats)) {
+			state.set(`notes.${obj.type}.${obj.id}.stats`, obj.stats);
+		}
+			state.unset(`notes.${obj.type}.${obj.id}.stats.computing`);
+			return obj
 	}).then((polygons) => {
 		return {polygons}
 	})
@@ -226,14 +222,13 @@ function registerGeohashes({props, state}) {
 // This case occurs before a token is available. Just save all geohashes and
 // filter them later when the list of available geohashes becomes known.
 	let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-	props.geohashes.forEach((gh) => {
+	return Promise.map(props.geohashes || [], (gh) => {
 		state.set(`map.geohashesOnScreen.${props.layer}.${gh}.${coordsIndex}`, {
 			coords: props.coords
 		});
+		return
 	})
 }
-
-
 
 function unregisterGeohashes({props, state}) {
   var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
@@ -241,31 +236,23 @@ function unregisterGeohashes({props, state}) {
 }
 
 function addNoteToGeohashIndex({props, state}) {
-	props.geohashes.forEach((geohash) => {
-		geohashNoteIndexManager.set(geohash, props.id);
-	})
-}
-
-export function getYieldDataIndex({state, oada}) {
-  let token = state.get('Connections.oada_token');
-	let domain = state.get('Connections.oada_domain');
-
-	return recursiveGet.func(arguments)({
-		domain, 
-		token, 
-		path:'', 
-		setupTree, 
-		headers: {},
-		websocket: oada
-	}).then((data) => {
-		return {data}
-	})
+	return Promise.map(props.polygons, (polygon) => {
+		return Promise.map(polygon.geohashes, (gh) => {
+			return geohashNoteIndexManager.set(gh, polygon.id);
+		})
+	}).then(() => { return })
 }
 
 export function polygonToGeohashes({props}) {
+	let a = Date.now()
 	return Promise.map((props.polygons || []), (obj) => {
-		console.log(obj)
-		if (_.isEmpty(obj.polygon)) return Promise.resolve([]);
+		if (_.isEmpty(obj.polygon)) return Promise.resolve({
+			id: obj.id,
+			type: obj.type,
+			bbox: obj.bbox,
+			polygon: obj.polygon,
+			geohashes: {},
+		});
 		let newPoly = _.clone(obj.polygon);
 		newPoly.push(obj.polygon[0])
 		//Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
@@ -284,14 +271,15 @@ export function polygonToGeohashes({props}) {
 			}
 		})
 	}).then((polygons) => {
-		console.log(polygons)
 		return {polygons}
 	})
 }
 
 export function geohashesToGeojson({state, props}) {
+	let a = Date.now()
+	let geohashPolygons = [];
 	return Promise.map(props.polygons || [], (obj) => {
-		let geohashPolygons = [];
+		geohashPolygons = [];
 		return Promise.map(Object.keys(obj.geohashes || {}), (bucket) => {
 			return Promise.map(Object.keys(obj.geohashes[bucket] || {}), (geohash) => {
 				let ghBox = gh.decode_bbox(geohash);
@@ -306,25 +294,21 @@ export function geohashesToGeojson({state, props}) {
 				geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
 			})
 		}).then((result) => {
-			return {
-				id: obj.id,
-				type: obj.type,
-				bbox: obj.bbox,
-				polygon: obj.polygon,
-				geohashPolygons
-			}
-		}).then((polygons) => {
-			return {polygons}
+			state.set(`map.geohashPolygons`, geohashPolygons)
+			return obj
 		})
+	}).then((polygons) => {
+		state.set(`map.geohashPolygons`, geohashPolygons)
+		return {polygons}
 	})
 }
 
 function getStatsForGeohashes({props, state, oada}) {
+	let a = Date.now()
 	let availableGeohashes = state.get('yield.index');
 	return Promise.map(props.polygons || [], (obj) => {
-		console.log(obj)
 		let stats = {};
-		return Promise.map(Object.keys(availableGeohashes), (crop) => {
+		return Promise.map(Object.keys(availableGeohashes || {}), (crop) => {
 			stats[crop] = { 
 				area: {
 					sum: 0,
@@ -353,7 +337,6 @@ function getStatsForGeohashes({props, state, oada}) {
 				return Promise.map(Object.keys(obj.geohashes[bucket] || {}), (geohash) => {
 					let ghData = data[geohash];
 					if (!ghData) return
-					if (!stats[crop]) console.log(bucket, geohash, stats[crop])
 					stats[crop].area.sum += ghData.area.sum;
 					stats[crop].area.sum_of_squares += ghData.area['sum-of-squares'];
 					stats[crop].weight.sum += ghData.weight.sum;
@@ -419,8 +402,8 @@ state.set(`yield.index.${props.crop}.${props.ghLen}.${geohash}`, {
 */
 
 export function watchYieldDataIndex({state, props, oada}) {
-  let token = state.get('Connections.oada_token');
-	let domain = state.get('Connections.oada_domain');
+	//  let token = state.get('Connections.oada_token');
+	//let domain = state.get('Connections.oada_domain');
 	/*
 	if (props.harvest) {
 		return Promise.map(Object.keys(props.harvest['tiled-maps']['dry-yield-map']['crop-index'] || {}), (crop) => {

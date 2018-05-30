@@ -2,56 +2,18 @@ import { Module } from 'cerebral'
 import uuid from 'uuid'
 import Color from 'color'
 
-import { 
-  updateNoteText,
-  updateTagText,
-  changeTab,
-  changeShowHideState,
-  addNewNote,
-  removeNote,
-  handleNoteClick,
-  addTag,
-  handleNoteListClick,
-  enterNoteEditMode,
-  exitNoteEditMode,
-  removeTag,
-  toggleNoteDropdown,
-	cancelNote,
-	drawComplete,
-	toggleComparisonsPane,
-	init,
-} from './sequences';
+import * as signals from './sequences';
 
 export default Module({
 
 	state: {
 		tab: 0,//0. notes, 1. fields, 2. tags
+		loading: true,
+		visible: true,
 		notes: {},//initial_notes(),
 	},
 
-	signals: {
-		init,
-		expandComparisonsClicked: toggleComparisonsPane,
-    addNoteButtonClicked: addNewNote,
-    cancelEditingButtonClicked: cancelNote,
-    deleteNoteButtonClicked: removeNote,
-    doneEditingButtonClicked: [
-      ...drawComplete, ...exitNoteEditMode
-    ],
-    editNoteButtonClicked: [
-      ...enterNoteEditMode, ...toggleNoteDropdown,
-    ],
-    noteBackgroundClicked: toggleNoteDropdown,
-    noteClicked: handleNoteClick,
-    noteListClicked: handleNoteListClick,
-    noteTextChanged: updateNoteText,
-    showHideButtonClicked: changeShowHideState,
-    showNoteDropdown: toggleNoteDropdown,
-    tabClicked: changeTab,
-    tagAdded: addTag, 
-    tagInputTextChanged: updateTagText,
-    tagRemoved: removeTag,
-  }
+	signals,
 })
 
 function initial_notes() { 

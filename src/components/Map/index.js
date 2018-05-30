@@ -1,16 +1,14 @@
 import React from 'react';
 import { connect } from '@cerebral/react';
-import { CircleMarker, Marker, Map, TileLayer, GeoJSON } from 'react-leaflet';
+import { CircleMarker, Map, TileLayer} from 'react-leaflet';
 import './map.css';
-import uuid from 'uuid';
 //import DrawingMessage from './DrawingMessage';
 import {state, signal} from 'cerebral/tags'
 import LayerControl from './LayerControl'
 import LegendControl from './LegendControl'
+import LoadingScreen from '../LoadingScreen'
 
 export default connect({
-  notes: state`notes.notes`,
-  selectedNote: state`notes.selected_note`,
   editing: state`app.view.editing`,
   legends: state`app.view.legends`,
   legendVisible: state`app.view.legend.visible`,
@@ -18,9 +16,9 @@ export default connect({
   mapZoom: state`map.zoom`,
   moving: state`map.moving`,
   dragging: state`map.dragging_marker`,
-  isLoading: state`map.isLoading`,
+  notesLoading: state`notes.loading`,
+  fieldsLoading: state`fields.loading`,
   isMobile: state`app.is_mobile`,
-	geohashPolygons: state`map.geohashPolygons`,
 	center: state`map.center`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
@@ -55,45 +53,9 @@ class TrialsMap extends React.Component {
   }
 
 	render() {
-		let notePolygons = Object.keys(this.props.notes).filter(id => 
-			this.props.notes[id].geometry 
-			&& this.props.notes[id].geometry.geojson 
-			&& this.props.notes[id].geometry.geojson.coordinates[0].length > 0
-		).map(id => {
-			return <GeoJSON 
-      className={'note-polygon'}
-      data={this.props.notes[id].geometry.geojson} 
-      color={this.props.notes[id].color} 
-  	  style={{fillOpacity:0.4}}
-	    onClick={() => this.props.noteClicked({id})}
-      dragging={true} 
-			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
-		/>})
-
-    let markerList = [];
-    if (this.props.editing && this.props.selectedNote) {
-			let note = this.props.notes[this.props.selectedNote];
-      if (note && note.geometry && note.geometry.geojson && note.geometry.geojson.coordinates[0].length > 0) {
-        markerList = [];
-        note.geometry.geojson.coordinates[0].forEach((pt, i)=> {
-           markerList.push(<Marker
-            className={'selected-note-marker'}
-//            icon={marker}
-            key={this.props.selectedNote+'-'+i} 
-            position={[pt[1], pt[0]]}
-            color={note.color}
-            draggable={true}
-            onDrag={(e)=>{this.props.markerDragged({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
-            onDragStart={(e)=>{this.props.markerDragStarted({idx: i})}}
-            onDragEnd={(e)=>{this.props.markerDragEnded({lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
-          />)
-        })
-      }
-		}
 
     return (
       <div className={'map-panel'}>
-        <div className={this.props.isLoading ? 'loading-screen' : 'hidden'}/>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
           onClick={(e) => {this.validateMouseEvent(e)}} 
@@ -126,10 +88,9 @@ class TrialsMap extends React.Component {
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
           />
-          {notePolygons}
-          {markerList}
           <LayerControl />
         </Map> 
+				{this.props.notesLoading || !this.props.fieldsLoading ? <LoadingScreen /> : null}
       </div>
     )
   }

@@ -65,7 +65,8 @@ class NoteList extends React.Component {
 					comparison: this.props.notes[id].fields[field]
 				}) 
 			})
-      return(<Note 
+			return(<Note 
+				order={this.props.fields[field].stats && !_.isEmpty(this.props.fields[field].stats) ? 0 : 1}
         id={field} 
 				key={'notekey'+field}
 				type='fields'
@@ -82,10 +83,10 @@ class NoteList extends React.Component {
           onChangeIndex={(tab) => this.props.tabClicked({tab})}>
           <div
             className={'notes-container'}
-            onTouchTap={(evt) => {this.handleClick(evt)}}>
+            onClick={(evt) => {this.handleClick(evt)}}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+              onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
               Create a new note...
             </div>
             {notes} 
@@ -101,7 +102,7 @@ class NoteList extends React.Component {
         <FloatingActionButton
           className={'add-note-button'}
           style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : null}
-          onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <ContentAdd />
 				</FloatingActionButton>
 				{this.props.loading ? <LoadingScreen /> : null}

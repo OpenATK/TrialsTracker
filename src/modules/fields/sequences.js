@@ -6,12 +6,13 @@ import { set, when } from 'cerebral/operators'
 import { state, props } from 'cerebral/tags'
 import Promise from 'bluebird';
 import computeBoundingBox from '../map/utils/computeBoundingBox'
-import {getPolygonStats, polygonToGeohashes } from '../yield/sequences.js';
+import * as yieldMod from '../yield/sequences.js';
 import gjArea from '@mapbox/geojson-area';
 import * as oada from '../oada/sequences'
 import * as notes from '../notes/sequences'
 
 //TODO: create transform from field to notes.fields entry
+//TODO: need a string that says "loading fields"
 
 let setupTree = {
 	//	'_type': "application/vnd.oada.fields.1+json",
@@ -37,93 +38,54 @@ export const fetch = sequence('fields.fetch', [
 		true: sequence('fetchFieldsSuccess', [
 			mapOadaToFields,
 			mapFieldsToNotes,
-			set(state`notes.fields`, props`notes`),
 		]),
 		false: sequence('fetchFieldsFailed', []),
 	},
 ])
 
-console.log('before fields init', getPolygonStats)
 export const init = sequence('fields.init', [
 	set(state`fields.loading`, true),
 	fetch,
 	set(state`fields.loading`, false),
 	set(props`type`, 'fields'),
 	notes.getAllStats,
-	getPolygonStats,
+	yieldMod.getPolygonStats,
 ])
-console.log('after fields init', getPolygonStats)
 
 export const selectField = [];
 
-//export const mapFieldsToNotes = sequence('fields.mapFieldsToNotes', [
-//	({state, props}) => {
 function mapFieldsToNotes({state, props}) {
-		let fields = state.get('fields.records');
-		let notes = {};
-		return Promise.map(Object.keys(fields || {}), (key) => {
-			return notes[key] = {
-				created: Date.now(),
-				id: key,
-				text: key,
-				tags: [],
-				fields: {},
-				geometry: {
-					geojson: fields[key].boundary.geojson,
-					bbox: {},
-					centroid: [],
-					visible: true,
-					bbox: computeBoundingBox(fields[key].boundary.geojson),
-					area: gjArea.geometry(fields[key].boundary.geojson)/4046.86,
-				},
-				color: rmc.getColor(),
-				completions: [],
-				stats: {},
-			};
-		}).then(() => {
-			return {notes}
-		})
-}
-//	set(state`notes.fields`, props`notes`)
-//])
-
-export function getFieldStats({state, path}) {
-  let fields = state.get('fields.records');
-  let availableGeohashes = state.get('yield.index');
-  if (!(fields && availableGeohashes)) return path.error({});
-  let token = state.get('Connections.oada_token');
-  let domain = state.get('Connections.oada_domain');
-	let stats = {};
-	return Promise.map(Object.keys(fields || {}), (field, idx) => {
-		return polygonToGeohashes(fields[field].boundary.geojson.coordinates[0], fields[field].boundary.bbox, availableGeohashes, domain, token).then((fieldStats) => {
-      stats[field] = fieldStats.stats;
-      return stats;
-    })
-  }).then((res) => { 
-    return path.success({stats});
-  }).catch((error) => {
-    console.log(error);
-    return path.error({error})
-  })
-}
-
-export function getFieldBoundingBoxes({props, state, path}) {
-  var bboxes = {};
-	var areas = {};
-  return Promise.map(Object.keys(props.fields['fields-index']), (fieldGroup) => {
-    return Promise.map(Object.keys(props.fields['fields-index'][fieldGroup]['fields-index']), (field) => {
-			bboxes[field] = computeBoundingBox(props.fields['fields-index'][fieldGroup]['fields-index'][field].boundary.geojson);
-			areas[field] = gjArea.geometry(props.fields['fields-index'][fieldGroup]['fields-index'][field].boundary.geojson)/4046.86;
-		})
-  }).then((result) => {
-    return path.success({bboxes, areas})
-  }).catch((err) => {
-    return path.error({err});
-  })
+	let fields = state.get('fields.records');
+	let notes = {};
+	return Promise.map(Object.keys(fields || {}), (key) => {
+	let bbox = computeBoundingBox(fields[key].boundary.geojson);           
+		return notes[key] = {
+			created: Date.now(),
+			id: key,
+			text: key,
+			tags: [],
+			fields: {},
+			geometry: {
+				geojson: fields[key].boundary.geojson,
+				centroid:[
+					(bbox.north + bbox.south)/2, 
+					(bbox.east + bbox.west)/2
+				],
+				visible: true,
+				bbox,
+				area: gjArea.geometry(fields[key].boundary.geojson)/4046.86,
+			},
+			color: rmc.getColor(),
+			completions: [],
+			stats: {},
+		};
+	}).then(() => {
+		state.set(`notes.fields`, notes)
+		return
+	})
 }
 
 let dist = gaussian(0,1);
-
 export function getFieldDataForNotes({props, state, path}) {
 	var notes = props.notes;
   var fields = state.get('fields.records');
@@ -166,16 +128,19 @@ export function getFieldDataForNotes({props, state, path}) {
 }
 
 export function mapOadaToFields({props, state}) {
+	console.log('in here')
 	let fields = state.get('oada.bookmarks.fields')
-  if (fields) {
-		Object.keys(fields['fields-index']).forEach((fieldGroup) => {
-		  Object.keys(fields['fields-index'][fieldGroup]['fields-index']).forEach((field) => {
-			  state.set(`fields.records.${field}`, { 
+	if (fields) {
+		return Promise.map(Object.keys(fields['fields-index'] || {}), (fieldGroup) => {
+		  return Promise.map(Object.keys(fields['fields-index'][fieldGroup]['fields-index'] || {}), (field) => {
+			  return state.set(`fields.records.${field}`, { 
 			  	boundary: fields['fields-index'][fieldGroup]['fields-index'][field].boundary,
 			  	id: field,
 			  });
       })
-    })
+		}).then(() => {
+			return
+		})
   }
 }
 
@@ -188,23 +153,4 @@ export function setFieldDataForNotes({props, state}) {
       })
     })
   }
-}
-
-export function setFieldBoundingBoxes({props, state}) {
-//TODO: need to check for valid data source
-  Object.keys(props.bboxes).forEach((field) => {
-    state.set(`fields.records.${field}.boundary.area`, props.areas[field]);
-    state.set(`fields.records.${field}.boundary.bbox`, props.bboxes[field]);
-    state.set(`fields.records..${field}.boundary.centroid`, [(props.bboxes[field].north + props.bboxes[field].south)/2, (props.bboxes[field].east + props.bboxes[field].west)/2]);
-  })
-}
-
-export function setFieldStats({props, state}) {
-	if (props.stats) {
-    Object.keys(props.stats).forEach((field) => {
-      Object.keys(props.stats[field]).forEach((crop) => {
-        state.set(`fields.records.${field}.stats.${crop}`, props.stats[field][crop]);
-      })
-		})
-	}
 }

@@ -10,8 +10,9 @@ import {
   markerDragging,
   startMarkerDrag,
   startMovingMap,
-  toggleCropLayerVisibility,
   undoDrawPoint,
+  toggleCropLayer,
+  toggleNotesVisible,
 } from './sequences';
 
 export default Module({
@@ -41,7 +42,8 @@ export default Module({
     markerDragStarted: startMarkerDrag,
     markerDragged: markerDragging,
     mouseDownOnMap: handleMapClick,
-    toggleCropLayer: toggleCropLayerVisibility,
+    toggleCropLayer,
+    toggleNotesVisible: toggleNotesVisible,
     undoButtonClicked: undoDrawPoint,
   }
 })

@@ -8,7 +8,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 export default connect({
   index: state`yield.index`,
   currentLocation: state`app.model.current_location`,
-  selectedNote: state`Note.notes.${state`Note.selected_note`}`,
+  selectedNote: state`notes.notes.${state`notes.selected_note.id`}`,
   open: state`MenuBar.open`,
   editing: state`app.view.editing`,
   isMobile: state`app.is_mobile`,
@@ -36,8 +36,11 @@ class MenuBar extends React.Component {
   }
 
 	render() {
-    let undoEnabled = this.props.selectedNote ?
-      this.props.selectedNote.geometry.geojson.coordinates[0].length > 0 : false;
+		let undoEnabled = this.props.selectedNote 
+			&& this.props.selectedNote.geometry 
+			&& this.props.selectedNote.geometry.geojson ?
+			this.props.selectedNote.geometry.geojson.coordinates[0].length > 0 
+			: false;
     return (
       <AppBar
         className={'menu-bar'}
@@ -47,48 +50,48 @@ class MenuBar extends React.Component {
           {Object.keys(this.props.index || {}).length > 0 ? 
             <IconButton
               key={1}
-              onTouchTap={() => this.props.mapLegendButtonClicked({})}
+              onClick={() => this.props.mapLegendButtonClicked({})}
               iconClassName="material-icons">info
             </IconButton>
           : null }
           <IconButton
             key={2}
             style={this.props.currentLocation ? {} : {display:'none'}}
-            onTouchTap={() => this.props.gpsButtonClicked({})}
+            onClick={() => this.props.gpsButtonClicked({})}
             iconClassName="material-icons">gps_fixed
           </IconButton>
           <IconButton
             key={3}
             style={this.props.editing ? {} : {display:'none'}}
             disabled={!undoEnabled}
-            onTouchTap={() => this.props.undoButtonClicked({})}
+            onClick={() => this.props.undoButtonClicked({})}
             iconClassName="material-icons">undo
           </IconButton>
           <IconMenu
             key={4}
             iconButtonElement={<IconButton><MoreVertIcon /></IconButton>}
             onRequestChange={()=>{this.props.showMenuDropdown()}}
-            onTouchTap={()=>{this.props.showMenuDropdown()}}
+            onClick={()=>{this.props.showMenuDropdown()}}
             open={this.props.menuDropdownVisible}
             targetOrigin={{horizontal: 'right', vertical: 'top'}}
             anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
               <MenuItem 
                 primaryText="Clear Cache" 
-                onTouchTap={()=>this.props.clearCacheButtonClicked({})}
+                onClick={()=>this.props.clearCacheButtonClicked({})}
               />
               <MenuItem
                 style={this.props.isMobile ? {} : {display:'none'}}
                 primaryText="Go Fullscreen"
-                onTouchTap={()=>this.reqFS()}
+                onClick={()=>this.reqFS()}
               />
               <Divider />
               <MenuItem 
                 primaryText="Edit Source Data"
-                onTouchTap={()=>this.props.connectionsClicked({})}
+                onClick={()=>this.props.connectionsClicked({})}
               />
               <MenuItem 
                 primaryText="Sign Out"
-                onTouchTap={()=>this.props.signOutClicked({})}
+                onClick={()=>this.props.signOutClicked({})}
               />
             </IconMenu>
           </div>

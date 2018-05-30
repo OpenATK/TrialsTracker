@@ -10,15 +10,15 @@ export const init = sequence('init', [
 	oada.init,
 	oada.configureWs,
 	oada.configureCache,
-	notes.init,
-	fields.init,
 	yieldMod.init,
+	notes.init,
+	//fields.init,
 ])
 
-export const clearCacheButtonClicked = [
+export const clearCacheButtonClicked = sequence('app.clearCache', [
 	oada.clearCache,
 	init
-];
+]);
 
 function setMobile({state}) {
   var md = new MobileDetect(window.navigator.userAgent);

@@ -116,9 +116,6 @@
 
 .field-polygon {
   stroke-width: 2.5;
-  stroke: #000000;
-  fill: #000000;
-  fill-opacity: 0.15;
 }
 .note-polygon {
   stroke-width: 4;

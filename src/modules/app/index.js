@@ -24,7 +24,10 @@ export default Module({
 
   state : stateTree,
 
-	signals,
+	signals: {
+		clearCacheButtonClicked: signals.clearCacheButtonClicked,
+		init: signals.init,
+	},
 
 	providers: {
 		oada,

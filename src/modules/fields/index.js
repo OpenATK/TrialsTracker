@@ -6,6 +6,7 @@ export default Module({
 
 	state : {
 		records: {},
+		loading: true,
 	},
 
 	signals: {

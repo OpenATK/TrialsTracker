@@ -240,7 +240,7 @@ function del(req) {
 			headers: { 'x-oada-rev': _rev},
 		}).then(async() => {
 			// Now, invalidate the parent should it contain a link
-			if (!pathLeftover) {
+			if (!pathLeftover) { // No pathLeftover means it is itself a resource
 				let lookup;
 				try {
 					let reqPieces = urlObj.path.split('/')

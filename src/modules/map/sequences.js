@@ -1,14 +1,18 @@
-import { set } from 'cerebral/operators';
+import { set, toggle } from 'cerebral/operators';
 import computeBoundingBox from './utils/computeBoundingBox.js';
-import { state } from 'cerebral/tags'
+import { state, props } from 'cerebral/tags'
 import gjArea from '@mapbox/geojson-area';
 
 export let startMovingMap = [
   set(state`map.moving`, true)
 ];
 
-export var toggleCropLayerVisibility = [
-  toggleCropLayer,
+export var toggleCropLayer = [
+  toggle(`map.crop_layers${props.crop}.visible`)
+]
+
+export var toggleNotesVisible = [
+  toggle('notes.visible'),
 ]
 
 export let doneMovingMap = [
@@ -16,6 +20,10 @@ export let doneMovingMap = [
 ];
 
 export let handleMapClick = [
+	({state, props}) => ({
+		type: state.get('notes.selected_note.type'),
+		id: state.get('notes.selected_note.id'),
+	}),
   dropPoint, 
   recalculateArea, 
   getNoteBoundingBox, 
@@ -44,7 +52,7 @@ export let startMarkerDrag = [
 ];
 
 export let markerDragging = [
-  setMarkerPosition, 
+  set(`notes.${props.type}.${props`id`}.geometry.geojson.coordinates.0.${props`id`}`, [props.lng, props.lat]),
   recalculateArea
 ];
 
@@ -57,7 +65,7 @@ export let handleMapMoved = [
 ];
 
 export function mapToNotePolygon({props, state}) {
-  var note = state.get(`notes.notes.${props.id}`);
+  var note = state.get(`notes.${props.type}.${props.id}`);
   if (note && note.geometry.centroid) state.set('map.center', note.geometry.centroid);
 }
 
@@ -79,27 +87,21 @@ function setCurrentLocation({props, state}) {
   state.set('app.model.current_location', obj);
 }
 
-function setMarkerPosition({props, state}) {
-  let id = state.get('notes.selected_note');
-  state.set(`notes.notes.${id}.geometry.geojson.coordinates.0.${props.idx}`, [props.lng, props.lat])
-}
-
 function recalculateArea({state}) {
-  let id = state.get('notes.selected_note');
-  let note = state.get(`notes.notes.${id}`);
+	let selectedNote = state.get(`notes.selected_note`);
+	let note = state.get(`notes.${selectedNote.type}.${selectedNote.id}`);
   if (note.geometry.geojson) {
     if (note.geometry.geojson.coordinates[0].length > 2) {
       let area = gjArea.geometry(note.geometry.geojson)/4046.86;
-      state.set(`notes.notes.${id}.geometry.area`, area);
+      state.set(`notes.${selectedNote.type}.${selectedNote.id}.geometry.area`, area);
     }
   }
 }
 
 function undo({props, state}) {
-  let id = state.get('notes.selected_note');
-	let points = state.get(`notes.notes.${id}.geometry.geojson.coordinates.0`);
+	let points = state.get(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
   if (points.length > 0) {
-    state.pop(`notes.notes.${id}.geometry.geojson.coordinates.0`);
+    state.pop(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
   }
 }
 
@@ -108,28 +110,27 @@ function mapToFieldPolygon({props, state}) {
   if (field) state.set('map.center', field.boundary.centroid);
 }
 
-function toggleCropLayer({props, state}) {
-  var vis = state.get(`map.crop_layers.${props.crop}.visible`);
-  state.set(`map.crop_layers${props.crop}.visible`, !vis);
-}
-
 export function getNoteBoundingBox({props, state}) {
-  let selectedNote = state.get('notes.selected_note');
-  let notes = state.get('notes.notes');
-  let bbox = computeBoundingBox(notes[selectedNote].geometry.geojson);
-  state.set(`notes.notes.${selectedNote}.geometry.bbox`, bbox);
-  state.set(`notes.notes.${selectedNote}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
+  let note = state.get(`notes.${props.type}.${props.id}`);
+  let bbox = computeBoundingBox(note.geometry.geojson);
+  state.set(`notes.${props.type}.${props.id}.geometry.bbox`, bbox);
+  state.set(`notes.${props.type}.${props.id}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
 }
 
 function dropPoint ({props, state}) {
-	let id = state.get('notes.selected_note');
-	let note = state.get(`notes.notes.${id}`);
-	if (!note.geometry.geojson) {
-		state.set(`notes.notes.${id}.geometry.geojson`, {
-			type: "Polygon",
-			coordinates: [[props.pt]]
+	let note = state.get(`notes.${props.type}.${props.id}`);
+	console.log(note, props)
+	if (!note.geometry || !note.geometry.geojson) {
+		state.set(`notes.${props.type}.${props.id}.geometry`, {
+			geojson: {
+				type: "Polygon",
+				coordinates: [[props.pt]]
+			}
 		});
 	} else {
-		state.push(`notes.notes.${id}.geometry.geojson.coordinates.0`, props.pt);
+		state.push(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`, props.pt);
+	}
+	return {
+		note
 	}
 }

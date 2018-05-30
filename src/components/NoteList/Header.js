@@ -11,7 +11,7 @@ export default connect({
   selectedNote: state`notes.selected_note`,
 
   tabClicked: signal`notes.tabClicked`,
-  doneClicked: signal`notes.doneEditingButtonClicked`,
+  doneClicked: signal`notes.doneClicked`,
 },
 
 class Header extends React.Component {
@@ -31,7 +31,7 @@ class Header extends React.Component {
 				className={'note-list-header'}>
 				{this.props.editing ? 
         <Tabs
-          onTouchTap={() => this.props.doneClicked({id:this.props.selectedNote})}
+          onClick={() => this.props.doneClicked({id:this.props.selectedNote.id})}
           value={0}>
 					<Tab 
 						label="DONE" 

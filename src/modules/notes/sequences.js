@@ -1,4 +1,4 @@
-import { when, set, unset, toggle, wait } from 'cerebral/operators';
+import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
 import { sequence } from 'cerebral'
 import uuid from 'uuid';
 import rmc from 'random-material-color';
@@ -36,7 +36,7 @@ export const oadaUpdateNote = [
 	({props, state}) => ({
 		data: props.note,
 		contentType: 'application/vnd.oada.yield.1+json',
-		path: '/bookmarks/notes/'+props.note._id.replace(/^\/?resources\//, ''),
+		path: '/bookmarks/notes/'+props.note.id,
 	}),
 	oada.put,
 ]
@@ -44,11 +44,11 @@ export const oadaUpdateNote = [
 export const getNoteStats = [
 	set(state`notes.${props`type`}.${props`id`}.stats.computing`, true),
 	({state, props}) => ({
-		polygon:  state.get(`notes.${props`type`}.${props.id}.geometry.geojson.coordinates.0`),
-		bbox: state.get(`notes.${props`type`}.${props.id}.geometry.bbox`),
+		polygon:  state.get(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`),
+		bbox: state.get(`notes.${props.type}.${props.id}.geometry.bbox`),
 	}),
 	yieldMod.getPolygonStats,
-	({state, props}) => ({note: state.get(`notes.${props`type`}.${props.id}`)}),
+	({state, props}) => ({note: state.get(`notes.${props.type}.${props.id}`)}),
 	unset(state`notes.${props`type`}.${props`id`}.stats.computing`),
 ]
 
@@ -56,10 +56,19 @@ export function getAllStats({state, props}) {
 	let notes = state.get(`notes.${props.type}`);
 	return Promise.map(Object.keys(notes || {}), (id) => {
 		state.set(`notes.${props.type}.${id}.stats`, {computing:true})
+		let polygon;
+		let bbox;
+		if (notes[id].geometry && notes[id].geometry.geojson) {
+			polygon = notes[id].geometry.geojson.coordinates[0];
+			bbox = notes[id].geometry.bbox;
+		} else {
+			polygon = [];
+			bbox = []
+		}
 		return {
 			id,
-			polygon: notes[id].geometry.geojson.coordinates[0],
-			bbox: notes[id].geometry.bbox,
+			polygon,
+			bbox,
 			type: props.type
 		}
 	}).then((polygons) => {
@@ -67,19 +76,21 @@ export function getAllStats({state, props}) {
 	})
 }
 
-export const drawComplete = [
+export const handleWatchUpdate = sequence('notes.handleWatchUpdate', [
+	({state, props}) => {
+		console.log('GOT IT', props)
+	},
+	
+])
+
+export const doneClicked = [
+	set(props`type`, state`notes.selected_note.type`),
+	set(props`id`, state`notes.selected_note.id`),
+	set(props`note`, state`notes.${props`type`}.${props`id`}`),
 	set(state`app.view.editing`, false), 
 	oadaUpdateNote,
 	getNoteStats
 ];
-
-export const setAllNoteStats = [
-	({state, props}) => {
-		return Promise.map(props.polygons, (obj) => {
-			state.set(`notes.${obj.type}.${obj.id}.stats`, obj.stats)
-		})
-	}
-]
 
 export const init = sequence('notes.init', [
 	set(state`notes.loading`, true),
@@ -90,13 +101,18 @@ export const init = sequence('notes.init', [
 	set(props`type`, `notes`),
 	getAllStats,
 	yieldMod.getPolygonStats,
+	({state, props}) => ({
+		path: '/bookmarks/notes',
+		signalPath: 'notes.handleWatchUpdate'
+	}),
+	oada.registerWatch,
 ])
 
-export const toggleComparisonsPane = [
+export const expandComparisonsClicked = [
   toggle(state`notes.${props`type`}.${props`id`}.expanded`)
 ]
 
-export const cancelNote = [
+export const cancelNoteButtonClicked = [
   set(state`app.view.editing`, false),
   unset(state`notes.selected_note`),
   unset(state`notes.${props`type`}.${props`id`}`)
@@ -107,14 +123,21 @@ export const toggleNoteDropdown = [
   toggle(state`app.view.note_dropdown.visible`),
 ];
 
-export const addTag = [
+export const editNoteButtonClicked = [
+  set(state`app.view.editing`, true),
+	set(state`notes.selected_note.id`, props`id`),
+	set(state`notes.selected_note.type`, props`type`),
+  toggleNoteDropdown,
+]
+
+export const tagAdded = [
   set(state`app.model.tag_input_text`, ''),
 	addTagToNote, {
 		error: [
-			set(state`notes.${props`type`}.${state`notes.selected_note`}.tag_error`, props`message`),
+			set(state`notes.${props`type`}.${props`id`}.tag_error`, props`message`),
       wait(2000), {
 				continue: [
-    			unset(state`notes.${props`type`}.${state`notes.selected_note`}.tag_error`),
+    			unset(state`notes.${props`type`}.${props`id`}.tag_error`),
 				]
 			}
 		],
@@ -124,50 +147,49 @@ export const addTag = [
 	},
 ];
 
-export const removeTag = [
-  unset(state`notes.${props`type`}.${state`notes.selected_note`}.tags.${props`idx`}`),
+export const tagRemoved = [
+  unset(state`notes.${props`type`}.${props`id`}.tags.${props`idx`}`),
 	removeTagFromAllTagsList,
 ];
 
-export const handleNoteListClick = [
+export const noteListClicked = [
 	unset(state`notes.selected_note`),
   set(state`app.view.editing`, false),
 ];
 
-export const enterNoteEditMode = [
-  set(state`app.view.editing`, true),
-	set(state`notes.selected_note`, props`id`)
-];
-
 export const exitNoteEditMode = [
-  set(state`app.view.editing`, false),
 ];
 
-export const changeTab = [
+export const tabClicked = [
   set(state`notes.tab`, props`tab`),
 ];
 
-export const removeNote = [
+export const deleteNoteButtonClicked = [
+	set(props`note`, state`notes.${props`type`}.${props`id`}`),
 	set(state`app.view.editing`, false),
 	checkTags,
 	({state, props}) => ({
-		path: '/bookmarks/notes/'+state.get(`notes.${props`type`}.${props.id}._id`).replace(/^\/?resources\//, ''),
+		path: '/bookmarks/notes/'+props.note.id,
 	}),
+	unwatchNote,
 	oada.oadaDelete,
 	fetch,
 	unset(state`notes.selected_note`),
 ];
 
-export const updateNoteText = [
+export const unwatchNote = [
+]
+
+export const noteTextChanged = [
   set(state`notes.${props`type`}.${props`id`}.text`, props`value`)
 ];
 
-export const updateTagText = [
-	unset(state`notes.${props`type`}.${state`notes.selected_note`}.tag_error`),
+export const tagTextChanged = [
+	unset(state`notes.${props`type`}.${state`id`}.tag_error`),
   set(state`app.model.tag_input_text`, props`value`),
 ];
 
-export const addNewNote = [
+export const addNoteButtonClicked = [
 //TODO: perhaps restrict whether a note can be added while another is editted
 	unset(state`notes.selected_note`),
 	createNote, 
@@ -179,20 +201,27 @@ export const addNewNote = [
 	}),
 	oada.createResourceAndLink,
 	fetch,
-	set(state`notes.selected_note`, props`note.id`),
+	equals(state`notes.tab`), {
+		0: [set(props`type`, 'notes')],
+		1: [set(props`type`, 'fields')],
+		2: [],
+	},
+	set(state`notes.selected_note.id`, props`note.id`),
+	set(state`notes.selected_note.type`, props`type`),
 	set(state`app.view.editing`, true),
 ];
 
-export const changeShowHideState = [
+export const showHideButtonClicked = [
   changeShowHide, 
 ];
 
-export const handleNoteClick = [
+export const noteClicked = [
 	map.mapToNotePolygon,
   when(state`app.view.editing`), {
     true: [],
 		false: [
-			set(state`notes.selected_note`, props`id`)
+			set(state`notes.selected_note.id`, props`id`),
+			set(state`notes.selected_note.type`, props`type`),
     ],
   },
 ];
@@ -204,22 +233,26 @@ function computeStatsForNotes({state, props}) {
 function mapOadaToRecords({state, props}) {
 	state.set('notes.notes', {});
 	let notes =  state.get('oada.bookmarks.notes');
-	Object.keys(notes).forEach((key) => {
+	return Promise.map(Object.keys(notes || {}), (key) => {
 		// ignore reserved keys used by oada
 		if (key.charAt(0) !== '_') state.set(`notes.notes.${notes[key].id}`, notes[key])
-	})
+		return
+	}).then(() => { return})
 }
 
 function getTagsList({state}) {
 	let tags = {}
 	let notes = state.get(`notes.notes`);
-	Object.keys(notes || {}).forEach((key) => {
-		(notes[key].tags || []).forEach((tag) => {
+	return Promise.map(Object.keys(notes || {}), (key) => {
+		return Promise.map(notes[key].tags || [], (tag) => {
 			tags[tag] = tags[tag] || {text: tag, references: 0}
 			tags[tag].references++
+			return
 		})
+	}).then(() => {
+		state.set(`app.model.tags`, tags)
+		return
 	})
-	state.set(`app.model.tags`, tags)
 }
 
 function changeShowHide ({props, state}) {
@@ -246,7 +279,7 @@ function createNote({props, state}) {
     stats: {},
   };
   note.font_color = getFontColor(note.color);
-	return {note, uuid: note.id}
+	return {id: note.id, note, uuid: note.id}
 };
 
 function getFontColor(color) {
@@ -269,15 +302,14 @@ function checkTags ({props, state}) {
 }
 
 function addTagToNote({props, state, path}) {
-	var id = state.get('notes.selected_note');
-	var tags = state.get(`notes.notes.${id}.tags`);
+	var tags = state.get(`notes.${props.type}.${props.id}.tags`);
 	props.text = props.text.toLowerCase().trim();
 	if (props.text === '') {
 		return path.error({message: 'Tag text required'})
 	} else if (tags.indexOf(props.text) > -1) {
 		return path.error({message: 'Tag already applied'})
 	} else {
-		state.push(`notes.notes.${id}.tags`, props.text);
+		state.push(`notes.${props.type}.${props.id}.tags`, props.text);
 		return path.success()
 	}
 };
@@ -302,5 +334,3 @@ function removeTagFromAllTagsList({props, state}) {
     state.set(`app.model.tags'.${props.tag}.references`, refs - 1);
   }
 };
-
-

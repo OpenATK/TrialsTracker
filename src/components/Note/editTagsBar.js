@@ -7,11 +7,11 @@ import { state, signal, props } from 'cerebral/tags'
 let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
-	  tags: state`notes.notes.${props`id`}.tags`,
+	  tags: state`notes.${props`type`}.${props`id`}.tags`,
     allTags: state`app.model.tags`,
     editing: state`app.view.editing`,
 	  tagInput: state`app.model.tag_input_text`,
-	  error: state`notes.notes.${props`id`}.tag_error`,
+	  error: state`notes.${props`type`}.${props`id`}.tag_error`,
 
     tagAdded: signal`notes.tagAdded`,
     tagRemoved: signal`notes.tagRemoved`,
@@ -30,7 +30,7 @@ export default connect({
 							key={this.props.id + tag}
 							labelStyle={labelStyle}
 							style={{marginLeft: idx>0 ? '3px' : '0px'}}
-							onRequestDelete={() => this.props.tagRemoved({idx})} 
+							onRequestDelete={() => this.props.tagRemoved({idx, id: this.props.id, type: this.props.type})} 
 						  className={'tag'}>
 						  {tag}
 						</Chip>) 
@@ -53,8 +53,8 @@ export default connect({
 						hintText={this.props.error ? null : 'Add a new tag...'}
 						errorText={this.props.error ? this.props.error : null}
 						dataSource={Object.keys(this.props.allTags || {}).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
-            onUpdateInput={(value) => this.props.tagInputTextChanged({value, noteId:this.props.id})}
-            onNewRequest={(text, id) => this.props.tagAdded({text, noteId:this.props.id})}
+            onUpdateInput={(value) => this.props.tagInputTextChanged({value, type: this.props.type, id:this.props.id})}
+            onNewRequest={(text, id) => this.props.tagAdded({text, id:this.props.id, type: this.props.type})}
             searchText={this.props.tagInput}
 					  onKeyDown={this.handleKeyDown}
 					  tabIndex={2}

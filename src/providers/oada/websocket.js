@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const uuid = require('uuid/v4');
 let isWindow = false;
 if (typeof window !== 'undefined' && window.WebSocket) {
+	// eslint-disable-next-line
 	WebSocket = window.WebSocket;
 	isWindow = true;
 }
@@ -39,6 +40,7 @@ function websocket(url) {
 		if (!isWindow) socket.on('close', socket.onclose)
 		socket.onmessage = function(event) {
 			var response = JSON.parse(event.data);
+			console.log(response)
 			//Look for id in httpCallbacks
 			if (response.requestId) {
 				if (httpCallbacks[response.requestId]) {
@@ -107,6 +109,7 @@ function websocket(url) {
 		}
 
 		function _watch(request, callback) {
+			console.log(request, callback)
 			//Watch for changes on requested resource and trigger provided signal
 			return new Promise((resolve, reject) => {
 				let message = {
