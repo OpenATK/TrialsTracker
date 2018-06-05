@@ -20,28 +20,52 @@ export function drawTile({state, props, oada}) {
 
 	// Only get those that we know to be available (this "available" list can also
 	// be utilized to filter what is drawn).
+		/*
 	geohashes = geohashes.filter((geohash) => {
+		if (!props.index['geohash-'+geohash.length]) return false
 		return (props.index['geohash-'+geohash.length][geohash]) ? true : false;
 	})
-	// GET the relevant tiles and draw them on the canvas
+	*/
+	return fetchGeohashData(tile, geohashes, oada, props.layer, props.coords, props.legend, coordsIndex, domain, token)
+}
+
+export function redrawTile({state, props, oada}) {
+	let domain = state.get('oada.domain');
+	let token = state.get('oada.token');
+	let geohashesOnScreen = state.get(`map.geohashesOnScreen`)
+	return Promise.map(Object.keys(props.change || {}), (crop) => {
+		return Promise.map(Object.keys(props.change[crop] || {}), (geohash) => {
+			return Promise.map(Object.keys(geohashesOnScreen || {}), (coordsIndex) => {
+				if (!geohashesOnScreen[coordsIndex][geohash]) return
+				let tile = tiles.get(coordsIndex)
+				if (!tile) return
+				return fetchGeohashData(tile, [geohash], oada, crop, geohashesOnScreen[coordsIndex].coords, props.legend, coordsIndex, domain, token)
+			})
+		})
+	}).then(() => {
+		return
+	})
+}
+
+export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, coordsIndex, domain, token) {
+	// GET the geohashData and draw it on the canvas
 	return Promise.map(geohashes, (geohash) => {
 	//	return Promise.try(() => geohashes[0]).then((geohash) => {
 		if (!geohash) throw new Error
-		let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+props.layer+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
+		let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
 		return oada.get({
 			url: domain+path, 
 			token,
-		}).then((data) => {
-			return recursiveDrawOnCanvas(props.coords, data.data['geohash-data'], 0, tile, props.legend);
+		}).then((response) => {
+			return recursiveDrawOnCanvas(coords, response.data['geohash-data'], 0, tile, legend);
+		}).catch((err) => {
+			return
 		})
 	}).then(() => {
 		//Save the tile and call done
 		tiles.set(coordsIndex, tile);
 		return { geohashes }
-	}).catch((err) => {
-		console.log(err)
-	})
-}
+	})}
 
 function getGeohashLevel(zoom, sw, ne) {
   if (zoom >= 15) return 7;

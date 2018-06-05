@@ -21,6 +21,7 @@ export default connect({
   class EditTagsBar extends React.Component {
   
 		render() {
+			console.log(this.props)
       return (
         <div
           className={'edit-tags-bar'}>

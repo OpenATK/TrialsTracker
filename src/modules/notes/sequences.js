@@ -4,7 +4,6 @@ import uuid from 'uuid';
 import rmc from 'random-material-color';
 import Color from 'color';
 import * as yieldMod from '../yield/sequences.js';
-//import * as fields from '../fields/sequences.js';
 import * as map from '../map/sequences.js';
 import {state, props } from 'cerebral/tags'
 import * as oada from '../oada/sequences'
@@ -55,23 +54,27 @@ export const getNoteStats = [
 export function getAllStats({state, props}) {
 	let notes = state.get(`notes.${props.type}`);
 	return Promise.map(Object.keys(notes || {}), (id) => {
-		state.set(`notes.${props.type}.${id}.stats`, {computing:true})
-		let polygon;
-		let bbox;
-		if (notes[id].geometry && notes[id].geometry.geojson) {
-			polygon = notes[id].geometry.geojson.coordinates[0];
-			bbox = notes[id].geometry.bbox;
-		} else {
-			polygon = [];
-			bbox = []
+		if (notes[id]._id) {
+			state.set(`notes.${props.type}.${id}.stats`, {computing:true})
+			let polygon;
+			let bbox;
+			if (notes[id].geometry && notes[id].geometry.geojson) {
+				polygon = notes[id].geometry.geojson.coordinates[0];
+				bbox = notes[id].geometry.bbox;
+			} else {
+				polygon = [];
+				bbox = []
+			}
+			return {
+				id,
+				polygon,
+				bbox,
+				type: props.type
+			}
 		}
-		return {
-			id,
-			polygon,
-			bbox,
-			type: props.type
-		}
+		return
 	}).then((polygons) => {
+		polygons = polygons.filter((polygon) => (polygon) ? true: false);
 		return {polygons}
 	})
 }
@@ -80,7 +83,7 @@ export const handleWatchUpdate = sequence('notes.handleWatchUpdate', [
 	({state, props}) => {
 		console.log('GOT IT', props)
 	},
-	
+	fetch,
 ])
 
 export const doneClicked = [
@@ -102,8 +105,12 @@ export const init = sequence('notes.init', [
 	getAllStats,
 	yieldMod.getPolygonStats,
 	({state, props}) => ({
-		path: '/bookmarks/notes',
-		signalPath: 'notes.handleWatchUpdate'
+		watches: {
+			[state.get('oada.bookmarks.notes._id')] : {
+				path: '/bookmarks/notes',
+				signalPath: 'notes.handleWatchUpdate'
+			},
+		},
 	}),
 	oada.registerWatch,
 ])
@@ -164,21 +171,22 @@ export const tabClicked = [
   set(state`notes.tab`, props`tab`),
 ];
 
+export const unwatchNote = sequence('notes.unwatchNote', [
+])
+
 export const deleteNoteButtonClicked = [
 	set(props`note`, state`notes.${props`type`}.${props`id`}`),
 	set(state`app.view.editing`, false),
 	checkTags,
 	({state, props}) => ({
-		path: '/bookmarks/notes/'+props.note.id,
+		path: '/bookmarks/notes/'+props.id,
 	}),
-	unwatchNote,
 	oada.oadaDelete,
+	unwatchNote,
 	fetch,
 	unset(state`notes.selected_note`),
 ];
 
-export const unwatchNote = [
-]
 
 export const noteTextChanged = [
   set(state`notes.${props`type`}.${props`id`}.text`, props`value`)
@@ -235,7 +243,7 @@ function mapOadaToRecords({state, props}) {
 	let notes =  state.get('oada.bookmarks.notes');
 	return Promise.map(Object.keys(notes || {}), (key) => {
 		// ignore reserved keys used by oada
-		if (key.charAt(0) !== '_') state.set(`notes.notes.${notes[key].id}`, notes[key])
+		if (key.charAt(0) !== '_') state.set(`notes.notes.${key}`, notes[key])
 		return
 	}).then(() => { return})
 }
@@ -293,7 +301,8 @@ function getFontColor(color) {
 
 function checkTags ({props, state}) {
   var allTags = state.get(`app.model.tags`);
-  var noteTags = state.get(`notes.notes.${props.id}.tags`);
+	var noteTags = state.get(`notes.${props.type}.${props.id}.tags`);
+	if (!noteTags) return
   noteTags.forEach((tag) => {
     if (allTags[tag].references <= 1) {
       state.unset(`app.model.tags`, tag); 

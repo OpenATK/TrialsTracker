@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var urlLib = require('url');
 var csvjson = require('csvjson');
 var uuid = require('uuid');
 var gh = require('ngeohash');
@@ -25,21 +26,26 @@ var tree = {
   harvest: {
 		_type: 'application/vnd.oada.harvest.1+json',
 		_rev: '0-0',
+		_id: 'resources/'+uuid(),
     'as-harvested': {
       _type: 'application/vnd.oada.as-harvested.1+json',
 			_rev: '0-0',
+			_id: 'resources/'+uuid(),
       'yield-moisture-dataset': {
         _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
 				_rev: '0-0',
+				_id: 'resources/'+uuid(),
         'crop-index': {}
       },
     },
     'tiled-maps': {
       _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
 			_rev: '0-0',
+			_id: 'resources/'+uuid(),
       'dry-yield-map': {
         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
 				_rev: '0-0',
+				_id: 'resources/'+uuid(),
         'crop-index': {},
       },
     },
@@ -63,20 +69,7 @@ module.exports = function(yield_data_directory, domain, token) {
     }).then(() => {
       return this.createAggregates([1, 2, 3, 4, 5, 6, 7]);
     }).then(() => {
-      return Promise.map(Object.keys(tree), (key) => {
-				return _Setup.putLinkedTree(tree[key], key).then((res) => {
-          let pathString = '/bookmarks/'+key
-          return axios({
-            method: 'put',
-             url: 'https://'+DOMAIN+pathString,
-            headers: {
-              'Authorization': 'Bearer ' + TOKEN,
-              'Content-Type': tree[key]._type
-            },
-            data: res,
-          })
-        })
-      })
+			return this.putLinkedTree(tree, 'https://'+DOMAIN+'/bookmarks')
     })
   })
 }
@@ -128,6 +121,7 @@ processRawData = function(csvJson, filename) {
     //Handle new crop types
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] || {
       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+			_id: 'resources/'+uuid(),
 			_rev: '0-0',
       'geohash-length-index': {
         'geohash-7': {
@@ -139,6 +133,7 @@ processRawData = function(csvJson, filename) {
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] || {
 			_rev: '0-0',
       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+			_id: 'resources/'+uuid(),
       data: { },
     };
  
@@ -227,15 +222,18 @@ createAggregates = function(levels) {
 					tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
 						_rev: '0-0',
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
+						_id: 'resources/'+uuid(),
             'geohash-length-index': {},
           };
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] || {
-					 _rev: '0-0',
-           'geohash-index': {},
+						_rev: '0-0',
+						_id: 'resources/'+uuid(),
+						'geohash-index': {},
           }
           //Handle new geohashes
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen]['geohash-index'][bucketGh] || {
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
+						_id: 'resources/'+uuid(),
             stats: {
               area: {
                 sum: 0,
@@ -308,58 +306,73 @@ recomputeStats = function(currentStats, additionalStats) {
   return currentStats;
 };
 
-var _Setup = {
-	// Handle a large json of oada data
-	putLinkedTree: function(setupTree, pathString) {
-
-    return Promise.each(Object.keys(setupTree || {}), (key) => {
-      if (typeof setupTree[key] === 'object' && setupTree[key]) {
-        return _Setup.putLinkedTree(setupTree[key], pathString+'/'+key).then((res) => {
-          return setupTree[key] = res;
-        })
-      } else return setupTree[key] = setupTree[key];
-		}, {concurrency: 5}).then((results) => {
-			// if it has _type, post a new resource
-      if (setupTree._type) {
-        return axios({
-          method:'post', 
-          url:'https://'+DOMAIN+'/resources/',
-          headers: {
-            'Authorization': 'Bearer '+ TOKEN,
-            'Content-Type': setupTree._type,
-          },
-          data: setupTree,
+// Handle a large json of oada data; build from the top down
+putLinkedTree = function(setupTree, url) {
+	return Promise.each(Object.keys(setupTree || {}), (key) => {
+		if (typeof setupTree[key] === 'object' && setupTree[key]) {
+			if (setupTree[key]._id) {
+				let data = (setupTree[key]['geohash-index']) ? {} : replaceLinks(_.clone(setupTree[key]));
+				return axios({
+					method:'put', 
+					url:'https://'+DOMAIN+'/'+setupTree[key]._id,
+					headers: {
+						'Authorization': 'Bearer '+ TOKEN,
+						'Content-Type': setupTree[key]._type,
+					},
+					data,
 				}).then((response) => {
-					// Then return only a link to this resource
-					let ret = {	_id: response.headers.location.replace(/^\//, '')}
-					if (setupTree._rev) ret._rev = '0-0';
-					return ret 
-        })
-      } else {
-        return setupTree
-      }
-    }).catch((e) => {
-      if(!e.cancel) {
-        throw e;
-      }
-    })
-  },
+					let link = {_id: setupTree[key]._id}
+					if (setupTree[key]._rev) link._rev = setupTree[key]._rev
+					if (setupTree[key]['geohash-data']) {
+						let path = urlLib.parse(url).path;
+						console.log('going to Create', path+'/'+key)
+						return Promise.delay(5000).then(() => {
+							return axios({
+								method:'put', 
+								url: url+'/'+key,
+								headers: {
+									'Authorization': 'Bearer '+ TOKEN,
+									'Content-Type': setupTree[key]._type,
+								},
+								data: link,
+							}).then(() => { return putLinkedTree(setupTree[key], url+'/'+key)})
+						})
+					} else {
+						return axios({
+							method:'put', 
+							url: url+'/'+key,
+							headers: {
+								'Authorization': 'Bearer '+ TOKEN,
+								'Content-Type': setupTree[key]._type,
+							},
+							data: link,
+						}).then(() => { return putLinkedTree(setupTree[key], url+'/'+key)})
+					}
+				}).catch((e) => {
+					console.log(e)
+					return
+				})
+			}
+			return putLinkedTree(setupTree[key], url+'/'+key)
+		} else return
+	})
+}
 
-  replaceLinks: function(desc, example) {
-    var ret = (Array.isArray(example)) ? [] : {};
-    if (!desc) return example;  // no defined descriptors for this level
-    Object.keys(example).forEach(function(key, idx) {
-      var val = example[key];
-      if (typeof val !== 'object' || !val) {
-        ret[key] = val; // keep it as-is
-        return;
-      }
-      if (val._id) { // If it's an object, and has an '_id', make it a link from descriptor
-        ret[key] = { _id: desc[key]._id, _rev: '0-0' };
-        return;
-      }
-      ret[key] = _Setup.replaceLinks(desc[key],val); // otherwise, recurse into the object looking for more links
-    });
-    return ret;
-  },
-};
+replaceLinks = function(data) {
+	var ret = (Array.isArray(data)) ? [] : {};
+	if (!data) return data;
+	Object.keys(data).forEach(function(key, idx) {
+		var val = data[key];
+		if (typeof val !== 'object' || !val) {
+			ret[key] = val; // keep it as-is
+			return;
+		}
+		if (val._id) { // If it's an object, and has an '_id', make it a link from data
+			ret[key] = { _id: data[key]._id};
+			if (data[key]._rev) ret[key]._rev = data[key]._id;
+			return;
+		}
+		ret[key] = replaceLinks(data[key],val); // otherwise, recurse into the object looking for more links
+	});
+	return ret;
+}

@@ -37,20 +37,22 @@ class NoteList extends React.Component {
 
 	render() {
 		//TODO: either make this a computed, or put this into actions
-		let notesArray = Object.keys(this.props.notes || {}).map(key => this.props.notes[key]);
-		let sorted_notes = _.sortBy(notesArray, ['date'])
-		let notes = sorted_notes.map((note, i) => {
-			let comparisons = Object.keys(note.fields || {}).map((field) => {
+		//		let notesArray = _.sortBy(_.toPairs(this.props.notes), 1.date)
+		let self = this;
+		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}), [function(key) {
+			return self.props.notes[key].date}])
+		let notes = sorted_notes.map((key, i) => {
+			let comparisons = Object.keys(this.props.notes[key].fields || {}).map((field) => {
 				return {
 					text: field,
 					stats: this.props.fields[field].stats,
-					comparison: note.fields[field]
+					comparison: this.props.notes[key].fields[field]
 				}
 			})
 			return (<Note 
 				order={i}
-        id={note.id} 
-				key={'notekey'+note.id}
+        id={key} 
+				key={'notekey'+key}
 				type='notes'
 				comparisons={comparisons}
       />)

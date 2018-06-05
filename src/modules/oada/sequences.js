@@ -27,7 +27,7 @@ export const authorize = sequence('oada.authorize', [
 		]),
 		unauthorized: sequence('unauthorized', [
 			set(state`oada.isAuthenticated`, false),
-			set(state`error`, props`error`)
+			set(state`error`, {})
 		]),
 	}
 ])
@@ -43,7 +43,12 @@ export const fetchTree = sequence('oada.fetchTree', [
 	}),
 	fetch,
 	when(props`omit`), {
-		false: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
+		false: [ 
+			when(props`result`), {
+				true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
+				false: [],
+			},
+		],
 		true: []
 	}
 ])
@@ -127,7 +132,6 @@ function fetch({oada, props, state, path}) {
 		return oada.get({
 			url,
 			token: props.token 
-
 		}).then((response) => {
 			returnData = response.data;
 			return Promise.map(Object.keys(setupTree || returnData), (key) => {
@@ -146,12 +150,12 @@ function fetch({oada, props, state, path}) {
 						return returnData[key] = res;
 					})
 				}
+			}).then(() => {
+				return returnData
 			})
 		}).catch((err) => {
 			// 404s and such handled here. This will return an empty string as its data
-			return err.response
-		}).then(() => {
-			return returnData
+			return
 		})
 	}
 	return recursiveGet(props.url, props.setupTree).then((result) => {
@@ -189,6 +193,7 @@ export const oadaDelete = sequence('oada.delete', [
 //
 // contentType : The necessary Content-Type header oada uses to verify write
 //							 permission.
+//
 // uuid        : When given, create the resource via PUT using this uuid.
 export const createResourceAndLink = sequence('oada.createResourceAndLink', [
 	// create resource
@@ -220,14 +225,20 @@ export const createResourceAndLink = sequence('oada.createResourceAndLink', [
 
 export const registerWatch = sequence('oada.registerWatch', [
 	({state, props, oada}) => {
-		return oada.watch({
-			token: state.get('oada.token'),
-			url: ((props.path[0] === '/') ? '':'/')+props.path,
-			signalName: props.signalPath,
-			payload: {},
+		return Promise.map(Object.keys(props.watches || {}), (_id) => {
+			state.set(`oada.watches.${_id}`, props.watches[_id])
+			return oada.watch({
+				token: state.get('oada.token'),
+				signalName: props.watches[_id].signalPath,
+				url: state.get('oada.domain')+((props.watches[_id].path[0] === '/') ? '':'/')+props.watches[_id].path,
+			})
+		}).then(() => {
+			return
+		}).catch((err) => {
+			console.log(err)
+			return
 		})
 	},
-	set(state`oada.watches`, {}),
 ])
 
 export const configureWs = sequence('oada.configureWs', [
@@ -252,6 +263,10 @@ export const configureCache = sequence('oada.configureCache', [
 
 export const clearCache = sequence('oada.clearCache', [
 	({oada}) => {
-		return oada.clearCache()
+		return oada.clearCache().then(() => {
+			return oada.resetWs({
+				url: state.get('oada.domain'),
+			})
+		})
 	}
 ])

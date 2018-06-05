@@ -40,7 +40,6 @@ function websocket(url) {
 		if (!isWindow) socket.on('close', socket.onclose)
 		socket.onmessage = function(event) {
 			var response = JSON.parse(event.data);
-			console.log(response)
 			//Look for id in httpCallbacks
 			if (response.requestId) {
 				if (httpCallbacks[response.requestId]) {
@@ -86,11 +85,10 @@ function websocket(url) {
 		function _http(request) {
 			//Do a HTTP request
 			return new Promise((resolve, reject) => {
-				if (request.url.indexOf(url) === 0) request.url = request.url.replace(url, '');
 				let message = {
 					requestId: uuid(),
 					method: request.method.toLowerCase(),
-					path: request.url,
+					path: (request.url.indexOf(url) === 0) ? request.url.replace(url, '') : request.url,
 					data: request.data,
 					headers: Object.entries(request.headers).map(([key, value]) => {
 						return {[key.toLowerCase()]: value}
@@ -109,7 +107,6 @@ function websocket(url) {
 		}
 
 		function _watch(request, callback) {
-			console.log(request, callback)
 			//Watch for changes on requested resource and trigger provided signal
 			return new Promise((resolve, reject) => {
 				let message = {

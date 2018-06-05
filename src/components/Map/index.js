@@ -90,7 +90,7 @@ class TrialsMap extends React.Component {
           />
           <LayerControl />
         </Map> 
-				{this.props.notesLoading || !this.props.fieldsLoading ? <LoadingScreen /> : null}
+				{this.props.notesLoading || this.props.fieldsLoading ? <LoadingScreen /> : null}
       </div>
     )
   }

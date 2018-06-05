@@ -1,23 +1,9 @@
 import { Module } from 'cerebral'
-import {
-	init,
-	dataReceived,
-  addGeohashes,
-	removeGeohashes,
-	createTile,
-	getPolygonStats
-} from './sequences'
+import * as signals from './sequences'
 
 export default Module({
 
-	signals: {
-		init: init,
-		dataReceived,
-    newTileDrawn: addGeohashes,
-		tileUnloaded: removeGeohashes,
-		createTile,
-		getPolygonStats
-	},
+	signals,
 
 	state : {
     legends: {

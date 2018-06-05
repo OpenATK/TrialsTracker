@@ -13,7 +13,6 @@ export default connect({
   geohashesToDraw: state`map.geohashesToDraw.${props`layer`}`,
 
   tileUnloaded: signal`yield.tileUnloaded`,
-	newTileDrawn: signal`yield.newTileDrawn`,
 	createTile: signal`yield.createTile`,
 },
 
@@ -41,17 +40,15 @@ class RasterLayer extends GridLayer {
 		let tile = tiles.get(coordsIndex);
 		// If the tile is cached and its not on the list of geohashes to (re)draw,
 		// return the tile
-    if (tile && !this.props.geohashesToDraw[coordsIndex]) {
-      return tile;
-		} else {
-			//Create a new tile, call a signal to draw it, and return the (empty) tile
-		  tile = L.DomUtil.create('canvas', 'leaflet-tile');
-			tile.height = 256;                     
-			tile.width = 256;
-			tiles.set(coordsIndex, tile)
-			this.props.createTile({coords, layer: this.props.layer})
-			return tile;
-		}
+		if (tile) return tile;
+
+		//Create a new tile, call a signal to draw it, and return the (empty) tile
+		tile = L.DomUtil.create('canvas', 'leaflet-tile');
+		tile.height = 256;                     
+		tile.width = 256;
+		tiles.set(coordsIndex, tile)
+		this.props.createTile({coords, layer: this.props.layer})
+		return tile;
   }
 
  // Grid lines must be drawn on top using the same canvas as the yield data.

@@ -1,4 +1,5 @@
 import { Provider } from 'cerebral'
+import urlLib from 'url'
 import websocket from './websocket'
 import Promise from 'bluebird'
 import axios from 'axios'
@@ -19,8 +20,11 @@ export default Provider ({
 	authorize({domain, options}) {
 		//Get token from the cache
 		//Else get token
+		console.log('getting the ting', domain, options)
 		return getAccessToken(domain, options).then((result) => {
 			return {accessToken: result.access_token}
+		}).catch((err) => {
+			console.log(err)
 		})
 	},
 	
@@ -32,7 +36,7 @@ export default Provider ({
 				'Authorization': 'Bearer '+token,
 			},
 		}
-		if (cache.get) return cache.get(req)
+		if (cache) return cache.get(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,
@@ -52,7 +56,7 @@ export default Provider ({
 			},
 			data,
 		}
-		if (cache.put) return cache.put(req)
+		if (cache) return cache.put(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,
@@ -72,7 +76,7 @@ export default Provider ({
 			},
 			data
 		}
-		if (cache.post) return cache.post(req)
+		if (cache) return cache.post(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,
@@ -90,7 +94,7 @@ export default Provider ({
 				'Authorization': 'Bearer '+token,
 			},
 		}
-		if (cache.delete) return cache.delete(req)
+		if (cache) return cache.delete(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,
@@ -103,6 +107,7 @@ export default Provider ({
 	configureCache({name}) {
 		return configureCache(name, request).then((result) => {
 			cache = result
+			return
 		})
 	},
 
@@ -113,38 +118,46 @@ export default Provider ({
 	},
 
 	configureWs({url}) {
-		//Set request variable to websocket.http
-		//If theres already a websocket connection, do something?
-
 		return websocket(url).then((socketApi) => {
 			request = socketApi.http;
 			return socket = socketApi;
 		})
 	},
 
+	resetWs({url}) {
+		if (socket) {
+			socket.close();
+			socket = undefined;
+			return this.configureWs({url})
+		}
+	},
+
 	watch({url, token, signalName, payload}) {
-		console.log(this.context)
+		let headers = {Authorization: 'Bearer '+token};
+		let urlObj = urlLib.parse(url)
 		let signal = this.context.controller.getSignal(signalName);
 		if (request === axios) {
 			// Ping a normal GET every 5 seconds in the absense of a websocket
 			return setInterval(() => {
 				this.get({url, token}).then((result) => {
-					console.log('got something', result,)
 					signal(payload)
 				})
 			}, 5000)
 		} else {
-			console.log('here!!!')
 			return socket.watch({
-				url,
-				headers: {
-					Authorization: 'Bearer '+token,
-				}
-			}, function watchResponse(response) {
-				console.log('got something', response,)
+				url: urlObj.path,
+				headers,
+			}, async function watchResponse(response) {
+				if (!payload) payload = {};
 				payload.response = response;
+				payload.request = {
+					url,
+					headers,
+					method: payload.response.change.type,
+				}
+				if (cache) await cache.handleWatchChange(payload)
 				return signal(payload)
 			})
 		}
-	}
+	},
 })
