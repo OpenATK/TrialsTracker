@@ -1,13 +1,17 @@
 const tiles = {};
 
 const tileManager = {
-	set: (key, value) => { 
-		tiles[key] = value;
+	set: (layer, key, value) => { 
+		tiles[layer] = tiles[layer] || {};
+		tiles[layer][key] = value;
 	},
 
-	get: (key) => tiles[key],
+	get: (layer, key) => {
+		if (tiles[layer]) return tiles[layer][key];
+		return
+	},
 
-	remove: (key) => delete tiles[key],
+	remove: (layer, key) => delete tiles[layer][key],
 };
 Object.freeze(tileManager);
 export default tileManager;

@@ -2,6 +2,7 @@ import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
 import { sequence } from 'cerebral'
 import uuid from 'uuid';
 import rmc from 'random-material-color';
+import _ from 'lodash';
 import Color from 'color';
 import * as yieldMod from '../yield/sequences.js';
 import * as map from '../map/sequences.js';
@@ -54,13 +55,13 @@ export const getNoteStats = [
 export function getAllStats({state, props}) {
 	let notes = state.get(`notes.${props.type}`);
 	return Promise.map(Object.keys(notes || {}), (id) => {
-		if (notes[id]._id) {
+		//if (notes[id]._id) {
 			state.set(`notes.${props.type}.${id}.stats`, {computing:true})
 			let polygon;
 			let bbox;
 			if (notes[id].geometry && notes[id].geometry.geojson) {
 				polygon = notes[id].geometry.geojson.coordinates[0];
-				bbox = notes[id].geometry.bbox;
+				bbox = _.clone(notes[id].geometry.bbox);
 			} else {
 				polygon = [];
 				bbox = []
@@ -71,7 +72,7 @@ export function getAllStats({state, props}) {
 				bbox,
 				type: props.type
 			}
-		}
+		//}
 		return
 	}).then((polygons) => {
 		polygons = polygons.filter((polygon) => (polygon) ? true: false);
@@ -81,7 +82,6 @@ export function getAllStats({state, props}) {
 
 export const handleWatchUpdate = sequence('notes.handleWatchUpdate', [
 	({state, props}) => {
-		console.log('GOT IT', props)
 	},
 	fetch,
 ])
@@ -239,6 +239,7 @@ function computeStatsForNotes({state, props}) {
 }
 
 function mapOadaToRecords({state, props}) {
+	state.set('map.layers.Notes', {visible: true});
 	state.set('notes.notes', {});
 	let notes =  state.get('oada.bookmarks.notes');
 	return Promise.map(Object.keys(notes || {}), (key) => {

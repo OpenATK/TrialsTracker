@@ -128,7 +128,6 @@ export function getFieldDataForNotes({props, state, path}) {
 }
 
 export function mapOadaToFields({props, state}) {
-	console.log('in here')
 	let fields = state.get('oada.bookmarks.fields')
 	if (fields) {
 		return Promise.map(Object.keys(fields['fields-index'] || {}), (fieldGroup) => {
@@ -139,6 +138,7 @@ export function mapOadaToFields({props, state}) {
 			  });
       })
 		}).then(() => {
+			state.set('map.layers.Fields', {visible: true});
 			return
 		})
   }

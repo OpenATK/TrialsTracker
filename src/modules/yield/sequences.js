@@ -10,8 +10,7 @@ import Promise from 'bluebird'
 import geohashNoteIndexManager from './utils/geohashNoteIndexManager';
 //import * as fields from '../fields/sequences';
 import * as oadaMod from '../oada/sequences'
-import tiles from '../../components/RasterLayer/tileManager';
-import { recursiveDrawOnCanvas, drawTile, redrawTile } from '../../components/RasterLayer/draw';
+import { drawTile, redrawTile } from '../../components/RasterLayer/draw';
 
 let t;
 
@@ -26,8 +25,6 @@ let setupTree = {
 					//					"_type": "application/vnd.oada.tiled-maps.dry-yield-map.1+json",
 					'geohash-length-index': {
 						'*': {
-							'geohash-index': {
-							}
 						}
 					}
 				}
@@ -54,7 +51,6 @@ export const handleYieldIndexWatch = sequence('yield.fetch', [
 	// Also, add new geohashes to our index
 	({state, props}) => {
 		let thing = props.response.change.body;
-		console.log(thing)
 		let ret = {};
 		return Promise.map(Object.keys(thing['crop-index'] || {}), (crop) => {
 			ret[crop] = {};
@@ -104,7 +100,7 @@ export const registerWatches = sequence('yield.registerWatches', [
 
 export const init = sequence('yield.init', [
 	fetch,
-	registerWatches
+	//registerWatches
 ])
 
 export const getPolygonStats = [
@@ -122,7 +118,7 @@ export const getPolygonStats = [
 		}
 	},
 	polygonToGeohashes,
-	//	geohashesToGeojson,
+	geohashesToGeojson,
 	addNoteToGeohashIndex,
 	getStatsForGeohashes,
 	setStats,
@@ -135,13 +131,6 @@ export const getPolygonStats = [
 	fields.getFieldDataForNotes,
 	fields.setFieldDataForNotes,
 	*/
-]
-
-export const dataReceived = [
-	updateYieldIndex,
-	updateNoteStats,
-	setStats,
-	updateYieldTiles
 ]
 
 export const tileUnloaded = [
@@ -161,7 +150,7 @@ export function mapOadaToYieldIndex({props, state}) {
 	let harvest = state.get('oada.bookmarks.harvest')
   if (harvest && harvest['tiled-maps'] && harvest['tiled-maps']['dry-yield-map']) {
 		return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'] || {}), (crop) => {
-      state.set(`map.crop_layers.${crop}`, {visible: true});
+      state.set(`map.layers.${crop.charAt(0).toUpperCase() + crop.slice(1)}`, {visible: true});
       state.set(`yield.index.${crop}`, {});
 			return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'] || {}), (ghLength) => {
 				if (harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength])
@@ -420,39 +409,6 @@ function getStatsForGeohashes({props, state, oada}) {
 		return {polygons}
 	})
 }
-
-export function updateYieldTiles({state, props, oada}) {
-	let legend = state.get(`app.view.legends.${props.crop}`);
-	let geohashesOnScreen = state.get(`map.geohashesOnScreen`);
-	if (props.response.change.type === 'merge') {
-		return Promise.map(Object.keys(props.response.change.body['geohash-index'] || {}), (geohash) => {
-			let data = props.response.change.body['geohash-index'][geohash]['geohash-data'];
-			return Promise.map(Object.keys(geohashesOnScreen[geohash] || {}), (tile) => {
-				return recursiveDrawOnCanvas(geohashesOnScreen[geohash][tile].coords, data, 0, tiles.get(tile), legend).then((canvas) => {                 
-					tiles.set(tiles, canvas);
-					return 
-				})
-			})
-		}).then(() => {
-			return {}
-		})
-	} 
-	if (props.response.change.type === 'delete') {
-    Object.keys(props.response.delete['geohash-length-index'][props.ghLen]['geohash-index']).forEach((geohash) => {
-			state.set(`yield.index.${props.crop}.${props.ghLen}.${geohash}`, {
-				'_id': props.response.resourceId,
-				'_rev': props.response.delete['geohash-length-index'][props.ghLen]['geohash-index'][geohash]._rev
-			})
-		})
-	}
-}
-	/*
-// Set new rev to induce a cache update
-state.set(`yield.index.${props.crop}.${props.ghLen}.${geohash}`, {
-	'_id': props.response.resourceId,
-	'_rev': props.response.change.body['geohash-index'][geohash]._rev
-})
-*/
 
 export function watchYieldDataIndex({state, props, oada}) {
 	//  let token = state.get('Connections.oada_token');

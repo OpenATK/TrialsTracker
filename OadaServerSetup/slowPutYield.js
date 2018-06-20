@@ -228,6 +228,7 @@ createAggregates = function(levels) {
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] || {
 						_rev: '0-0',
 						_id: 'resources/'+uuid(),
+            _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
 						'geohash-index': {},
           }
           //Handle new geohashes
@@ -326,7 +327,7 @@ putLinkedTree = function(setupTree, url) {
 					if (setupTree[key]['geohash-data']) {
 						let path = urlLib.parse(url).path;
 						console.log('going to Create', path+'/'+key)
-						return Promise.delay(5000).then(() => {
+						return Promise.delay(0000).then(() => {
 							return axios({
 								method:'put', 
 								url: url+'/'+key,

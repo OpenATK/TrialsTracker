@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from '@cerebral/react';
-import { CircleMarker, Map, TileLayer} from 'react-leaflet';
+import { Marker, CircleMarker, Map, TileLayer} from 'react-leaflet';
 import './map.css';
 //import DrawingMessage from './DrawingMessage';
 import {state, signal} from 'cerebral/tags'
@@ -29,7 +29,8 @@ export default connect({
   locationFound: signal`map.locationFound`,
   mapMoved: signal`map.mapMoved`,
 	gpsButtonClicked: signal`map.currentLocationButtonClicked`,
-  noteClicked: signal`notes.noteClicked`,        
+	noteClicked: signal`notes.noteClicked`,
+	toggleLayer: signal`map.toggleLayer`,
 },
 
 class TrialsMap extends React.Component {
@@ -54,13 +55,29 @@ class TrialsMap extends React.Component {
 
 	render() {
 
-    return (
+		let markerList = [];
+		if (this.props.selectedNote && this.props.selectedNote.geometry && this.props.selectedNote.geometry.geojson) {
+			markerList = this.props.selectedNote.geometry.geojson.coordinates[0].map((pt, i) =>
+				<Marker
+					className={'selected-note-marker'}
+					key={this.props.selectedNote+'-'+i}
+					position={[pt[1], pt[0]]}
+					color={this.props.selectedNote.color}
+					draggable={true}
+					onDrag={(e)=>{this.props.markerDragged({type: 'notes', lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+					onDragStart={(e)=>{this.props.markerDragStarted({})}}
+					onDragEnd={(e)=>{this.props.markerDragEnded({})}}
+				/>                                                                 
+			) 
+		}
+
+		return (
       <div className={'map-panel'}>
         <Map 
           onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
           onClick={(e) => {this.validateMouseEvent(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
-          onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
+					onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
           dragging={true}
           ref='map'
           center={this.props.center}
@@ -87,7 +104,8 @@ class TrialsMap extends React.Component {
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-          />
+					/>
+					{markerList}
           <LayerControl />
         </Map> 
 				{this.props.notesLoading || this.props.fieldsLoading ? <LoadingScreen /> : null}

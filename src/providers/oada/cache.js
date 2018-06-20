@@ -21,6 +21,9 @@ let expiration;
 // Handle delete vs put
 // handle pathleftover vs resource manipulation
 // Handle resource already exists for doesn't
+//
+
+
 async function dbUpsert(req, res) {
 	let urlObj = url.parse(req.url)
 	let pieces = urlObj.path.split('/')
@@ -47,10 +50,10 @@ async function dbUpsert(req, res) {
 				let newData = _.merge(curData, res.data || {})
 				pointer.set(result.doc.doc, pathLeftover, newData);
 				dbPut.doc.doc = result.doc.doc;
-			}
-			dbPut.doc.doc = _.merge(result.doc.doc, res.data || {});
+			} else dbPut.doc.doc = _.merge(result.doc.doc, res.data || {});
 		}
 	} catch(e) {
+		console.log(e)
 		// Resource was not in db.		
 		if (req.method && req.method.toLowerCase() === 'delete') {
 			// Deleting a resource that doesn't exist: do nothing.
@@ -64,10 +67,10 @@ async function dbUpsert(req, res) {
 			dbPut.doc.doc = res.data;
 		}
 	}
-	console.log(dbPut)
 	return db.put(dbPut).then((result) => {
 		return getResFromDb(req)
 	}).catch((err) => {
+		console.log(err)
 		if (err.name === 'conflict') {
 			//TODO: avoid infinite loops with this type of call
 			// If there is a conflict in the lookup, repeat the lookup (the HEAD
@@ -93,6 +96,7 @@ function getResFromServer(req) {
 }
 
 function getResFromDb(req, force) {
+	console.log(req)
 	let urlObj = url.parse(req.url)
 	let pieces = urlObj.path.split('/')
 	let resourceId = pieces.slice(1,3).join('/'); //returns resources/abc
@@ -104,13 +108,15 @@ function getResFromDb(req, force) {
 		//If no pathLeftover, it'll just return resource!
 		return Promise.try(() => {
 			let data = pointer.get(resource.doc.doc, pathLeftover)
+			console.log(data)
 			return {
 				data,
 				_rev: data._rev,
 				location: resourceId+pathLeftover
 			}
 		})
-	}).catch(() => {
+	}).catch((err) => {
+		console.log(err)
 		return getResFromServer(req)
 	})
 }
@@ -126,12 +132,14 @@ function getResFromDb(req, force) {
 //   
 // }
 function get(req, force) {
+	console.log(req)
 	let urlObj = url.parse(req.url)
 	if (/^\/resources/.test(urlObj.path)) {
 		return getResFromDb(req)
 	} else {
 		// First lookup the resourceId in the cache
 		return getLookup(req).then((result) => {
+			console.log(result)
 			// Now see if the resource is, in fact, already in the cache (may not have
 			// known associated resource_id before returning from oada
 			return getResFromDb({
@@ -175,6 +183,9 @@ function getLookup(req) {
 					return getLookup(req)
 				}
 			})
+		}).catch((e) => {
+			console.log(e)
+			return
 		})
 	})
 }
@@ -258,6 +269,7 @@ async function deleteCheckParent(req, res) {
 		} return
 	} catch(e) {
 		console.log(e)
+		return
 	}
 }
 
@@ -270,7 +282,6 @@ async function deleteCheckParent(req, res) {
 // If pathleftover
 // 2b. GET the child to confirm and cache the new state
 function dbDelete(req, res) {
-	console.log(req, res)
 	let urlObj = url.parse(req.url)
 	let _rev = res.headers['x-oada-rev'];
 	let pieces = res.headers['content-location'].split('/')
@@ -278,9 +289,7 @@ function dbDelete(req, res) {
 	let pathLeftover = (pieces.length > 3) ? '/'+pieces.slice(3, pieces.length).join('/') : '';
 	// If it is itself a resource, we only need to invalidate the cache entry for
 	// the parent (which links to the child)
-	console.log(pathLeftover, !pathLeftover)
 	if (!pathLeftover) return deleteCheckParent(req, res)
-	console.log(resourceId, pathLeftover)
 	// Else, invalidate the cache entry for the resource itself
 	return dbUpsert({
 		url: urlObj.protocol+'//'+urlObj.host+'/'+resourceId+pathLeftover,
@@ -331,7 +340,6 @@ function replaceLinks(obj, req) {
 }
 
 export async function recursiveUpsert(req, body) {
-	console.log(req, body)
 	let urlObj = url.parse(req.url);
 	if (body._rev) {
 		let lookup = await getLookup({
@@ -342,7 +350,6 @@ export async function recursiveUpsert(req, body) {
 			url: req.url,
 			headers: req.headers
 		});
-		console.log(lookup, newBody)
 		await dbUpsert({
 			url: urlObj.protocol+'//'+urlObj.host+'/'+lookup.doc.resourceId,
 			headers: req.headers
@@ -410,14 +417,11 @@ export function handleWatchChange(payload) {
 			case 'delete':
 			// DELETE: remove the deepest resource from the change body, execute
 			// the delete, and recursively update all other revs in the cache
-				console.log(deepestResource)
 				let nullPath = await findNullValue(deepestResource.data, '', '')
-				console.log(nullPath)
 				let lookup = await getLookup({
 					url: payload.request.url+deepestResource.path,
 					header: payload.request.headers
 				})
-				console.log(lookup)
 				return dbDelete({
 					url: urlObj.protocol+'//'+urlObj.host+'/'+lookup.doc.resourceId+nullPath,
 					headers: payload.request.headers,
@@ -436,7 +440,6 @@ export function handleWatchChange(payload) {
 				break;
 			// Recursively update all of the resources down the returned change body
 			case 'merge':
-				console.log(payload)
 				return recursiveUpsert(payload.request, payload.response.change.body)
 				break;
 

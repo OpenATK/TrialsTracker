@@ -128,13 +128,15 @@ export const post = sequence('oada.post', [
 
 function fetch({oada, props, state, path}) {
 	let recursiveGet = (url, setupTree) => {
-		let returnData = {};
 		return oada.get({
 			url,
 			token: props.token 
 		}).then((response) => {
-			returnData = response.data;
-			return Promise.map(Object.keys(setupTree || returnData), (key) => {
+			let returnData = response.data;
+				console.log(response.data)
+			return Promise.map(Object.keys(setupTree), (key) => {
+				console.log(key)
+			//return Promise.map(Object.keys(setupTree || returnData), (key) => {
 				//if (key === '_type') return 
 				// If setupTree contains a *, this means we should get ALL content on the server
 				// at this level and continue recursion for each returned key.
@@ -159,6 +161,7 @@ function fetch({oada, props, state, path}) {
 		})
 	}
 	return recursiveGet(props.url, props.setupTree).then((result) => {
+		console.log(result)
 		return {result}
 	})
 }
@@ -235,7 +238,6 @@ export const registerWatch = sequence('oada.registerWatch', [
 		}).then(() => {
 			return
 		}).catch((err) => {
-			console.log(err)
 			return
 		})
 	},

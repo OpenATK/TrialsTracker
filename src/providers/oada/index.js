@@ -20,7 +20,6 @@ export default Provider ({
 	authorize({domain, options}) {
 		//Get token from the cache
 		//Else get token
-		console.log('getting the ting', domain, options)
 		return getAccessToken(domain, options).then((result) => {
 			return {accessToken: result.access_token}
 		}).catch((err) => {
@@ -29,6 +28,7 @@ export default Provider ({
 	},
 	
 	get({url, token}) {
+		console.log(url, token)
 		let req = {
 			method: 'get',
 			url,
@@ -76,7 +76,7 @@ export default Provider ({
 			},
 			data
 		}
-		if (cache) return cache.post(req)
+		if (cache && cache.post) return cache.post(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,
@@ -138,11 +138,23 @@ export default Provider ({
 		let signal = this.context.controller.getSignal(signalName);
 		if (request === axios) {
 			// Ping a normal GET every 5 seconds in the absense of a websocket
-			return setInterval(() => {
-				this.get({url, token}).then((result) => {
+			// TODO: Perhaps supply a _rev to check for change beyond?? Query needs to
+			// be written to handle this scenario.
+			/*
+			return setInterval(async () => {
+				this.get({url, token}).then((response) => {
+					// TODO: handle stuff.  Get changes??
+					payload.response = response;
+					payload.request = {
+						url,
+						headers
+						method: payload.response.change.type
+					}
+					if (cache) await cache.handleWatchChange(payload)
 					signal(payload)
 				})
 			}, 5000)
+			*/
 		} else {
 			return socket.watch({
 				url: urlObj.path,

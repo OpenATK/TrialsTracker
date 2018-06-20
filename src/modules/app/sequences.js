@@ -8,8 +8,8 @@ import * as yieldMod from '../yield/sequences'
 export const init = sequence('init', [
 	setMobile,
 	oada.init,
-	oada.configureWs,
-	//oada.configureCache,
+	//oada.configureWs,
+	oada.configureCache,
 	yieldMod.init,
 	notes.init,
 	fields.init,

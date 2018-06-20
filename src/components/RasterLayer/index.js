@@ -37,7 +37,7 @@ class RasterLayer extends GridLayer {
 //Compute the geohashes needed for this tile and save the canvas reference. 
 	createTile(coords) {
 		let coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();
-		let tile = tiles.get(coordsIndex);
+		let tile = tiles.get(this.props.layer, coordsIndex);
 		// If the tile is cached and its not on the list of geohashes to (re)draw,
 		// return the tile
 		if (tile) return tile;
@@ -46,7 +46,7 @@ class RasterLayer extends GridLayer {
 		tile = L.DomUtil.create('canvas', 'leaflet-tile');
 		tile.height = 256;                     
 		tile.width = 256;
-		tiles.set(coordsIndex, tile)
+		tiles.set(this.props.layer, coordsIndex, tile)
 		this.props.createTile({coords, layer: this.props.layer})
 		return tile;
   }

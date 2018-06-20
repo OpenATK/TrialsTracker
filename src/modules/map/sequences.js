@@ -1,4 +1,4 @@
-import { set, toggle } from 'cerebral/operators';
+import { when, set, toggle } from 'cerebral/operators';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import { state, props } from 'cerebral/tags'
 import gjArea from '@mapbox/geojson-area';
@@ -7,8 +7,11 @@ export let startMovingMap = [
   set(state`map.moving`, true)
 ];
 
-export var toggleCropLayer = [
-  toggle(`map.crop_layers${props.crop}.visible`)
+export var toggleLayer = [
+	when (state`map.layers.${props`name`}`), {
+		true: [toggle(state`map.layers.${props`name`}.visible`)],
+		false: []
+	}
 ]
 
 export var toggleNotesVisible = [

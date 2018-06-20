@@ -16,16 +16,14 @@ export function drawTile({state, props, oada}) {
   let precision = getGeohashLevel(props.coords.z, sw, ne);
 	let geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
 	let coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-	let tile = tiles.get(coordsIndex)
+	let tile = tiles.get(props.layer, coordsIndex)
 
 	// Only get those that we know to be available (this "available" list can also
 	// be utilized to filter what is drawn).
-		/*
 	geohashes = geohashes.filter((geohash) => {
 		if (!props.index['geohash-'+geohash.length]) return false
 		return (props.index['geohash-'+geohash.length][geohash]) ? true : false;
 	})
-	*/
 	return fetchGeohashData(tile, geohashes, oada, props.layer, props.coords, props.legend, coordsIndex, domain, token)
 }
 
@@ -35,9 +33,11 @@ export function redrawTile({state, props, oada}) {
 	let geohashesOnScreen = state.get(`map.geohashesOnScreen`)
 	return Promise.map(Object.keys(props.change || {}), (crop) => {
 		return Promise.map(Object.keys(props.change[crop] || {}), (geohash) => {
+			if (!props.index['geohash-'+geohash.length]) return
+			if (!props.index['geohash-'+geohash.length][geohash]) return
 			return Promise.map(Object.keys(geohashesOnScreen || {}), (coordsIndex) => {
 				if (!geohashesOnScreen[coordsIndex][geohash]) return
-				let tile = tiles.get(coordsIndex)
+				let tile = tiles.get(props.layer, coordsIndex)
 				if (!tile) return
 				return fetchGeohashData(tile, [geohash], oada, crop, geohashesOnScreen[coordsIndex].coords, props.legend, coordsIndex, domain, token)
 			})
@@ -63,7 +63,7 @@ export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, co
 		})
 	}).then(() => {
 		//Save the tile and call done
-		tiles.set(coordsIndex, tile);
+		tiles.set(crop, coordsIndex, tile);
 		return { geohashes }
 	})}
 

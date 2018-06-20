@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from '@cerebral/react';
-import { Marker, FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
+import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 import './map.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
@@ -8,7 +8,7 @@ import uuid from 'uuid'
 const { Overlay } = LayersControl;
 
 export default connect({
-  cropLayers: state`map.crop_layers`,
+  layers: state`map.layers`,
 	notes: state`notes.notes`,
 	notesVisible: state`notes.visible`,
   selectedNote: state`notes.notes.${state`notes.selected_note`}`,
@@ -20,8 +20,6 @@ export default connect({
 	geohashPolygons: state`map.geohashPolygons`,
 
 	noteClicked: signal`notes.noteClicked`,
-  toggleCropLayer: signal`map.toggleCropLayer`,
-  toggleNotesVisible: signal`map.toggleNotesVisible`,
 },
 
 class LayerControl extends React.Component {
@@ -58,8 +56,8 @@ class LayerControl extends React.Component {
          </FeatureGroup>
 				</Overlay> : null }
 
-				{Object.keys(this.props.fields || {}).length ? <Overlay 
-          checked 
+				{this.props.layers.Fields ? <Overlay 
+          checked={this.props.layers.Fields.visible}
           name='Fields'>
 				  <FeatureGroup>
 					  {Object.keys(this.props.fields || {}).map(field => <GeoJSON 
@@ -74,8 +72,7 @@ class LayerControl extends React.Component {
 				</Overlay> : null }
 				{Object.keys(this.props.index || {}).map(crop => 
 					<Overlay 
-          checked={this.props.cropLayers[crop].visible}
-          onChange={()=>this.props.toggleCropLayer({crop})}
+          checked={this.props.layers[crop.charAt(0).toUpperCase() + crop.slice(1)].visible}
           name={crop.charAt(0).toUpperCase() + crop.slice(1)}
           key={crop+'-overlay'}>
           <RasterLayer
@@ -85,30 +82,14 @@ class LayerControl extends React.Component {
             tileGridlines={false}
 					/>
 				</Overlay> : null )}
-				<Overlay 
-					checked={this.props.notesVisible}
-					onChange={()=>this.props.toggleNotesVisible()}
+				{this.props.layers.Notes ? <Overlay 
+					checked={this.props.layers.Notes.visible}
 					name='Notes'
 					key={'notes-polygons'}>
 				  <FeatureGroup>
-						{ this.props.selectedNote
-						&& this.props.selectedNote.geometry
-						&& this.props.selectedNote.geometry.geojson ? 
-						this.props.selectedNote.geometry.geojson.coordinates[0].map((pt, i) => 
-							<Marker
-								className={'selected-note-marker'}
-								key={this.props.selectedNote+'-'+i} 
-								position={[pt[1], pt[0]]}
-								color={this.props.selectedNote.color}
-								draggable={true}
-								onDrag={(e)=>{this.props.markerDragged({type: 'notes', lat: e.target._latlng.lat, lng:e.target._latlng.lng, id:this.props.selectedNote.id})}}
-								onDragStart={(e)=>{this.props.markerDragStarted({})}}
-								onDragEnd={(e)=>{this.props.markerDragEnded({})}}
-							/>
-						) : null}
 						{notePolygons}
 					</FeatureGroup>
-				</Overlay>
+				</Overlay> : null}
 			</LayersControl>
     )
   }
