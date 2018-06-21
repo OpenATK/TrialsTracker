@@ -118,7 +118,7 @@ export const getPolygonStats = [
 		}
 	},
 	polygonToGeohashes,
-	geohashesToGeojson,
+	//	geohashesToGeojson,
 	addNoteToGeohashIndex,
 	getStatsForGeohashes,
 	setStats,
@@ -335,7 +335,7 @@ export function geohashesToGeojson({state, props}) {
 				];
 				geohashPolygons.push({"type":"Polygon","coordinates": [geohashPolygon]})
 			})
-		}).then((result) => {
+		}, {concurrency: 10}).then((result) => {
 			state.set(`map.geohashPolygons`, geohashPolygons)
 			return obj
 		})
@@ -387,7 +387,7 @@ function getStatsForGeohashes({props, state, oada}) {
 					stats[crop]['sum-yield-squared-area'] += ghData['sum-yield-squared-area'];
 					return
 				})
-			}).then(() => {
+			}, {concurrency: 10}).then(() => {
 				stats[crop].yield = {}
 				stats[crop].yield.mean = stats[crop].weight.sum/stats[crop].area.sum;
 				stats[crop].yield.variance = (stats[crop]['sum-yield-squared-area']/stats[crop].area.sum) - Math.pow(stats[crop].yield.mean, 2);

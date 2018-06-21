@@ -16,11 +16,11 @@ export default connect({
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
   clearCacheButtonClicked: signal`clearCacheButtonClicked`,
-  gpsButtonClicked: signal`Map.currentLocationButtonClicked`,
+  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
-  undoButtonClicked: signal`Map.undoButtonClicked`,
+  undoButtonClicked: signal`map.undoButtonClicked`,
   mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
 },
 class MenuBar extends React.Component {

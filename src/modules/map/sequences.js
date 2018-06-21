@@ -54,8 +54,9 @@ export let startMarkerDrag = [
   set(state`map.dragging_marker`, true),
 ];
 
-export let markerDragging = [
-  set(`notes.${props.type}.${props`id`}.geometry.geojson.coordinates.0.${props`id`}`, [props.lng, props.lat]),
+export let markerDragged = [
+  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.0`, props`lng`),
+  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.1`, props`lat`),
   recalculateArea
 ];
 
@@ -102,9 +103,12 @@ function recalculateArea({state}) {
 }
 
 function undo({props, state}) {
-	let points = state.get(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
+	let selected = state.get('notes.selected_note');
+	let points = state.get(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`);
+	console.log(state.get(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`));
+	console.log(points)
   if (points.length > 0) {
-    state.pop(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
+    state.pop(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`);
   }
 }
 
@@ -114,10 +118,11 @@ function mapToFieldPolygon({props, state}) {
 }
 
 export function getNoteBoundingBox({props, state}) {
-  let note = state.get(`notes.${props.type}.${props.id}`);
+	let selected = state.get('notes.selected_note');
+  let note = state.get(`notes.${selected.type}.${selected.id}`);
   let bbox = computeBoundingBox(note.geometry.geojson);
-  state.set(`notes.${props.type}.${props.id}.geometry.bbox`, bbox);
-  state.set(`notes.${props.type}.${props.id}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
+  state.set(`notes.${selected.type}.${selected.id}.geometry.bbox`, bbox);
+  state.set(`notes.${selected.type}.${selected.id}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
 }
 
 function dropPoint ({props, state}) {

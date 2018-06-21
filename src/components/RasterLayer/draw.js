@@ -61,7 +61,7 @@ export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, co
 		}).catch((err) => {
 			return
 		})
-	}).then(() => {
+	}, {concurrency: 10}).then(() => {
 		//Save the tile and call done
 		tiles.set(crop, coordsIndex, tile);
 		return { geohashes }

@@ -76,8 +76,9 @@ export default connect({
               className={'area-header'}>
               Area  <div
 								style={{
-									color: this.props.type === 'notes' && this.props.note ? this.props.note.color : '#000',
-									backgroundColor: this.props.type === 'notes' && this.props.note ? `rgba(${color.r },${color.g},${color.b},${color.a})` : '#fff'}}
+									color: this.props.note.color || '#000',
+									backgroundColor: `rgba(${color.r },${color.g},${color.b},${color.a})` || '#fff',
+								}}
                 className={'note-area-box'}
               />
             </span>

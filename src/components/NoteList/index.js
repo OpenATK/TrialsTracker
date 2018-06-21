@@ -60,7 +60,7 @@ class NoteList extends React.Component {
 
 		let fields = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
-      Object.keys(this.props.notes || {}).forEach((id) => {                          
+      Object.keys(this.props.notes || {}).forEach((id) => {
 				if (this.props.notes[id].fields && this.props.notes[id].fields[field]) comparisons.push({
 					text: this.props.notes[id].text,
 					stats: this.props.notes[id].stats,

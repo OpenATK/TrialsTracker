@@ -7,23 +7,6 @@ let db;
 let request;
 let expiration;
 
-//TODO: Deleting notes doesn't seem to properly delete the note via the cache,
-// likely due to my change on line 40.
-// Deleting stuff seems to cause NOT COMPLeTE OBJECTs left and right
-// Also, deleting /bookmarks/notes/test (path leftover) wasn't behaving as it
-// should, either.
-// Also, I think the oada module should make an effort to fix the oada state 
-// after a delete as part of the oada.delete sequence
-
-// Delete had been working because we would unset the child from its parent, and
-// then we would reGET everything from the db.
-
-// Handle delete vs put
-// handle pathleftover vs resource manipulation
-// Handle resource already exists for doesn't
-//
-
-
 async function dbUpsert(req, res) {
 	let urlObj = url.parse(req.url)
 	let pieces = urlObj.path.split('/')
@@ -38,47 +21,54 @@ async function dbUpsert(req, res) {
 			_accessed: Date.now(),
 		}
 	}
-	try {
-		let result = await db.get(resourceId)
-		dbPut._rev = result._rev
-		if (req.method && req.method.toLowerCase() === 'delete') {
-			dbPut.doc.doc =	(dbPut.doc.doc || {});
-		} else {
-			if (pathLeftover) {
-				// merge the new data into the old at the path leftover, then return old
-				let curData = pointer.get(result.doc.doc, pathLeftover);
-				let newData = _.merge(curData, res.data || {})
-				pointer.set(result.doc.doc, pathLeftover, newData);
-				dbPut.doc.doc = result.doc.doc;
-			} else dbPut.doc.doc = _.merge(result.doc.doc, res.data || {});
-		}
-	} catch(e) {
-		console.log(e)
-		// Resource was not in db.		
-		if (req.method && req.method.toLowerCase() === 'delete') {
-			// Deleting a resource that doesn't exist: do nothing.
-		} else {
-			if (pathLeftover) {
-				//Execute the PUT and Warn users that the data is incomplete
-				let doc = {_NOT_COMPLETE_RESOURCE: true};
-				pointer.set(doc, pathLeftover, res.data);
-				dbPut.doc.doc = doc;
+	return Promise.try(() => {
+		return db.get(resourceId).then((result) => {
+			dbPut._rev = result._rev
+			if (req.method && req.method.toLowerCase() === 'delete') {
+				dbPut.doc.doc =	(dbPut.doc.doc || {});
+			} else {
+				if (pathLeftover) {
+					// merge the new data into the old at the path leftover, then return old
+					let curData = {}
+					try {
+						curData = pointer.get(result.doc.doc, pathLeftover);
+					} catch(err) {}
+					let newData = _.merge(curData, res.data || {})
+					pointer.set(result.doc.doc, pathLeftover, newData);
+					dbPut.doc.doc = result.doc.doc;
+				} else dbPut.doc.doc = _.merge(result.doc.doc, res.data || {});
 			}
-			dbPut.doc.doc = res.data;
-		}
-	}
-	return db.put(dbPut).then((result) => {
-		return getResFromDb(req)
-	}).catch((err) => {
-		console.log(err)
-		if (err.name === 'conflict') {
-			//TODO: avoid infinite loops with this type of call
-			// If there is a conflict in the lookup, repeat the lookup (the HEAD
-			// request likely took too long and the lookup was already created by
-			// another simultaneous request
-			return dbUpsert(req, res)
-		}
-		return
+			return
+		}).catch((e) => {
+			console.log(e)
+			// Resource was not in db.		
+			if (req.method && req.method.toLowerCase() === 'delete') {
+				// Deleting a resource that doesn't exist: do nothing.
+			} else {
+				if (pathLeftover) {
+					//Execute the PUT and Warn users that the data is incomplete
+					let doc = {_NOT_COMPLETE_RESOURCE: true};
+					pointer.set(doc, pathLeftover, res.data);
+					dbPut.doc.doc = doc;
+				}
+				dbPut.doc.doc = res.data;
+			}
+			return
+		})
+	}).then(() => {
+		return db.put(dbPut).then((result) => {
+			return getResFromDb(req)
+		}).catch((err) => {
+			console.log(err)
+			if (err.name === 'conflict') {
+				//TODO: avoid infinite loops with this type of call
+				// If there is a conflict in the lookup, repeat the lookup (the HEAD
+				// request likely took too long and the lookup was already created by
+				// another simultaneous request
+				return dbUpsert(req, res)
+			}
+			return
+		})
 	})
 }
 
@@ -96,7 +86,6 @@ function getResFromServer(req) {
 }
 
 function getResFromDb(req, force) {
-	console.log(req)
 	let urlObj = url.parse(req.url)
 	let pieces = urlObj.path.split('/')
 	let resourceId = pieces.slice(1,3).join('/'); //returns resources/abc
@@ -108,7 +97,6 @@ function getResFromDb(req, force) {
 		//If no pathLeftover, it'll just return resource!
 		return Promise.try(() => {
 			let data = pointer.get(resource.doc.doc, pathLeftover)
-			console.log(data)
 			return {
 				data,
 				_rev: data._rev,
@@ -132,20 +120,21 @@ function getResFromDb(req, force) {
 //   
 // }
 function get(req, force) {
-	console.log(req)
 	let urlObj = url.parse(req.url)
 	if (/^\/resources/.test(urlObj.path)) {
 		return getResFromDb(req)
 	} else {
 		// First lookup the resourceId in the cache
 		return getLookup(req).then((result) => {
-			console.log(result)
 			// Now see if the resource is, in fact, already in the cache (may not have
 			// known associated resource_id before returning from oada
 			return getResFromDb({
 				headers: req.headers, 
 				url: urlObj.protocol+'//'+urlObj.host+'/'+result.doc.resourceId+result.doc.pathLeftover
 			})
+		}).catch((err) => {
+			console.log(err);
+			throw err
 		})
 	}
 }
@@ -185,7 +174,7 @@ function getLookup(req) {
 			})
 		}).catch((e) => {
 			console.log(e)
-			return
+			throw e	
 		})
 	})
 }
@@ -235,7 +224,8 @@ function put(req) {
 			_valid: false,
 			headers: { 'x-oada-rev': _rev},
 		}).then(() => {
-			// Now get the data to bring it back into the cache
+			// Now get the data to bring it back into the cache. While dbUpsert does 
+			// much of this, the lookup has not necessarily been created yet.
 			return get({
 				headers: req.headers, 
 				url: urlObj.protocol+'//'+urlObj.host+'/'+resourceId+pathLeftover,
@@ -249,12 +239,14 @@ async function deleteCheckParent(req, res) {
 	let urlObj = url.parse(req.url)
 	let _rev = res.headers['x-oada-rev'];
 	let lookup;
+	// Try to get the parent document
 	try {
 		let reqPieces = urlObj.path.split('/')
 		lookup = await getLookup({
 			url: urlObj.protocol+'//'+urlObj.host+reqPieces.slice(0, reqPieces.length-1).join('/'),
 			headers: req.headers
 		})
+		// if the parent document has a known resourceId, nullify the link to the deleted child
 		if (lookup && lookup.doc.resourceId) {
 			let parentUrl = urlObj.protocol+'//'+urlObj.host+'/'+lookup.doc.resourceId+lookup.doc.pathLeftover;
 			return dbUpsert({

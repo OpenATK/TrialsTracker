@@ -28,7 +28,6 @@ export default Provider ({
 	},
 	
 	get({url, token}) {
-		console.log(url, token)
 		let req = {
 			method: 'get',
 			url,

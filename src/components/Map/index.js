@@ -9,6 +9,8 @@ import LegendControl from './LegendControl'
 import LoadingScreen from '../LoadingScreen'
 
 export default connect({
+	selectedNote: state`notes.${state`notes.selected_note.type`}.${state`notes.selected_note.id`}`,
+	selected: state`notes.selected_note`,
   editing: state`app.view.editing`,
   legends: state`app.view.legends`,
   legendVisible: state`app.view.legend.visible`,
@@ -64,7 +66,7 @@ class TrialsMap extends React.Component {
 					position={[pt[1], pt[0]]}
 					color={this.props.selectedNote.color}
 					draggable={true}
-					onDrag={(e)=>{this.props.markerDragged({type: 'notes', lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+					onDrag={(e)=>{this.props.markerDragged({id: this.props.selected.id, type: this.props.selected.type, lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
 					onDragStart={(e)=>{this.props.markerDragStarted({})}}
 					onDragEnd={(e)=>{this.props.markerDragEnded({})}}
 				/>                                                                 

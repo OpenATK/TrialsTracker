@@ -26,6 +26,7 @@ export const fetch = sequence('notes.fetch', [
 				contentType: 'application/vnd.oada.yield.1+json',
 				path: '/bookmarks/notes',
 				data: {},
+				uuid: uuid()
 			}),
 			oada.createResourceAndLink
 		])
@@ -91,8 +92,8 @@ export const doneClicked = [
 	set(props`id`, state`notes.selected_note.id`),
 	set(props`note`, state`notes.${props`type`}.${props`id`}`),
 	set(state`app.view.editing`, false), 
+	getNoteStats,
 	oadaUpdateNote,
-	getNoteStats
 ];
 
 export const init = sequence('notes.init', [

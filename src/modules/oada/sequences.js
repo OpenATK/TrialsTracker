@@ -133,9 +133,7 @@ function fetch({oada, props, state, path}) {
 			token: props.token 
 		}).then((response) => {
 			let returnData = response.data;
-				console.log(response.data)
 			return Promise.map(Object.keys(setupTree), (key) => {
-				console.log(key)
 			//return Promise.map(Object.keys(setupTree || returnData), (key) => {
 				//if (key === '_type') return 
 				// If setupTree contains a *, this means we should get ALL content on the server
@@ -161,7 +159,6 @@ function fetch({oada, props, state, path}) {
 		})
 	}
 	return recursiveGet(props.url, props.setupTree).then((result) => {
-		console.log(result)
 		return {result}
 	})
 }
