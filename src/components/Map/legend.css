@@ -1,5 +1,6 @@
 .legend-control {
-  position: relative;
+	display: flex;
+	flex-direction: column;
   bottom: 20px;
   padding: 5px;
   line-height: 18px;

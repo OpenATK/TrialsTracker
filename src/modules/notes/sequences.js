@@ -24,6 +24,7 @@ export const fetch = sequence('notes.fetch', [
 		setupTree,
 	}),
 	oada.smartFetch, 
+	mapOadaToRecords,
 	/*
 	when(state`oada.bookmarks.notes`), {
 		true: sequence('fetchNotesSuccess', [
@@ -106,7 +107,7 @@ export const doneClicked = [
 ];
 
 export const init = sequence('notes.init', [
-	set(state`notes.loading`, true),
+	//	set(state`notes.loading`, true),
 	//assumes oada has been initialized with a domain and valid token
 	fetch,
 	getTagsList,

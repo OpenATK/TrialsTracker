@@ -43,15 +43,10 @@ export const fetchTree = sequence('oada.fetchTree', [
 		url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
 	}),
 	fetch,
-	when(props`omit`), {
-		false: [ 
-			when(props`result`), {
-				true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
-				false: [],
-			},
-		],
-		true: []
-	}
+	when(props`result`), {
+		true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
+		false: [],
+	},
 ])
 
 export const get = sequence('oada.get', [
@@ -66,10 +61,7 @@ export const get = sequence('oada.get', [
 			}
 		})
 	},
-	when(props`omit`), {
-		false: [set(state`oada.${props`cerebralPath`}`, props`data`)],
-		true: []
-	}
+	set(state`oada.${props`cerebralPath`}`, props`data`),
 ])
 
 export const updateState = sequence('oada.updateState', [
@@ -134,16 +126,11 @@ export const smartFetch = sequence('oada.smartFetch', [
 		token: state.get('oada.token'),
 		url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
 	}),
-	smartTreePut,
-	when(props`omit`), {
-		false: [ 
-			when(props`result`), {
-				true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
-				false: [],
-			},
-		],
-		true: []
-	}
+	smartTreeFetch,
+	when(props`result`), {
+		true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
+		false: [],
+	},
 ])
 
 function replaceLinks(obj) {
@@ -207,7 +194,7 @@ let tree = {
 	}
 }
 
-function smartTreePut({oada, props, state, path}) {
+function smartTreeFetch({oada, props, state, path}) {
 	let smartPut = (url, setupTree, returnData) => {
 		console.log(url, setupTree, returnData)
 		return Promise.try(() => {
@@ -232,7 +219,8 @@ function smartTreePut({oada, props, state, path}) {
 				// If setupTree contains a *, this means we should get ALL content on the server
 				// at this level and continue recursion for each returned key.
 				if (key === '*') {
-					console.log(url, 'found star')
+          console.log(url, 'found star')
+          console.log(returnData);
 					return Promise.map(Object.keys(returnData), (resKey) => {
 						if (resKey.charAt(0) === '_') return
 						return smartPut(url+'/'+resKey, setupTree[key] || {}, returnData[key]).then((res) => {
@@ -440,7 +428,7 @@ export const createResourceAndLink = sequence('oada.createResourceAndLink', [
 	({state, props}) => {
 		let content = {
 			_id: 'resources/'+props.id, 
-			_rev: props._rev
+			_rev: props._rev || '0-0'
 		}
 		// Link to given path or path plus the random ID created by the POST
 		// Its important to perform the PUT in this manner so that the parent 

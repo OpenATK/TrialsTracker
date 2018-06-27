@@ -84,12 +84,14 @@ function dbUpsert(req, res) {
 }
 
 function getResFromServer(req) {
-	return request({
+  let newReq = {
 		method: 'GET',
 		url: req.url,
 		headers: req.headers
-	}).then((res) => {
-		return dbUpsert(req, res)
+  }
+	return request(newReq).then((res) => {
+    console.log('now upserting again', newReq,res)
+		return dbUpsert(newReq, res)
 	}).catch((err) => {
 		console.log(err)
 		throw err
@@ -251,6 +253,7 @@ function put(req) {
 }
 
 async function deleteCheckParent(req, res) {
+	console.log('deleteCheckParent', req, res)
 	let urlObj = url.parse(req.url)
 	let _rev = res.headers['x-oada-rev'];
 	let lookup;
@@ -260,7 +263,8 @@ async function deleteCheckParent(req, res) {
 		lookup = await getLookup({
 			url: urlObj.protocol+'//'+urlObj.host+reqPieces.slice(0, reqPieces.length-1).join('/'),
 			headers: req.headers
-		})
+    })
+    console.log(lookup)
 		// if the parent document has a known resourceId, nullify the link to the deleted child
 		if (lookup && lookup.doc.resourceId) {
 			let parentUrl = urlObj.protocol+'//'+urlObj.host+'/'+lookup.doc.resourceId+lookup.doc.pathLeftover;
@@ -289,6 +293,7 @@ async function deleteCheckParent(req, res) {
 // If pathleftover
 // 2b. GET the child to confirm and cache the new state
 function dbDelete(req, res) {
+	console.log('dbDelete', req, res)
 	let urlObj = url.parse(req.url)
 	let _rev = res.headers['x-oada-rev'];
 	let pieces = res.headers['content-location'].split('/')
@@ -311,6 +316,7 @@ function dbDelete(req, res) {
 
 // Issue DELETE to server then update the db
 function del(req) {
+	console.log('del', req)
 	let urlObj = url.parse(req.url)
 	return request(req).then((response) => {
 		return dbDelete(req, response)

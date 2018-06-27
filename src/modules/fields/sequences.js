@@ -15,13 +15,15 @@ import * as notes from '../notes/sequences'
 //TODO: need a string that says "loading fields"
 
 let setupTree = {
-	//	'_type': "application/vnd.oada.fields.1+json",
+	'_type': "application/vnd.oada.fields.1+json",
+	'_rev': '0-0',
 	'fields-index': {
 		'*': {
-			//			'_type': "application/vnd.oada.field.1+json",
+			'_type': "application/vnd.oada.fields.1+json",
+			'_rev': '0-0',
 			'fields-index': {
 				'*': {
-					//					'_type': "application/vnd.oada.field.1+json"
+					'_type': "application/vnd.oada.field.1+json"
 				}
 			}
 		}
