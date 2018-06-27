@@ -98,10 +98,11 @@ export const put = sequence('oada.put', [
 			data: props.data,
 			token: state.get('oada.token'),
 		}).then((response) => {
+			console.log(response)
 			return {
 				// return the resource 
 				_rev: response._rev,
-				id: response.location.split('/').filter(n => n && true).slice(-1)[0],
+				id: response.headers['content-location'].split('/').filter(n => n && true).slice(-1)[0],
 			}
 		})
 	},
@@ -120,7 +121,7 @@ export const post = sequence('oada.post', [
 			return {
 				// return the resource 
 				_rev: response._rev,
-				id: response.location.split('/').filter(n => n && true).slice(-1)[0],
+				id: response.headers['content-location'].split('/').filter(n => n && true).slice(-1)[0],
 			}
 		})
 	},
@@ -352,7 +353,7 @@ function fetch({oada, props, state, path}) {
 					url,
 					token: props.token 
 				}).then((response) => {
-					console.log(url, 'finished getting', response.data)
+					console.log(response)
 					returnData = response.data;
 					return
 				})
@@ -360,13 +361,11 @@ function fetch({oada, props, state, path}) {
 			return
 		}).then(() => {
 			// Walk down the data at this url and continue recursion.
-			console.log(url, 'proceeding')
 			return Promise.map(Object.keys(setupTree), (key) => {
-				console.log(url, 'KEY', key)
 				// If setupTree contains a *, this means we should get ALL content on the server
 				// at this level and continue recursion for each returned key.
 				if (key === '*') {
-					console.log(url, 'found star')
+					console.log('found star')
 					return Promise.map(Object.keys(returnData), (resKey) => {
 						if (resKey.charAt(0) === '_') return
 						return recursiveGet(token, url+'/'+resKey, setupTree[key] || {}, returnData[key]).then((res) => {
@@ -383,11 +382,14 @@ function fetch({oada, props, state, path}) {
 			})
 		// Catch errors. 404s 
 		}).catch((err) => {
-			console.log(err)
+			console.log('!!!!!!!!!!!!!!!')
+			console.log('!!!!!!!!!!!!!!!')
+			console.log('!!!!!!!!!!!!!!!')
 			return
 		})
 	}
 	return recursiveGet(props.token, props.url, props.setupTree, {}).then((result) => {
+		console.log(props.path, 'DONESO', result)
 		return {result}
 	})
 }
@@ -491,11 +493,11 @@ export const configureCache = sequence('oada.configureCache', [
 
 export const clearCache = sequence('oada.clearCache', [
 	({oada}) => {
-		return oada.clearCache().then(() => {
-			return oada.resetWs({
-				url: state.get('oada.domain'),
-			})
-		})
+		return oada.clearCache()//.then(() => {
+			//			return oada.resetWs({
+			//	url: state.get('oada.domain'),
+			//})
+		//})
 	}
 ])
 

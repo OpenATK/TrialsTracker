@@ -9,14 +9,22 @@ import * as map from '../map/sequences.js';
 import {state, props } from 'cerebral/tags'
 import * as oada from '../oada/sequences'
 
-// TODO: Handle if oada isn't there (fails via token or lack of domain)
-
+let setupTree = {
+	'_type': 'application/vnd.oada.yield.1+json',
+	'_rev': '0-0',
+	'*': {
+		//TODO: fix content type
+		'_type': 'application/vnd.oada.yield.1+json',
+		'_rev': '0-0',
+	}
+}
 export const fetch = sequence('notes.fetch', [
 	({props}) => ({
 		path: '/bookmarks/notes',
-		setupTree: {'*': {}},
+		setupTree,
 	}),
-	oada.fetchTree, 
+	oada.smartFetch, 
+	/*
 	when(state`oada.bookmarks.notes`), {
 		true: sequence('fetchNotesSuccess', [
 			mapOadaToRecords,
@@ -31,6 +39,7 @@ export const fetch = sequence('notes.fetch', [
 			oada.createResourceAndLink
 		])
 	}
+	*/
 ])
 
 export const oadaUpdateNote = [
