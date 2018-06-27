@@ -10,9 +10,9 @@ export const init = sequence('init', [
 	oada.init,
 	//oada.configureWs,
 	oada.configureCache,
-	//yieldMod.init,
+	yieldMod.init,
 	notes.init,
-	//fields.init,
+	fields.init,
 ])
 
 export const clearCacheButtonClicked = sequence('app.clearCache', [

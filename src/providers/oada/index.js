@@ -1,11 +1,9 @@
 import { Provider } from 'cerebral'
+import uuid from 'uuid'
 import urlLib from 'url'
 import websocket from './websocket'
 import Promise from 'bluebird'
 import axios from 'axios'
-import {
-	getToken
-} from '../../modules/oada/factories'
 import { configureCache } from './cache'
 let cache;
 let getAccessToken = Promise.promisify(require('oada-id-client').getAccessToken)
@@ -66,16 +64,17 @@ export default Provider ({
 	},
 
 	post({url, token, contentType, data}) {
+		let _id = uuid();
 		let req = {
-			method: 'post',
-			url,
+			method: 'put',
+			url: url+'/'+_id,
 			headers: {
 				'Authorization': 'Bearer '+token,
 				'Content-Type': contentType,
 			},
 			data
 		}
-		if (cache && cache.post) return cache.post(req)
+		if (cache && cache.put) return cache.put(req)
 		return request(req).then((result) => { 
 			return {
 				data: result.data,

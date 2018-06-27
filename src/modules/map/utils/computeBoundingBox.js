@@ -1,6 +1,12 @@
 export default function computeBoundingBox(geojsonPolygon) {
   let bbox;
-  let coords = geojsonPolygon.coordinates[0];
+	let coords = geojsonPolygon.coordinates[0];
+	if (coords.length === 0) return {
+		north: undefined, 
+		south: undefined, 
+		east: undefined, 
+		west: undefined, 
+	}
   let north = coords[0][1];
   let south = coords[0][1];
   let east = coords[0][0];

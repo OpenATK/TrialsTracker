@@ -243,6 +243,7 @@ function mapOadaToRecords({state, props}) {
 	state.set('map.layers.Notes', {visible: true});
 	state.set('notes.notes', {});
 	let notes =  state.get('oada.bookmarks.notes');
+	console.log(JSON.stringify(notes))
 	return Promise.map(Object.keys(notes || {}), (key) => {
 		// ignore reserved keys used by oada
 		if (key.charAt(0) !== '_') state.set(`notes.notes.${key}`, notes[key])

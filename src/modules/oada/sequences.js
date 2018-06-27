@@ -1,6 +1,7 @@
 import { props, state } from 'cerebral/tags';
 import { when, set } from 'cerebral/operators';
 import { sequence } from 'cerebral';
+import urlLib from 'url';
 
 //TODO: make the function that recursively gets a tree and creates it if it doesn't exist
 // Make lookup tree for resources -> path so it can quickly be found in cerebral
@@ -126,39 +127,267 @@ export const post = sequence('oada.post', [
 	updateState
 ])
 
-function fetch({oada, props, state, path}) {
-	let recursiveGet = (url, setupTree) => {
-		return oada.get({
-			url,
-			token: props.token 
-		}).then((response) => {
-			let returnData = response.data;
+// When starting up, it should fetch stuff using using the setup tree, creating
+export const smartFetch = sequence('oada.smartFetch', [
+	({props, state}) => ({
+		token: state.get('oada.token'),
+		url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
+	}),
+	smartTreePut,
+	when(props`omit`), {
+		false: [ 
+			when(props`result`), {
+				true: [({state, props}) => state.set('oada.'+props.path.split('/').filter(n=>n&&true).join('.'), props.result)],
+				false: [],
+			},
+		],
+		true: []
+	}
+])
+
+function replaceLinks(obj) {
+	let ret = (Array.isArray(obj)) ? [] : {};
+	if (!obj) return obj;  // no defined objriptors for this level
+	return Promise.map(Object.keys(obj || {}), (key)  => {
+		if (key === '*') { // Don't put *s into oada. Ignore them
+			return;
+		}
+		let val = obj[key];
+		if (typeof val !== 'object' || !val) {
+			ret[key] = val; // keep it asntType: 'application/vnd.oada.harvest.1+json'
+			return;
+		}
+		if (val._type) { // If it has a '_type' key, don't worry about it.
+			//It'll get created in future iterations of ensureTreeExists
+			return;
+		}
+		if (val._id) { // If it's an object, and has an '_id', make it a link from descriptor
+			ret[key] = { _id: obj[key]._id};
+			if (val._rev) ret[key]._rev = '0-0'
+			return;
+		}
+		// otherwise, recurse into the object looking for more links
+		return replaceLinks(val).then((result) => {
+			ret[key] = result;
+			return;
+		})
+	}).then(() => {
+		return ret;
+	})
+}
+
+let tree = {
+	harvest: {
+		_type: 'harvest',
+		_rev: '0-0',
+		tiledmaps: {
+			_type: 'tiled-maps',
+			_rev: '0-0',
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			//HERE ON DOWN
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			'dry-yield-map': {
+				_type: 'dry-yield-map',
+				_rev: '0-0',
+				'crop-index': {
+					'*': {
+						_type: 'crop',
+						_rev: '0-0',
+						'geohash-length-index': {}
+					},
+					corn: {
+						_type: 'crop',
+						_rev: '0-0',
+						'geohash-length-index': {}
+					}
+				}
+			}
+		}
+	}
+}
+
+function smartTreePut({oada, props, state, path}) {
+	let smartPut = (url, setupTree, returnData) => {
+		console.log(url, setupTree, returnData)
+		return Promise.try(() => {
+			// Perform a GET if we have reached the next resource break.
+			if (setupTree._type) { // its a resource
+				console.log(url, 'is a resource. awaiting')
+				return oada.get({
+					url,
+					token: props.token 
+				}).then((response) => {
+					console.log(url, 'finished getting', response.data)
+					returnData = response.data;
+					return
+				})
+			}
+			return
+		}).then(() => {
+			// Walk down the data at this url and continue recursion.
+			console.log(url, 'proceeding')
 			return Promise.map(Object.keys(setupTree), (key) => {
-			//return Promise.map(Object.keys(setupTree || returnData), (key) => {
-				//if (key === '_type') return 
+				console.log(url, 'KEY', key)
 				// If setupTree contains a *, this means we should get ALL content on the server
 				// at this level and continue recursion for each returned key.
 				if (key === '*') {
+					console.log(url, 'found star')
 					return Promise.map(Object.keys(returnData), (resKey) => {
 						if (resKey.charAt(0) === '_') return
-						return recursiveGet(url+'/'+resKey, setupTree[key] || {}).then((res) => {
+						return smartPut(url+'/'+resKey, setupTree[key] || {}, returnData[key]).then((res) => {
 							return returnData[resKey] = res;
 						})
 					})
-				} else {
-					return recursiveGet(url+'/'+key, setupTree[key] || {}).then((res) => {
+				} else if (typeof setupTree[key] === 'object') {
+					console.log('in here', key, props.token)
+					return smartPut(url+'/'+key, setupTree[key] || {}, returnData[key]).then((res) => {
 						return returnData[key] = res;
 					})
-				}
+				} else return returnData[key]
 			}).then(() => {
 				return returnData
 			})
 		}).catch((err) => {
-			// 404s and such handled here. This will return an empty string as its data
+			console.log(err)
+			console.log(err.response)
+			// Put the data on the server and try to GET it over again. The 
+			// replaceLinks function will create all of the data down to the next 
+			// resource and we don't want to recursively and redundantly PUT key by 
+			// key all the way down. We just want to skip from one resource down to 
+			// the next.
+			if (err.response.status === 404) {
+				console.log(setupTree)
+				return replaceLinks(setupTree).then((data) => {
+					console.log('PUTTING', url, setupTree._type, data)
+					return makeResourceAndLink({
+						oada,
+						token: props.token,
+						url,
+						data
+					})
+				}).then(() => {
+					return smartPut(url, setupTree, returnData)
+				})
+			}
+			throw err
+		})
+	}
+	return smartPut(props.url, props.setupTree, {}).then((result) => {
+		return {result}
+	})
+}
+
+// Everything at this point and lower in the setupTree does not exist.
+// Keep walking down, look for resources, replace links, and create them.
+
+function makeResourceAndLink({oada, token, url, data}) {
+	let urlObj = urlLib.parse(url);
+	let domain = urlObj.protocol+'//'+urlObj.host;
+	return oada[data._id ? 'put' : 'post']({
+		url: data._id ? domain+'/'+data._id : domain+'/resources',
+		contentType: data._type,
+		data,
+		token,
+	}).then((response) => {
+		console.log(response)
+		data._id = response.headers['content-location'].replace(/^\//, '');
+		console.log(data._id)
+		let link = {
+			url,
+			'Content-Type': data._type,
+			data: {_id:data._id},
+			token,
+		}
+		if (data._rev) link.data._rev = '0-0'
+		console.log(link)
+		console.log('~~~~~~~~~~~~~~~~~~~~~')
+		console.log('~~~~~~~~~~~~~~~~~~~~~')
+		console.log('~~~~~~~~~~~~~~~~~~~~~')
+		return oada.put(link).then((res) => {
+			return res
+		})
+	})
+}
+
+	/*
+function makeResourceAndLink(oada, domain, token, path, data) {
+	
+	let createResource = oada.put({
+			url: state.get('oada.domain')+((props.path[0] === '/') ? '':'/')+props.path,
+			contentType: data._type
+			data,
+			token,
+	let createResource = axios({
+		method: data._id ? 'put' : 'post',
+		url: data._id ? domain+'/'+_id : domain+'/resources',
+		headers: {
+			Authorization: 'Bearer '+token,
+			'Content-Type': data._type
+		},
+		data
+	})
+	
+	let link = axios({
+		url: domain+path,
+		method: 'put',
+		headers: {
+			Authorization: 'Bearer '+token,
+			'Content-Type': data._type
+		},
+		data: {_id:data._id}
+	})
+	if (data._rev) link.data._rev = '0-0'
+
+	return Promise.join(createResource, link)
+}
+*/
+
+function fetch({oada, props, state, path}) {
+	let recursiveGet = (token, url, setupTree, returnData) => {
+		return Promise.try(() => {
+			// Perform a GET if we have reached the next resource break.
+			if (setupTree._type) { // its a resource
+				console.log(url, 'is a resource. awaiting')
+				return oada.get({
+					url,
+					token: props.token 
+				}).then((response) => {
+					console.log(url, 'finished getting', response.data)
+					returnData = response.data;
+					return
+				})
+			}
+			return
+		}).then(() => {
+			// Walk down the data at this url and continue recursion.
+			console.log(url, 'proceeding')
+			return Promise.map(Object.keys(setupTree), (key) => {
+				console.log(url, 'KEY', key)
+				// If setupTree contains a *, this means we should get ALL content on the server
+				// at this level and continue recursion for each returned key.
+				if (key === '*') {
+					console.log(url, 'found star')
+					return Promise.map(Object.keys(returnData), (resKey) => {
+						if (resKey.charAt(0) === '_') return
+						return recursiveGet(token, url+'/'+resKey, setupTree[key] || {}, returnData[key]).then((res) => {
+							return returnData[resKey] = res;
+						})
+					})
+				} else if (typeof setupTree[key] === 'object') {
+					return recursiveGet(token, url+'/'+key, setupTree[key] || {}, returnData[key]).then((res) => {
+						return returnData[key] = res;
+					})
+				} else return returnData[key]
+			}).then(() => {
+				return returnData
+			})
+		// Catch errors. 404s 
+		}).catch((err) => {
+			console.log(err)
 			return
 		})
 	}
-	return recursiveGet(props.url, props.setupTree).then((result) => {
+	return recursiveGet(props.token, props.url, props.setupTree, {}).then((result) => {
 		return {result}
 	})
 }
@@ -269,3 +498,5 @@ export const clearCache = sequence('oada.clearCache', [
 		})
 	}
 ])
+
+

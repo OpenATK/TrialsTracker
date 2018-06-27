@@ -21,7 +21,8 @@ export default connect({
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
   undoButtonClicked: signal`map.undoButtonClicked`,
-  mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
+	mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
+	connectToDataSilo: signal`datasilo.connectToDataSilo`,
 },
 class MenuBar extends React.Component {
 

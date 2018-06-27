@@ -1,7 +1,6 @@
-import PouchDB from 'pouchdb'
-import _ from 'lodash'
-import url from 'url'
-import pointer from 'json-pointer'
+var PouchDB = require('pouchdb');
+var _ = require('lodash');
+var pointer = require('json-pointer');
 PouchDB.plugin(require('pouchdb-upsert'));
 let db;
 let request;
@@ -346,7 +345,7 @@ function replaceLinks(obj, req) {
   return ret;
 }
 
-export async function recursiveUpsert(req, body) {
+async function recursiveUpsert(req, body) {
 	let urlObj = url.parse(req.url);
 	if (body._rev) {
 		let lookup = await getLookup({
@@ -377,7 +376,7 @@ export async function recursiveUpsert(req, body) {
 	} else return
 }
 
-export function findNullValue(obj, path, nullPath) {
+function findNullValue(obj, path, nullPath) {
 	if (typeof obj === 'object') {
 		return Promise.map(Object.keys(obj || {}), (key) => {
 			if (obj[key] === null) {
@@ -395,7 +394,7 @@ export function findNullValue(obj, path, nullPath) {
 }
 
 // Will this handle watches put on keys of a resource? i.e., no _id to be found
-export function findDeepestResource(obj, path, deepestResource) {
+function findDeepestResource(obj, path, deepestResource) {
 	if (typeof obj === 'object') {
 		return Promise.map(Object.keys(obj || {}), (key) => {
 			if (key === '_rev') {
@@ -412,7 +411,7 @@ export function findDeepestResource(obj, path, deepestResource) {
 	return Promise.resolve(deepestResource);
 }
 
-export function handleWatchChange(payload) {
+function handleWatchChange(payload) {
 	let urlObj = url.parse(payload.request.url)
 	// Give the change body an _id so the deepest resource can be found
 	payload.response.change.body._id = payload.response.resourceId;
@@ -456,7 +455,7 @@ export function handleWatchChange(payload) {
 	})
 }
 
-export async function clearCache() {
+async function clearCache() {
 	if (db) await db.destroy();
 	db = undefined;
 	request = undefined;
@@ -464,7 +463,7 @@ export async function clearCache() {
 }
 
 // name should be made unique across domains and users
-export function configureCache(name, req, exp) {
+module.exports = function configureCache(name, req, exp) {
 	db = db || new PouchDB(name);
 	request = req;
 	expiration = exp || 1000*60*60*24*2;//(ms/s)*(s/min)*(min/hr)*(hr/days)*days

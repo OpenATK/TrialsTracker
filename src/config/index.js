@@ -2,8 +2,8 @@ var overrides = require('./config.dev.js').default;
 
 //----------- Define default configs here ----------
 
-export const title = 'TrialsTracker';
-export const scope = 'oada.yield:all';
+const title = 'TrialsTracker';
+const scope = 'oada.yield:all';
 const defaults = {
 	scope,
   title,
@@ -18,11 +18,11 @@ if (process.env.REACT_APP_PROD_DEV) {
 
 var toExport =  {...defaults, ...overrides};
 
-export const oadaDomain = toExport.oadaDomain;
-export const websiteDomain = toExport.websiteDomain;
-export const redirect = toExport.websiteDomain + '/oauth2/redirect.html';
-export const metadata = toExport.metadata;
-export const devtoolsPort = toExport.devtoolsPort;
-export const defaultNewConnectionURL = toExport.defaultNewConnectionURL;
+const oadaDomain = toExport.oadaDomain;
+const websiteDomain = toExport.websiteDomain;
+const redirect = toExport.websiteDomain + '/oauth2/redirect.html';
+const metadata = toExport.metadata;
+const devtoolsPort = toExport.devtoolsPort;
+const defaultNewConnectionURL = toExport.defaultNewConnectionURL;
 
-export default toExport;
+module.exports = toExport;
