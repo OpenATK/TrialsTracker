@@ -26,7 +26,7 @@ var knownTree = {};
 
 var setupTree = {
 	bookmarks: {
-		_type: 'application/vnd.oada.harvest.1+json',
+		_type: 'application/vnd.oada.bookmarks.1+json',
 		_rev: '0-0',
 		harvest: {
 			_type: 'application/vnd.oada.harvest.1+json',

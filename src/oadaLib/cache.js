@@ -1,7 +1,7 @@
 var PouchDB = require('pouchdb');
+var url = require('url');
 var _ = require('lodash');
 var pointer = require('json-pointer');
-PouchDB.plugin(require('pouchdb-upsert'));
 let db;
 let request;
 let expiration;
@@ -463,7 +463,7 @@ async function clearCache() {
 }
 
 // name should be made unique across domains and users
-module.exports = function configureCache(name, req, exp) {
+export default function(name, req, exp) {
 	db = db || new PouchDB(name);
 	request = req;
 	expiration = exp || 1000*60*60*24*2;//(ms/s)*(s/min)*(min/hr)*(hr/days)*days

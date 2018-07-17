@@ -15,7 +15,7 @@ export default connect({
 	editing: state`app.view.editing`,
   index: state`yield.index`,
   fields: state`notes.fields`,
-  domain: state`Connections.oada_domain`,
+  domain: state`oada_domain`,
 	isLoading: state`map.isLoading`,
 	geohashPolygons: state`map.geohashPolygons`,
 
@@ -26,7 +26,7 @@ class LayerControl extends React.Component {
 
 	render() {
 
-		let notePolygons = Object.keys(this.props.notes).filter(id => 
+		let notePolygons = Object.keys(this.props.notes || {}).filter(id => 
 			this.props.notes[id].geometry 
 			&& this.props.notes[id].geometry.geojson 
 			&& this.props.notes[id].geometry.geojson.coordinates[0].length > 0
@@ -36,7 +36,7 @@ class LayerControl extends React.Component {
       data={this.props.notes[id].geometry.geojson} 
       color={this.props.notes[id].color} 
   	  style={{fillOpacity:0.4}}
-	    onClick={() => this.props.noteClicked({id})}
+	    onClick={() => this.props.noteClicked({id, type:'notes'})}
       dragging={true} 
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
 		/>})
@@ -44,7 +44,7 @@ class LayerControl extends React.Component {
     return (
       <LayersControl 
 				position='topright'>
-				{this.props.geohashPolygons.length ? <Overlay 
+				{this.props.geohashPolygons && this.props.geohashPolygons.length ? <Overlay 
           name='Geohash Polygons'>
 				  <FeatureGroup>
 					  {this.props.geohashPolygons.map(polygon => <GeoJSON 
@@ -56,7 +56,7 @@ class LayerControl extends React.Component {
          </FeatureGroup>
 				</Overlay> : null }
 
-				{this.props.layers.Fields ? <Overlay 
+				{this.props.layers && this.props.layers.Fields ? <Overlay 
           checked={this.props.layers.Fields.visible}
           name='Fields'>
 				  <FeatureGroup>
@@ -82,7 +82,7 @@ class LayerControl extends React.Component {
             tileGridlines={false}
 					/>
 				</Overlay> : null )}
-				{this.props.layers.Notes ? <Overlay 
+				{this.props.layers && this.props.layers.Notes ? <Overlay 
 					checked={this.props.layers.Notes.visible}
 					name='Notes'
 					key={'notes-polygons'}>

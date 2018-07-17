@@ -1,4 +1,8 @@
 import { equals, when, set, unset, toggle, wait } from 'cerebral/operators';
+import polygonsIntersect from '../map/utils/polygonsIntersect';
+import computeBoundingBox from '../map/utils/computeBoundingBox'
+import gaussian from 'gaussian';
+import gjArea from '@mapbox/geojson-area';
 import { sequence } from 'cerebral'
 import uuid from 'uuid';
 import rmc from 'random-material-color';
@@ -6,24 +10,28 @@ import _ from 'lodash';
 import Color from 'color';
 import * as yieldMod from '../yield/sequences.js';
 import * as map from '../map/sequences.js';
-import {state, props } from 'cerebral/tags'
-import * as oada from '../oada/sequences'
+import { state, props } from 'cerebral/tags'
+import * as oada from '@oada/cerebral-module/sequences'
 
-let setupTree = {
-	'_type': 'application/vnd.oada.yield.1+json',
-	'_rev': '0-0',
-	'*': {
-		//TODO: fix content type
-		'_type': 'application/vnd.oada.yield.1+json',
-		'_rev': '0-0',
-	}
+let tree = {
+  '_type': 'application/vnd.oada.bookmarks.1+json',
+  '_rev': '0-0',
+  'notes': {
+    '_type': 'application/vnd.oada.yield.1+json',
+    '_rev': '0-0',
+    '*': {
+      '_type': 'application/vnd.oada.yield.1+json',
+      '_rev': '0-0',
+    }
+  }
 }
+
 export const fetch = sequence('notes.fetch', [
 	({props}) => ({
-		path: '/bookmarks/notes',
-		setupTree,
+		path: '/bookmarks',
+		tree,
 	}),
-	oada.smartFetch, 
+	oada.get,
 	mapOadaToRecords,
 	/*
 	when(state`oada.bookmarks.notes`), {
@@ -46,8 +54,9 @@ export const fetch = sequence('notes.fetch', [
 export const oadaUpdateNote = [
 	({props, state}) => ({
 		data: props.note,
-		contentType: 'application/vnd.oada.yield.1+json',
-		path: '/bookmarks/notes/'+props.note.id,
+		type: 'application/vnd.oada.yield.1+json',
+    path: '/bookmarks/notes/'+props.note.id,
+    tree
 	}),
 	oada.put,
 ]
@@ -107,6 +116,8 @@ export const doneClicked = [
 ];
 
 export const init = sequence('notes.init', [
+  set(state`notes.connection_id`, props`connection_id`),
+  oada.connect,
 	//	set(state`notes.loading`, true),
 	//assumes oada has been initialized with a domain and valid token
 	fetch,
@@ -114,7 +125,15 @@ export const init = sequence('notes.init', [
 	set(state`notes.loading`, false),
 	set(props`type`, `notes`),
 	getAllStats,
-	yieldMod.getPolygonStats,
+  yieldMod.getPolygonStats,
+  when(state`fields.fields-index`), {
+    true: [
+      mapFieldsToNotes
+    ],
+    false: [
+    ]
+  }
+  /*
 	({state, props}) => ({
 		watches: {
 			[state.get('oada.bookmarks.notes._id')] : {
@@ -123,7 +142,8 @@ export const init = sequence('notes.init', [
 			},
 		},
 	}),
-	oada.registerWatch,
+  oada.get,
+  */
 ])
 
 export const expandComparisonsClicked = [
@@ -192,7 +212,7 @@ export const deleteNoteButtonClicked = [
 	({state, props}) => ({
 		path: '/bookmarks/notes/'+props.id,
 	}),
-	oada.oadaDelete,
+	oada.delete,
 	unwatchNote,
 	fetch,
 	unset(state`notes.selected_note`),
@@ -204,7 +224,7 @@ export const noteTextChanged = [
 ];
 
 export const tagTextChanged = [
-	unset(state`notes.${props`type`}.${state`id`}.tag_error`),
+	unset(state`notes.${props`type`}.${props`id`}.tag_error`),
   set(state`app.model.tag_input_text`, props`value`),
 ];
 
@@ -214,12 +234,11 @@ export const addNoteButtonClicked = [
 	createNote, 
 	({props, state}) => ({
 		data: props.note,
-		contentType: 'application/vnd.oada.yield.1+json',
+		type: 'application/vnd.oada.yield.1+json',
 		path: '/bookmarks/notes',
-		linkToId: true
+		tree,
 	}),
-	oada.createResourceAndLink,
-	fetch,
+	oada.put,
 	equals(state`notes.tab`), {
 		0: [set(props`type`, 'notes')],
 		1: [set(props`type`, 'fields')],
@@ -251,9 +270,9 @@ function computeStatsForNotes({state, props}) {
 
 function mapOadaToRecords({state, props}) {
 	state.set('map.layers.Notes', {visible: true});
-	state.set('notes.notes', {});
-	let notes =  state.get('oada.bookmarks.notes');
-	console.log(JSON.stringify(notes))
+  state.set('notes.notes', {});
+  let id = state.get('notes.connection_id');
+	let notes =  state.get(`oada.${id}.bookmarks.notes`);
 	return Promise.map(Object.keys(notes || {}), (key) => {
 		// ignore reserved keys used by oada
 		if (key.charAt(0) !== '_') state.set(`notes.notes.${key}`, notes[key])
@@ -356,3 +375,87 @@ function removeTagFromAllTagsList({props, state}) {
     state.set(`app.model.tags'.${props.tag}.references`, refs - 1);
   }
 };
+
+function mapFieldsToNotes({state, props}) {
+	let fields = state.get('fields.records');
+	let notes = {};
+	return Promise.map(Object.keys(fields || {}), (key) => {
+	let bbox = computeBoundingBox(fields[key].boundary.geojson);           
+		return notes[key] = {
+			created: Date.now(),
+			id: key,
+			text: key,
+			tags: [],
+			fields: {},
+			geometry: {
+				geojson: fields[key].boundary.geojson,
+				centroid:[
+					(bbox.north + bbox.south)/2, 
+					(bbox.east + bbox.west)/2
+				],
+				visible: true,
+				bbox,
+				area: gjArea.geometry(fields[key].boundary.geojson)/4046.86,
+			},
+			color: rmc.getColor(),
+			completions: [],
+			stats: {},
+		};
+	}).then(() => {
+		state.set(`notes.fields`, notes)
+		return
+	})
+}
+
+let dist = gaussian(0,1);
+function getFieldDataForNotes({props, state, path}) {
+	var notes = props.notes;
+  var fields = state.get('fields.records');
+  if (fields && props.notes) {
+		var noteFields = {};
+    return Promise.map(Object.keys(props.notes), (noteId) => {
+      noteFields[noteId] = {};
+			return Promise.map(Object.keys(fields), (fieldId) => {
+        if (notes[noteId].geometry.geojson.coordinates[0].length > 3) {
+          if (polygonsIntersect(fields[fieldId].boundary.geojson.coordinates[0], notes[noteId].geometry.geojson.coordinates[0])) {
+            if (fields[fieldId].stats) {
+							noteFields[noteId][fieldId] = {};
+              return Promise.map(Object.keys(fields[fieldId].stats), (crop) => {
+								if (notes[noteId].stats[crop]) {
+									let fieldStats = fields[fieldId].stats[crop];
+									let noteStats = notes[noteId].stats[crop];
+									noteFields[noteId][fieldId][crop] = {
+										comparison: {
+										  differenceMeans: fieldStats.yield.mean - noteStats.yield.mean,
+										  standardError: fieldStats.yield.standardDeviation/Math.pow(noteStats.count, 0.5),
+									  }
+									}
+									noteFields[noteId][fieldId][crop].comparison.zScore = (noteStats.yield.mean - fieldStats.yield.mean)/noteFields[noteId][fieldId][crop].comparison.standardError;
+									noteFields[noteId][fieldId][crop].comparison.pValue = noteFields[noteId][fieldId][crop].comparison.zScore > 0 ? 2*(1 - dist.cdf(noteFields[noteId][fieldId][crop].comparison.zScore)) : 2*(dist.cdf(noteFields[noteId][fieldId][crop].comparison.zScore))
+									noteFields[noteId][fieldId][crop].comparison.signficantDifference = noteFields[noteId][fieldId][crop].comparison.pValue < 0.05;
+                  return true;
+                } else return false;
+              })
+            } else return false;
+          } else return false;
+        } else return false;
+      })
+    }).then((result) => {
+      return path.success({noteFields});
+		}).catch((error) => {
+			console.log(error)
+      return path.error(error);
+		})
+  } else return path.error({});
+}
+
+function setFieldDataForNotes({props, state}) {
+  if (props.noteFields) {
+    Object.keys(props.noteFields).forEach((id) => {
+      state.set(`notes.notes.${id}.fields`, {});
+      Object.keys(props.noteFields[id]).forEach((fieldId) => {
+        state.set(`notes.notes.${id}.fields.${fieldId}`, props.noteFields[id][fieldId]);
+      })
+    })
+  }
+}

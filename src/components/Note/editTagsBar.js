@@ -15,13 +15,12 @@ export default connect({
 
     tagAdded: signal`notes.tagAdded`,
     tagRemoved: signal`notes.tagRemoved`,
-    tagInputTextChanged: signal`notes.tagInputTextChanged`,
+    tagTextChanged: signal`notes.tagTextChanged`,
 },
 
   class EditTagsBar extends React.Component {
   
 		render() {
-			console.log(this.props)
       return (
         <div
           className={'edit-tags-bar'}>
@@ -54,7 +53,7 @@ export default connect({
 						hintText={this.props.error ? null : 'Add a new tag...'}
 						errorText={this.props.error ? this.props.error : null}
 						dataSource={Object.keys(this.props.allTags || {}).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
-            onUpdateInput={(value) => this.props.tagInputTextChanged({value, type: this.props.type, id:this.props.id})}
+            onUpdateInput={(value) => this.props.tagTextChanged({value, type: this.props.type, id:this.props.id})}
             onNewRequest={(text, id) => this.props.tagAdded({text, id:this.props.id, type: this.props.type})}
             searchText={this.props.tagInput}
 					  onKeyDown={this.handleKeyDown}

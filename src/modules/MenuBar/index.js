@@ -1,8 +1,10 @@
 import { Module } from 'cerebral'
+  /*
 import {
 	showConnections,
 	signOut,
 } from '../Connections/chains'
+*/
 
 import {
   toggleMenuDropdown,
@@ -17,8 +19,8 @@ export default Module({
   },
 
   signals: {
-    signOutClicked: signOut,
-		connectionsClicked: showConnections,
+    //signOutClicked: signOut,
+    //connectionsClicked: showConnections,
     menuBackgroundClicked: toggleMenuDropdown,
     mapLegendButtonClicked: toggleMapLegend,
     showMenuDropdown: toggleMenuDropdown,

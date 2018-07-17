@@ -1,17 +1,14 @@
 import { connect } from '@cerebral/react'
 import { GridLayer} from 'react-leaflet'
-import gh from 'ngeohash'
 import _ from 'lodash'
 import Promise from 'bluebird'
 import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
-import tiles from './tileManager.js'
+import tiles from '../../modules/yield/tileManager.js'
 import { recursiveDrawOnCanvas } from './draw'
-//import * as cache from '../../providers/oada/cache.js'
 
 export default connect({
   geohashesToDraw: state`map.geohashesToDraw.${props`layer`}`,
-
   tileUnloaded: signal`yield.tileUnloaded`,
 	createTile: signal`yield.createTile`,
 },

@@ -1,7 +1,5 @@
 import { Module } from 'cerebral'
-import {
-  selectField
-} from './sequences'
+import * as signals from './sequences'
 export default Module({
 
 	state : {
@@ -9,7 +7,5 @@ export default Module({
 		loading: true,
 	},
 
-	signals: {
-		fieldClicked: selectField,
-  }
+	signals,
 })

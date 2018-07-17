@@ -18,4 +18,11 @@ tree = {
 var content = fs.readFileSync(file);
 content = JSON.parse(content)
 console.log(content);
-//oadaLib.smartPut('https://'+domain+'/bookmarks/notes')
+return Promise.map(Object.keys(content || {}), (key) => {
+  let url = 'https://'+domain+'/bookmarks/notes/'+key;
+  return oada.smartPut({
+    url
+    token,
+    setupTree,
+  })
+})

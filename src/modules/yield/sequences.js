@@ -8,13 +8,13 @@ import _ from 'lodash';
 import {longestCommonPrefix, recursiveGeohashSearch } from './utils/recursiveGeohashSearch'
 import Promise from 'bluebird'
 import geohashNoteIndexManager from './utils/geohashNoteIndexManager';
-//import * as fields from '../fields/sequences';
-import * as oadaMod from '../oada/sequences'
-import { drawTile, redrawTile } from '../../components/RasterLayer/draw';
+import * as fields from '../fields/sequences';
+import * as oadaMod from '@oada/cerebral-module/sequences'
+import { drawTile, redrawTile } from './draw';
 
 let t;
 
-let setupTree = {
+let tree = {
 	'_type': 'application/vnd.oada.harvest.1+json',
 	'_rev': '0-0',
 	'tiled-maps': {
@@ -46,16 +46,17 @@ let setupTree = {
 export const fetch = sequence('yield.fetch', [
 	({props, state}) => ({
 		path: '/bookmarks/harvest',
-		setupTree,
+		tree,
 	}),
-	oadaMod.smartFetch,
+	oadaMod.get,
 	mapOadaToYieldIndex,
 ])
 
 export const handleYieldIndexWatch = sequence('yield.fetch', [
 	// Parse out the needed data from the change
 	// Also, add new geohashes to our index
-	({state, props}) => {
+  ({state, props}) => {
+    let id = state.get('yield.connection_id');
 		let thing = props.response.change.body;
 		let ret = {};
 		return Promise.map(Object.keys(thing['crop-index'] || {}), (crop) => {
@@ -63,7 +64,7 @@ export const handleYieldIndexWatch = sequence('yield.fetch', [
 			return Promise.map(Object.keys(thing['crop-index'][crop]['geohash-length-index'] || {}), (ghLength) => {
 				return Promise.map(Object.keys(thing['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index'] || {}), (geohash) => {
 					ret[crop][geohash] = geohash;
-					state.set(`oada.bookmarks.harvest.tiled-maps.dry-yield-map.crop-index.${crop}.geohash-length-index.${ghLength}.geohash-index.${geohash}`, geohash)
+					state.set(`oada.${id}.bookmarks.harvest.tiled-maps.dry-yield-map.crop-index.${crop}.geohash-length-index.${ghLength}.geohash-index.${geohash}`, geohash)
 					state.set(`yield.index.${crop}.${ghLength}.${geohash}`, true)
 					return
 				})
@@ -82,20 +83,15 @@ export const handleYieldIndexWatch = sequence('yield.fetch', [
 export const registerWatches = sequence('yield.registerWatches', [
 	// Register a watch on geohash index
 	({state, props}) => ({
-		watches: {
+		requests: {
 			[state.get('oada.bookmarks.harvest.tiled-maps.dry-yield-map._id')]: {
 				path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
-				signalPath: 'yield.handleYieldIndexWatch'
+				watch: 'yield.handleYieldIndexWatch'
 			},
 		}
 	}),
-	oadaMod.registerWatch,
+	oadaMod.get,
 	/*
-	// Register a watch 
-	({state, props}) => ({
-		path: '/bookmarks/notes',
-		signalPath: 'notes.handleWatchUpdate'
-	}),
 	// Register a watch 
 	({state, props}) => ({
 		path: '/bookmarks/notes',
@@ -105,6 +101,8 @@ export const registerWatches = sequence('yield.registerWatches', [
 ])
 
 export const init = sequence('yield.init', [
+  set(state`yield.connection_id`, props`connection_id`),
+  oadaMod.connect,
 	fetch,
 	//registerWatches
 ])
@@ -153,7 +151,8 @@ export const createTile = [
 ]
 
 export function mapOadaToYieldIndex({props, state}) {
-	let harvest = state.get('oada.bookmarks.harvest')
+	let id = state.get('yield.connection_id')
+	let harvest = state.get(`oada.${id}.bookmarks.harvest`)
   if (harvest && harvest['tiled-maps'] && harvest['tiled-maps']['dry-yield-map']) {
 		return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'] || {}), (crop) => {
       state.set(`map.layers.${crop.charAt(0).toUpperCase() + crop.slice(1)}`, {visible: true});
@@ -187,9 +186,9 @@ export const setAllNoteStats = [
   }
 ]
 
+  /*
 // Steps when new data comes in:
 // Check if the data point falls in one note or another.
-//
 function updateNoteStats({state, props, oada}) {
   let token = state.get('oada.token');
   let domain = state.get('oada.domain');
@@ -254,6 +253,7 @@ function updateNoteStats({state, props, oada}) {
 	}
 	return {statsUpdates}
 }
+*/
 
 function updateYieldIndex({props, state}) {
 	//TODO: update rev!?!?!!!? should be addressed when caching is implemented further
@@ -377,22 +377,27 @@ function getStatsForGeohashes({props, state, oada}) {
 				}
 				if (!availableGeohashes[crop][ghLength] || !availableGeohashes[crop][ghLength][bucket]) return
 				let path = '/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+bucket.length+'/geohash-index/'+bucket;
-				let response = await oada.get({
+        return oada.get({
+          connection_id: state.get('yield.connection_id'),
 					token: state.get('oada.token'), 
-					url: state.get('oada.domain')+path,
-				})
-				let data = response.data['geohash-data']
-				return Promise.map(Object.keys(obj.geohashes[bucket] || {}), (geohash) => {
-					let ghData = data[geohash];
-					if (!ghData) return
-					stats[crop].area.sum += ghData.area.sum;
-					stats[crop].area.sum_of_squares += ghData.area['sum-of-squares'];
-					stats[crop].weight.sum += ghData.weight.sum;
-					stats[crop].weight.sum_of_squares += ghData.weight['sum-of-squares'];
-					stats[crop].count += ghData.count;
-					stats[crop]['sum-yield-squared-area'] += ghData['sum-yield-squared-area'];
-					return
-				})
+					path,
+        }).then((response) => {
+          let data = response.data['geohash-data']
+          return Promise.map(Object.keys(obj.geohashes[bucket] || {}), (geohash) => {
+            let ghData = data[geohash];
+            if (!ghData) return
+            stats[crop].area.sum += ghData.area.sum;
+            stats[crop].area.sum_of_squares += ghData.area['sum-of-squares'];
+            stats[crop].weight.sum += ghData.weight.sum;
+            stats[crop].weight.sum_of_squares += ghData.weight['sum-of-squares'];
+            stats[crop].count += ghData.count;
+            stats[crop]['sum-yield-squared-area'] += ghData['sum-yield-squared-area'];
+            return
+          })
+        }).catch((err) => {
+          //console.log(err);
+          return
+        })
 			}, {concurrency: 10}).then(() => {
 				stats[crop].yield = {}
 				stats[crop].yield.mean = stats[crop].weight.sum/stats[crop].area.sum;

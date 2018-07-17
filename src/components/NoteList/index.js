@@ -40,7 +40,7 @@ class NoteList extends React.Component {
 		//		let notesArray = _.sortBy(_.toPairs(this.props.notes), 1.date)
 		let self = this;
 		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}), [function(key) {
-			return self.props.notes[key].date}])
+			return self.props.notes[key].created}]).reverse();
 		let notes = sorted_notes.map((key, i) => {
 			let comparisons = Object.keys(this.props.notes[key].fields || {}).map((field) => {
 				return {

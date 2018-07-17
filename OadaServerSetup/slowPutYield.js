@@ -23,33 +23,33 @@ var TOKEN;
 var DOMAIN;
 
 var tree = {
-  harvest: {
-		_type: 'application/vnd.oada.harvest.1+json',
-		_rev: '0-0',
-		_id: 'resources/'+uuid(),
-    'as-harvested': {
-      _type: 'application/vnd.oada.as-harvested.1+json',
-			_rev: '0-0',
-			_id: 'resources/'+uuid(),
-      'yield-moisture-dataset': {
-        _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-				_rev: '0-0',
-				_id: 'resources/'+uuid(),
-        'crop-index': {}
+    harvest: {
+      _type: 'application/vnd.oada.harvest.1+json',
+      _rev: '0-0',
+      _id: 'resources/'+uuid(),
+      'as-harvested': {
+        _type: 'application/vnd.oada.as-harvested.1+json',
+        _rev: '0-0',
+        _id: 'resources/'+uuid(),
+        'yield-moisture-dataset': {
+          _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+          _rev: '0-0',
+          _id: 'resources/'+uuid(),
+          'crop-index': {}
+        },
       },
-    },
-    'tiled-maps': {
-      _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-			_rev: '0-0',
-			_id: 'resources/'+uuid(),
-      'dry-yield-map': {
+      'tiled-maps': {
         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-				_rev: '0-0',
-				_id: 'resources/'+uuid(),
-        'crop-index': {},
+        _rev: '0-0',
+        _id: 'resources/'+uuid(),
+        'dry-yield-map': {
+          _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+          _rev: '0-0',
+          _id: 'resources/'+uuid(),
+          'crop-index': {},
+        },
       },
     },
-  },
 };
 
 module.exports = function(yield_data_directory, domain, token) {

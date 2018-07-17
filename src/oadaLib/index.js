@@ -1,9 +1,11 @@
+import configureCache from './cache'
 var urlLib = require('url');
 var pointer = require('json-pointer');
 var websocket = require('./websocket');
 var Promise = require('bluebird');
 var axios = require('axios');
-var configureCache = require('./cache').configureCache;
+//var configureCache = require('./cache');
+console.log(configureCache);
 let getAccessToken = Promise.promisify(require('oada-id-client').getAccessToken)
 let _ = require('lodash');
 let cache;
@@ -110,13 +112,14 @@ var	del = function({url, token}) {
 		}
 	})
 }
-
+  /*
 var configureCache = function({name}) {
 	return configureCache(name, request).then((result) => {
 		cache = result
 		return
 	})
 }
+*/
 
 var clearCache = async function() {
 	await cache.clearCache();
@@ -375,7 +378,7 @@ function convertSetupTreePath(pathPieces, setupTree) {
 }
 
 function makeResourceAndLink({token, url, data}) {
-	console.log('making and linking', url)
+	console.log('NEW:', url)
 	let urlObj = urlLib.parse(url);
 	let domain = urlObj.protocol+'//'+urlObj.host;
 	let req = {
@@ -400,16 +403,15 @@ function makeResourceAndLink({token, url, data}) {
 	})
 }
 
-
-
-module.exports = {
+export default {
+  authorize,
 	get,
 	delete: del,
 	put,
 	post,
 	resetWs,
 	configureWs,
-	configureCache,
+  configureCache,
 	clearCache,
 	watch,
 	smartPut,
