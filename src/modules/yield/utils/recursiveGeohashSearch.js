@@ -2,8 +2,9 @@ import gh from 'ngeohash';
 import gju from 'geojson-utils';
 import Promise from 'bluebird';
 
-export function recursiveGeohashSearch(polygon, geohash, geohashes) {
-	return Promise.try(() => {
+export function recursiveGeohashSearch(polygon, geohash, geohashes, max) {
+  return Promise.try(() => {
+    let maxLength = max || 9;
     //TODO: available geohashes could begin with e.g. geohash-3, but the greatest common prefix may only be a single character
     let ghBox = gh.decode_bbox(geohash);
     //create an array of vertices in the order [nw, ne, se, sw]
@@ -20,7 +21,7 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes) {
         let lineA = {"type": "LineString", "coordinates": [polygon[i], polygon[i+1]]};
         let lineB = {"type": "LineString", "coordinates": [geohashPolygon[j], geohashPolygon[j+1]]};
         if (gju.lineStringsIntersect(lineA, lineB)) {
-					if (geohash.length === 9) return geohashes; // Can't go any deeper, omit.
+					if (geohash.length === maxLength) return geohashes; // Can't go any deeper, omit.
 					let gs = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
 					// fix precision errors. geohashes should start with the given geohash
 					gs = gs.filter((item) => item.substring(0, geohash.length) === geohash);
@@ -29,7 +30,7 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes) {
 							if (results === null) return geohashes;
 							return results
 						})
-					}).then(() => {
+					}, {concurrency: 5}).then(() => {
 						return geohashes;
 					})
 				}
@@ -50,7 +51,7 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes) {
     pt = {"type":"Point","coordinates": polygon[0]};
 		poly = {"type":"Polygon","coordinates": [geohashPolygon]};
     if (gju.pointInPolygon(pt, poly)) {
-      if (geohash.length === 9) return geohashes;
+      if (geohash.length === maxLength) return geohashes;
       let gs = gh.bboxes(ghBox[0], ghBox[1], ghBox[2], ghBox[3], geohash.length+1);
 			gs = gs.filter((item) => item.substring(0, geohash.length) === geohash);
 			return Promise.map(gs || [], (g) => {
@@ -58,7 +59,7 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes) {
           if (results === null) return geohashes;
           return results;
         })
-      }).then(() => {
+      }, {concurrency: 5}).then(() => {
         return geohashes;
       })
     }

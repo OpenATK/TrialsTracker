@@ -18,11 +18,11 @@ export function drawTile({state, props, oada}) {
 	let tile = tiles.get(props.layer, coordsIndex)
 
 	// Only get those that we know to be available (this "available" list can also
-	// be utilized to filter what is drawn).
+  // be utilized to filter what is drawn).
 	geohashes = geohashes.filter((geohash) => {
 		if (!props.index['geohash-'+geohash.length]) return false
 		return (props.index['geohash-'+geohash.length][geohash]) ? true : false;
-	})
+  })
 	return fetchGeohashData(tile, geohashes, oada, props.layer, props.coords, props.legend, coordsIndex, connection_id)
 }
 
@@ -34,7 +34,8 @@ export function redrawTile({state, props, oada}) {
 			if (!props.index['geohash-'+geohash.length]) return
 			if (!props.index['geohash-'+geohash.length][geohash]) return
 			return Promise.map(Object.keys(geohashesOnScreen || {}), (coordsIndex) => {
-				if (!geohashesOnScreen[coordsIndex][geohash]) return
+        if (!geohashesOnScreen[coordsIndex][geohash]) return
+        console.log('found one ', geohash);
 				let tile = tiles.get(props.layer, coordsIndex)
 				if (!tile) return
 				return fetchGeohashData(tile, [geohash], oada, crop, geohashesOnScreen[coordsIndex].coords, props.legend, coordsIndex, connection_id)
@@ -50,7 +51,7 @@ export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, co
 	return Promise.map(geohashes, (geohash) => {
 	//	return Promise.try(() => geohashes[0]).then((geohash) => {
 		if (!geohash) throw new Error
-		let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
+    let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
     return oada.get({
       connection_id: connection_id,
 			path, 

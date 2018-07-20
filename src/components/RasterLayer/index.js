@@ -8,7 +8,6 @@ import tiles from '../../modules/yield/tileManager.js'
 import { recursiveDrawOnCanvas } from './draw'
 
 export default connect({
-  geohashesToDraw: state`map.geohashesToDraw.${props`layer`}`,
   tileUnloaded: signal`yield.tileUnloaded`,
 	createTile: signal`yield.createTile`,
 },
@@ -60,28 +59,6 @@ class RasterLayer extends GridLayer {
       
 //Render is only called when state is changed; not on map pan/zoom
 	render() {
-//    if (this.props.geohashesToDraw) {
-/*      Promise.each(this.props.geohashesToDraw, function(geohash) {
-        if (self.canvas[geohash].drawn) { //TODO: This won't work for real-time data. It will already be drawn, but we'll need to redraw it with new data!
-          return null;
-        } 
-        self.canvas[geohash].drawn = true;
-        return Promise.map(self.canvas[geohash].canvases, function(cvs, idx) {
-//          return self.renderTile(cvs.canvas, geohash, cvs.coords, idx);
-//
-        })
-      })
-*/
-//      Promise.each(self.tiles[z], function(tile) {
-//        Object.keys(tile).forEach((geohash) => {
-//          self.props.geohashesToDraw.forEach((ghToDraw) => {
-//            if (geohash === ghToDraw) {
-//              self.redraw();
-//            }
-//          })
-//        })
-//      })
-//    }
     return super.render();
   }
 })

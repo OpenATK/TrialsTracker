@@ -20,8 +20,8 @@ export const init = sequence('init', [
     */
   }),
   yieldMod.init,
-  notes.init,
   fields.init,
+  notes.init,
 ])
 
 export const clearCacheButtonClicked = sequence('app.clearCache', [

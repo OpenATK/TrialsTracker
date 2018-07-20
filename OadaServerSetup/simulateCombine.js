@@ -6,7 +6,7 @@ var uuid = require('uuid');
 var gh = require('ngeohash');
 var rr = require('recursive-readdir');
 var fs = require('fs');
-var oada = require('../src/oadaLib')
+var oada = require('@oada/oada-cache').default;
 var PouchDB = require('pouchdb');
 var Promise = require('bluebird');
 var uuid = require('uuid');
@@ -19,12 +19,13 @@ var tradeMoisture = {
   corn: 15,
   wheat: 13,
 };
-var TOKEN = 'def'
-var DOMAIN = 'vip3.ecn.purdue.edu'
+var TOKEN = 'def';
+var DOMAIN = 'vip3.ecn.purdue.edu';
+var CONNECTION;
 var sampleRate = 1; // msg/s
 var knownTree = {};
 
-var setupTree = {
+var tree = {
 	bookmarks: {
 		_type: 'application/vnd.oada.bookmarks.1+json',
 		_rev: '0-0',
@@ -47,7 +48,9 @@ var setupTree = {
 									_rev: '0-0',
 									'geohash-index': {
 										'*': {
-											_type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+                      _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+									    _rev: '0-0',
+                      _context: {}
 										}
 									}
 								}
@@ -60,8 +63,8 @@ var setupTree = {
 	}
 };
 
-async function asyncForEach(array, callback) {
-  for (let index = 0; index < array.length; index++) {
+async function asyncForEach(array, offset, callback) {
+  for (let index = offset || 0; index < array.length; index++) {
     await callback(array[index], index, array)
   }
 }
@@ -71,13 +74,19 @@ readData('./flow_rate.csv')
 function readData(file) {
   var options = { delimiter : ','};
 	var data = fs.readFileSync(file, { encoding: 'utf8'});
-	var csvData = csvjson.toObject(data, options);
-	return processData(csvData);
+  var csvData = csvjson.toObject(data, options);
+  return oada.connect({
+    domain: 'https://'+DOMAIN,
+    token: TOKEN
+  }).then((conn) => {
+    CONNECTION = conn;
+    return processData(csvData, 13000);
+  })
 }
 
-async function processData(data) {
+async function processData(data, offset) {
 	//	return Promise.mapSeries(data, (row, i) => {
-	await asyncForEach(data, async (row, i) => {
+	await asyncForEach(data, offset, async (row, i) => {
     geohash = gh.encode(row.lat, row.lon, 7);
     var cropType = 'Wheat';
 		cropType = cropType.replace(/\w\S*/g, txt => txt.toLowerCase());
@@ -128,18 +137,24 @@ async function processData(data) {
 		let stuff = {
 			data: {
 				[id]: pt
-			}
+      },
+      _context: {
+        'crop-index': cropType,
+        'geohash-length-index': 'geohash-7'
+      }
 		}
 
-		let url = 'https://'+DOMAIN+'/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/'+cropType+'/geohash-length-index/geohash-7/geohash-index/'+geohash;
-		let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
-			await Promise.delay(dt)
-			await oada.smartPut({
-				url,
-				setupTree,
-				token: TOKEN,
-				data: stuff
-			})
-		//		})
+		let path = '/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/'+cropType+'/geohash-length-index/geohash-7/geohash-index/'+geohash;
+    let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
+    console.log('geohash', geohash, 'iteration', i, 'waiting',dt);
+    await Promise.delay(dt)
+		return CONNECTION.put({
+			path,
+			tree,
+			data: stuff
+    }).catch((err) => {
+      console.log(err);
+      return
+    })
 	})
 }

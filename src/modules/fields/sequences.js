@@ -31,13 +31,7 @@ export const fetch = sequence('fields.fetch', [
     //    watch: true,
 	}),
 	oada.get,
-	when(state`oada.${props`connection_id`}.bookmarks.fields`), {
-		true: sequence('fetchFieldsSuccess', [
-      mapOadaToFields,
-      //      mapFieldsToNotes,
-		]),
-		false: sequence('fetchFieldsFailed', []),
-	},
+  mapOadaToFields,
 ])
 
 export const init = sequence('fields.init', [
@@ -47,25 +41,22 @@ export const init = sequence('fields.init', [
 	fetch,
 	set(state`fields.loading`, false),
 	set(props`type`, 'fields'),
-  //notes.getAllStats,
-  //	yieldMod.getPolygonStats,
 ])
 
 export const selectField = sequence('fields.selectField', []);
 
 function mapOadaToFields({props, state}) {
-	let fields = state.get('oada.bookmarks.fields')
-	if (fields) {
-		return Promise.map(Object.keys(fields['fields-index'] || {}), (fieldGroup) => {
-		  return Promise.map(Object.keys(fields['fields-index'][fieldGroup]['fields-index'] || {}), (field) => {
-			  return state.set(`fields.records.${field}`, { 
-			  	boundary: fields['fields-index'][fieldGroup]['fields-index'][field].boundary,
-			  	id: field,
-			  });
-      })
-		}).then(() => {
-			state.set('map.layers.Fields', {visible: true});
-			return
-		})
-  }
+  let id = state.get('fields.connection_id');
+	let fields = state.get(`oada.${id}.bookmarks.fields`)
+	return Promise.map(Object.keys(fields['fields-index'] || {}), (fieldGroup) => {
+    return Promise.map(Object.keys(fields['fields-index'][fieldGroup]['fields-index'] || {}), (field) => {
+      return state.set(`fields.records.${field}`, { 
+        boundary: fields['fields-index'][fieldGroup]['fields-index'][field].boundary,
+        id: field,
+      });
+    })
+  }).then(() => {
+    state.set('map.layers.Fields', {visible: true});
+    return
+  })
 }

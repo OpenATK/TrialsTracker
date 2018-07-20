@@ -94,7 +94,7 @@ export default connect({
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.comparison).forEach((crop) => {
 					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-					let sign = (comp.comparison[crop].comparison.differenceMeans < 0 ^ this.props.type === 'notes') ? '-' : '+';
+					let sign = (comp.comparison[crop].comparison.differenceMeans < 0) ? '+' : '-';
           comps.push(
             <div
               key={this.props.id+'-'+comp.text+'-'+crop+'-comparison'}
@@ -111,6 +111,7 @@ export default connect({
               </div>
               <span
                 key={this.props.id+'-'+comp.text+'-'+crop+'-value'}
+							  style={{color:sign === '-' ? '#F00' : '#0F0'}}
                 className={'comparison-value'}>
                 {comp.stats[crop].yield.mean.toFixed(2) +
                 ' (' + sign + Math.abs(comp.comparison[crop].comparison.differenceMeans).toFixed(2) + ') bu/ac' }
