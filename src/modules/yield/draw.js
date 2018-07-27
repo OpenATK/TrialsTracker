@@ -26,31 +26,25 @@ export function drawTile({state, props, oada}) {
 	return fetchGeohashData(tile, geohashes, oada, props.layer, props.coords, props.legend, coordsIndex, connection_id)
 }
 
+// Check whether the the new geohash is on screen
 export function redrawTile({state, props, oada}) {
-	let connection_id = state.get('yield.connectionId');
-	let geohashesOnScreen = state.get(`map.geohashesOnScreen`)
-	return Promise.map(Object.keys(props.change || {}), (crop) => {
-		return Promise.map(Object.keys(props.change[crop] || {}), (geohash) => {
-			if (!props.index['geohash-'+geohash.length]) return
-			if (!props.index['geohash-'+geohash.length][geohash]) return
-			return Promise.map(Object.keys(geohashesOnScreen || {}), (coordsIndex) => {
-        if (!geohashesOnScreen[coordsIndex][geohash]) return
-        console.log('found one ', geohash);
-				let tile = tiles.get(props.layer, coordsIndex)
-				if (!tile) return
-				return fetchGeohashData(tile, [geohash], oada, crop, geohashesOnScreen[coordsIndex].coords, props.legend, coordsIndex, connection_id)
-			})
-		})
-	}).then(() => {
-		return
-	})
+  let connection_id = state.get('yield.connection_id');
+  let tilesOnScreen = state.get('yield.tilesOnScreen');
+  return Promise.map(Object.keys(tilesOnScreen || {}), (coordsIndex) => {
+    if (!tilesOnScreen[coordsIndex][props.geohash]) return
+    console.log(tilesOnScreen[coordsIndex], props.geohash)
+    let tile = tiles.get(props.crop, coordsIndex)
+    if (!tile) return
+    console.log('redrawing', props.geohash, 'in tile:', coordsIndex)
+    return fetchGeohashData(tile, [props.geohash], oada, props.crop, tilesOnScreen[coordsIndex].coords, props.legend, coordsIndex, connection_id)
+  }).then(() => {
+    return
+  })
 }
 
 export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, coordsIndex, connection_id) {
 	// GET the geohashData and draw it on the canvas
 	return Promise.map(geohashes, (geohash) => {
-	//	return Promise.try(() => geohashes[0]).then((geohash) => {
-		if (!geohash) throw new Error
     let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
     return oada.get({
       connection_id: connection_id,
@@ -64,7 +58,8 @@ export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, co
 		//Save the tile and call done
 		tiles.set(crop, coordsIndex, tile);
 		return { geohashes }
-	})}
+  })
+}
 
 function getGeohashLevel(zoom, sw, ne) {
   if (zoom >= 15) return 7;

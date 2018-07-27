@@ -49,7 +49,7 @@ var tree = {
 									'geohash-index': {
 										'*': {
                       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-									    _rev: '0-0',
+                      _rev: '0-0',
                       _context: {}
 										}
 									}
@@ -69,7 +69,7 @@ async function asyncForEach(array, offset, callback) {
   }
 }
 
-readData('./flow_rate.csv')
+readData('./flow_rate3k-6k.csv')
 
 function readData(file) {
   var options = { delimiter : ','};
@@ -77,10 +77,13 @@ function readData(file) {
   var csvData = csvjson.toObject(data, options);
   return oada.connect({
     domain: 'https://'+DOMAIN,
-    token: TOKEN
+    token: TOKEN,
+    cache: {name: 'importing'}
   }).then((conn) => {
     CONNECTION = conn;
-    return processData(csvData, 13000);
+    return CONNECTION.resetCache().then(() => {
+      return processData(csvData, 2377);
+    })
   })
 }
 
@@ -147,7 +150,7 @@ async function processData(data, offset) {
 		let path = '/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/'+cropType+'/geohash-length-index/geohash-7/geohash-index/'+geohash;
     let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
     console.log('geohash', geohash, 'iteration', i, 'waiting',dt);
-    await Promise.delay(dt)
+    //    await Promise.delay(dt/10)
 		return CONNECTION.put({
 			path,
 			tree,

@@ -15,6 +15,7 @@ export default connect({
   legendVisible: state`app.view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
+  runLiveDataClicked: signal`yield.runLiveDataClicked`,
   clearCacheButtonClicked: signal`clearCacheButtonClicked`,
   gpsButtonClicked: signal`map.currentLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
@@ -94,6 +95,11 @@ class MenuBar extends React.Component {
                 primaryText="Sign Out"
                 onClick={()=>this.props.signOutClicked({})}
               />
+              <MenuItem 
+                primaryText="Run Live Data"
+                onClick={()=>this.props.runLiveDataClicked({})}
+              />
+
             </IconMenu>
           </div>
         }

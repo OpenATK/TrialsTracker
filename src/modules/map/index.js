@@ -27,7 +27,6 @@ export default Module({
 		isLoading: false,
 		dragging_marker: false,
 		crop_layers: {},
-		geohashesOnScreen: {}
 	},
   
   signals: {

@@ -12,7 +12,9 @@ import * as yieldMod from '../yield/sequences.js';
 import * as map from '../map/sequences.js';
 import { state, props } from 'cerebral/tags'
 import * as oada from '@oada/cerebral-module/sequences'
+import geohashNoteIndexManager from '../yield/utils/geohashNoteIndexManager'
 const dist = require('gaussian')(0, 1);
+let B;
 
 let tree = {
   '_type': 'application/vnd.oada.bookmarks.1+json',
@@ -53,20 +55,22 @@ export const oadaUpdateNote = [
 ]
 
 export const getNoteStats = sequence('notes.getNoteStats', [
-	set(state`notes.${props`type`}.${props`id`}.stats.computing`, true),
+	set(state`notes.${props`type`}.${props`id`}.yield-stats.computing`, true),
 	({state, props}) => ({
 		polygon:  state.get(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`),
 		bbox: state.get(`notes.${props.type}.${props.id}.geometry.bbox`),
 	}),
-	yieldMod.getPolygonStats,
+  yieldMod.getPolygonStats,
+
 	({state, props}) => ({note: state.get(`notes.${props.type}.${props.id}`)}),
-	unset(state`notes.${props`type`}.${props`id`}.stats.computing`),
+	unset(state`notes.${props`type`}.${props`id`}.yield-stats.computing`),
 ])
 
 export function getStats({state, props}) {
 	let notes = state.get(`notes.${props.type}`);
 	return Promise.map(Object.keys(notes || {}), (id) => {
-    state.set(`notes.${props.type}.${id}.stats`, {computing:true})
+    if (notes[id]['yield-stats'] && notes[id]['yield-stats'].stats) return
+    state.set(`notes.${props.type}.${id}.yield-stats`, {computing:true})
     let polygon;
     let bbox;
     if (notes[id].geometry && notes[id].geometry.geojson) {
@@ -88,15 +92,37 @@ export function getStats({state, props}) {
 	})
 }
 
+function addNoteToGeohashIndex({props, state, oada}) {
+  B = Date.now();
+	return Promise.map(props.polygons, (polygon) => {
+    return Promise.map(Object.keys(polygon.geohashes || {}), (gh) => {
+      if (gh.length > 7) return
+      geohashNoteIndexManager.set(gh, polygon.id);
+      /*
+      if (polygon) return oada.put({
+        path: `/bookmarks/notes/${polygon.id}/yield-stats`,
+        data: 
+        connection_id: ''
+      })
+      */
+      return
+    })
+  }).then(() => { 
+    console.log('B', (Date.now() - B)/1000)
+		return 
+	})
+}
+
 function setStats({props, state}) {
-	return Promise.map(props.polygons || [], (obj) => {
-		if (!_.isEmpty(obj.stats)) {
-			state.set(`notes.${obj.type}.${obj.id}.stats`, obj.stats);
+	return Promise.map(props.polygons || [], (obj, i) => {
+    if (!_.isEmpty(obj.stats)) {
+      console.log(props.requests);
+			state.set(`notes.${obj.type}.${obj.id}.yield-stats`, props.requests[i].data);
 		}
-		state.unset(`notes.${obj.type}.${obj.id}.stats.computing`);
+		state.unset(`notes.${obj.type}.${obj.id}.yield-stats.computing`);
 		return obj
-	}).then((polygons) => {
-		return {polygons}
+	}).then(() => {
+		return
 	})
 }
 
@@ -115,6 +141,47 @@ export const doneClicked = [
 	oadaUpdateNote,
 ];
 
+export const createFieldNotes = sequence('notes.createFieldNotes', [
+  ({state,props,oada}) => {
+    var fields = state.get('notes.fields');
+    return Promise.map(Object.keys(fields || {}), (id) => {
+      return {
+        path: `/bookmarks/field-notes/${id}`,
+        type: 'application/vnd.oada.yield.1+json',
+        data: fields[id],
+        tree,
+        connection_id: state.get('notes.connection_id'),
+      }
+    }).then((requests) => {
+      return {requests}
+    })
+  },
+  oada.put,
+])
+
+export const createYieldStats = sequence('notes.createYieldStats', [
+  ({state,props,oada}) => {
+    return Promise.map(props.polygons || [], (obj) => {
+      var path = props.type === 'notes' ? 
+        `/bookmarks/notes/${obj.id}/yield-stats`
+      : `/bookmarks/field-notes/${obj.id}/yield-stats`;
+      return {
+        path,
+        type: 'application/vnd.oada.yield.1+json',
+        data: {
+          geohashes: obj.geohashes,
+          stats: obj.stats,
+        },
+        tree,
+        connection_id: state.get('notes.connection_id'),
+      }
+    }).then((requests) => {
+      return {requests}
+    })
+  },
+  oada.put,
+])
+
 export const init = sequence('notes.init', [
   set(state`notes.connection_id`, props`connection_id`),
   oada.connect,
@@ -126,6 +193,9 @@ export const init = sequence('notes.init', [
 	set(props`type`, `notes`),
   getStats,
   yieldMod.getPolygonStats,
+  addNoteToGeohashIndex,
+  getInterestingStuff,
+  createYieldStats,
   setStats,
   when(state`fields.records`), {
     true: [
@@ -133,6 +203,9 @@ export const init = sequence('notes.init', [
       set(props`type`, 'fields'),
       getStats,
       yieldMod.getPolygonStats,
+      addNoteToGeohashIndex,
+      getInterestingStuff,
+      createYieldStats,
       setStats,
     ],
     false: [
@@ -263,6 +336,48 @@ export const noteClicked = [
   },
 ];
 
+
+// find distribution of geohash size and number of points
+function getInterestingStuff({state, props}) {
+  var stuff = {
+    'total-geohashes': 0,
+    'total-count': 0,
+    'geohash-1': 0,
+    'geohash-2': 0,
+    'geohash-3': 0,
+    'geohash-4': 0,
+    'geohash-5': 0,
+    'geohash-6': 0,
+    'geohash-7': 0,
+    'geohash-8': 0,
+    'geohash-9': 0,
+
+  };
+  return Promise.map(props.polygons || [], (obj) => {
+    return Promise.map(Object.keys(obj.stats || {}), (key) => {
+      stuff['total-count']+= obj.stats[key].count;
+      return
+    }).then(() => {
+      if (Object.keys(obj.stats || {}).length === 0) return
+      return Promise.map(Object.keys(obj.geohashes || {}), (bucket) => {
+        return Promise.map(Object.keys(obj.geohashes[bucket].aggregates || {}), (aggregate) => {
+          stuff['geohash-'+aggregate.length]++;
+          stuff['total-geohashes']++;
+          return
+        })
+      })
+    })
+  }).then(() => {
+    console.log(stuff);
+    return
+  })
+}
+
+function handleNoteWatch({state, props}) {
+  //if geohash is less than 6, take it
+  //otherwise, check if the bucket is contained. 
+}
+
 function mapOadaToRecords({state, props}) {
 	state.set('map.layers.Notes', {visible: true});
   state.set('notes.notes', {});
@@ -311,7 +426,7 @@ function createNote({props, state}) {
     },
     color: rmc.getColor(),
     completions: [],
-    stats: {},
+    'yield-stats': {},
   };
   note.font_color = getFontColor(note.color);
 	return { note }
@@ -375,10 +490,11 @@ function mapFieldsToNotes({state, props}) {
 	let fields = state.get('fields.records');
 	let notes = {};
 	return Promise.map(Object.keys(fields || {}), (key) => {
-	let bbox = computeBoundingBox(fields[key].boundary.geojson);           
-		return notes[key] = {
+    let bbox = computeBoundingBox(fields[key].boundary.geojson);           
+    var id = uuid();
+		return notes[id] = {
 			created: Date.now(),
-			id: key,
+			id,
 			text: key,
 			tags: [],
 			geometry: {
@@ -393,7 +509,7 @@ function mapFieldsToNotes({state, props}) {
 			},
 			color: rmc.getColor(),
 			completions: [],
-			stats: {},
+			'yield-stats': {stats:{}},
 		};
 	}).then(() => {
 		state.set(`notes.fields`, notes)
@@ -409,11 +525,11 @@ function getNoteComparisons({props, state}) {
       if (notes[noteId].geometry.geojson.coordinates[0].length > 3) {
         return Promise.map(Object.keys(fields), (fieldId) => {
           if (polygonsIntersect(fields[fieldId].geometry.geojson.coordinates[0], notes[noteId].geometry.geojson.coordinates[0])) {
-            if (fields[fieldId].stats) {
-              return Promise.map(Object.keys(fields[fieldId].stats), (crop) => {
-								if (notes[noteId].stats[crop]) {
-									var fieldStats = fields[fieldId].stats[crop];
-                  var noteStats = notes[noteId].stats[crop];
+            if (fields[fieldId]['yield-stats'] && fields[fieldId]['yield-stats'].stats) {
+              return Promise.map(Object.keys(fields[fieldId]['yield-stats'].stats), (crop) => {
+								if (notes[noteId]['yield-stats'].stats[crop]) {
+									var fieldStats = fields[fieldId]['yield-stats'].stats[crop];
+                  var noteStats = notes[noteId]['yield-stats'].stats[crop];
                   var differenceMeans = fieldStats.yield.mean - noteStats.yield.mean;
                   var standardError = Math.pow((fieldStats.yield.variance/fieldStats.count) + (noteStats.yield.variance/noteStats.count), 0.5);
                   var zScore = Math.abs(differenceMeans)/standardError;

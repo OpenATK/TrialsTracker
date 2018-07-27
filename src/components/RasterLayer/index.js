@@ -4,8 +4,8 @@ import _ from 'lodash'
 import Promise from 'bluebird'
 import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
-import tiles from '../../modules/yield/tileManager.js'
-import { recursiveDrawOnCanvas } from './draw'
+import tiles from '../../modules/yield/tileManager'
+import { recursiveDrawOnCanvas } from '../../modules/yield/draw'
 
 export default connect({
   tileUnloaded: signal`yield.tileUnloaded`,
@@ -23,7 +23,7 @@ class RasterLayer extends GridLayer {
 		this.leafletElement.on('tileunload', this.tileUnload);
   }
   
-//Inherited by CanvasTileLayer, this is called when a tile goes offscreen. Remove tile from geohashesOnScreen
+//Inherited by CanvasTileLayer, this is called when a tile goes offscreen. Remove tile from tilesOnScreen
   tileUnload(evt) {
     this.props.tileUnloaded({coords:evt.coords, layer: this.props.layer});
   }

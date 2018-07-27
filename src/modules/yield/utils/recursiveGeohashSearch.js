@@ -30,13 +30,13 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes, max) {
 							if (results === null) return geohashes;
 							return results
 						})
-					}, {concurrency: 5}).then(() => {
+					}).then(() => {
 						return geohashes;
 					})
 				}
       }
 		}
-//2. If geohash is completely inside polygon, use the stats. Only one point
+//2. If geohash is completely inside polygon, use it. Only one point
 //   need be tested because no lines intersect in Step 1.
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
@@ -59,7 +59,7 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes, max) {
           if (results === null) return geohashes;
           return results;
         })
-      }, {concurrency: 5}).then(() => {
+      }).then(() => {
         return geohashes;
       })
     }

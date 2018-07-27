@@ -1,6 +1,5 @@
 import MobileDetect from 'mobile-detect';
 import { sequence } from 'cerebral'
-import { signal } from 'cerebral/tags'
 import * as fields from '@oada/fields-module/sequences'
 import * as notes from '../notes/sequences'
 import * as yieldMod from '../yield/sequences'
@@ -10,7 +9,8 @@ export const init = sequence('init', [
   ({state, props}) => ({
     domain: 'https://vip3.ecn.purdue.edu',
     token: 'def',
-    connection_id: 'vip3'
+    connection_id: 'vip3',
+    cache: {name: 'TrialsTracker'},
   /*
     options: {
 			redirect: 'http://localhost:8000/oauth2/redirect.html',

@@ -6,6 +6,7 @@ export default Module({
 	signals,
 
 	state : {
+		tilesOnScreen: {},
     legends: {
       corn: [{
         value: 130,

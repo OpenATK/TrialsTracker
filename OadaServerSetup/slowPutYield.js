@@ -157,7 +157,7 @@ processRawData = function(csvJson, filename) {
     var pt = {
       id: id,
       template: template_id,
-      moisture: csvJson[i]['Moisture(%)'],
+      moisture: csvJson[i]['Moisture(%)'] || 10,
       location: {
         lat: csvJson[i].Latitude,
         lon: csvJson[i].Longitude,
