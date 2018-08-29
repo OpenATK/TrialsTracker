@@ -1,133 +1,35 @@
 var _ = require('lodash');
 var md5 = require('md5');
-var urlLib = require('url');
-var csvjson = require('csvjson');
 var uuid = require('uuid');
 var gh = require('ngeohash');
-var rr = require('recursive-readdir');
-var fs = require('fs');
-var oada = require('@oada/oada-cache').default;
 var Promise = require('bluebird');
 var uuid = require('uuid');
-var axios = require('axios');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-var rawData = {};
-var tiledMaps = {};
 var tradeMoisture = {
   soybeans:  13,
   corn: 15,
   wheat: 13,
 };
-var TOKEN = 'def';
-var DOMAIN = 'vip3.ecn.purdue.edu';
-var CONNECTION;
 var sampleRate = 1; // msg/s
-var knownTree = {};
+var i = 0;
+var j = 0;
 
-var tree = {
-	bookmarks: {
-		_type: 'application/vnd.oada.bookmarks.1+json',
-		_rev: '0-0',
-		harvest: {
-			_type: 'application/vnd.oada.harvest.1+json',
-			_rev: '0-0',
-			'as-harvested': {
-				_type: 'application/vnd.oada.as-harvested.1+json',
-				_rev: '0-0',
-				'yield-moisture-dataset': {
-					_type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-					_rev: '0-0',
-					'crop-index': {
-						'*': {
-							_type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-							_rev: '0-0',
-							'geohash-length-index': {
-								'*': {
-									_type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-									_rev: '0-0',
-									'geohash-index': {
-										'*': {
-                      _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-                      _rev: '0-0',
-                      _context: {}
-										}
-									}
-								}
-							}
-						}
-					}
-				},
-      },
-			'tiled-maps': {
-				_type: 'application/vnd.oada.tiled-maps.1+json',
-				_rev: '0-0',
-        'dry-yield-map': {
-          _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
-					_rev: '0-0',
-					'crop-index': {
-						'*': {
-            _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
-							_rev: '0-0',
-							'geohash-length-index': {
-								'*': {
-                  _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
-									_rev: '0-0',
-									'geohash-index': {
-										'*': {
-                      _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
-                      _context: {}
-										}
-									}
-								}
-							}
-						}
-					}
-				},
-			}
-		},
-	}
-};
-
-async function asyncForEach(array, offset, callback) {
-  for (let index = offset || 0; index < array.length; index++) {
-    await callback(array[index], index, array)
-  }
-}
-
-readData('./flow_rate3k-6k.csv')
-
-function readData(file) {
-  var options = { delimiter : ','};
-	var data = fs.readFileSync(file, { encoding: 'utf8'});
-  var csvData = csvjson.toObject(data, options);
-  return oada.connect({
-    domain: 'https://'+DOMAIN,
-    token: TOKEN,
-    cache: {name: 'importing'}
-  }).then((conn) => {
-    CONNECTION = conn;
-    return CONNECTION.resetCache().then(() => {
-      return processData(csvData, 0).then((asHarvested) => {
-        return getTiledMaps(asHarvested, [1,2,3,4,5,6,7]).then((tiledMaps) => {
-          console.log('ready');
-          return pushTiledMaps(tiledMaps)
-        })
-      })
-    })
-  })
-}
-
-async function processData(data, offset) {
+async function getAsHarvested(data, offset) {
   var asHarvested = {};
 	return Promise.mapSeries(data, (row, i) => {
-  //	await asyncForEach(data, offset, async (row, i) => {
-    geohash = gh.encode(row.lat, row.lon, 7);
-    var crop = 'Wheat';
+    var geohash = gh.encode(row.Latitude, row.Longitude, 7);
+    var crop = row['Product - Name'] || row['Product'];
     crop = crop.replace(/\w\S*/g, txt => txt.toLowerCase());
     asHarvested[crop] = asHarvested[crop] || {};
     asHarvested[crop][geohash] = asHarvested[crop][geohash] || {
       'data': {},
       templates: {},
+      _context: {
+        'crop-index': crop,
+        'geohash-length-index': 'geohash-7',
+        'geohash-index': geohash,
+        'as-harvested': 'yield-moisture-dataset',
+      }
     };
 
 		let template = {
@@ -137,7 +39,10 @@ async function processData(data, offset) {
 				units: '%H2O',
 				value: tradeMoisture[crop]
 			},
-			location: { datum: 'WGS84' },
+      location: { datum: 'WGS84' },
+      speed: {
+        units: 'mph'
+      },
 			crop,
 		}
 		let template_id = md5(JSON.stringify(template));
@@ -146,21 +51,24 @@ async function processData(data, offset) {
     // Add the data point
     var id = uuid();
     var pt = {
-      id,
       template: template_id,
-			moisture: row['Moisture(%)'] || 10,
+      moisture: row['Moisture(%)'],
       location: {
-        lat: row.lat,
-        lon: row.lon,
+        lat: row.Latitude,
+        lon: row.Longitude,
+        alt: row['Elevation(ft)'],
       },
     };
 
-		var val = +row.data; // bu/s
-		//console.log(val)
-		pt.speed = row.speed;
-    pt.area = (row.speed*5280/3600)*(row['Swath Width(ft)'] || 30)/43560.0;
-		//    pt.weight = val*pt.area;
-		pt.weight = val * sampleRate;
+    var val = +row['Estimated Volume (Wet)(bu/ac)'];
+    pt.speed = row['Speed(mph)']
+    if (!val) val = +row['Yld Vol(Wet)(bu/ac)'];
+    if (row['Swath Width(ft)']) {
+      pt.area = (row['Speed(mph)']*5280/3600)*row['Swath Width(ft)']/43560.0;
+    } else {
+      pt.area = (row['Speed(mph)']*5280/3600)*row['Swth Wdth(ft)']/43560.0;
+    }
+    pt.weight = val*pt.area;
 
     if (isNaN(pt.weight)) {
       console.log('````````````NEW ONE``````````');
@@ -174,45 +82,138 @@ async function processData(data, offset) {
 		var id = md5(JSON.stringify(pt));
 		pt.id = id;
 
-		let stuff = {
-			data: {
-				[id]: pt
-      },
-      _context: {
-        'crop-index': crop,
-        'geohash-length-index': 'geohash-7'
-      }
-    }
-
     asHarvested[crop][geohash].data[id] = pt;
-
-		let path = '/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/'+crop+'/geohash-length-index/geohash-7/geohash-index/'+geohash;
-    let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
-    console.log('geohash', geohash, 'iteration', i, 'waiting',dt);
-    //    await Promise.delay(dt/10)
-    return /*CONNECTION.put({
-			path,
-			tree,
-			data: stuff
-    }).catch((err) => {
-      console.log(err);
-      return
-    })*/
+    return
   }).then(() => {
     return asHarvested;
   })
 }
 
-function pushAsHarvested(asHarvested) {
-  return Promise.map(Object.keys(asHarvested || {}), (crop) => {
-      return Promise.map(Object.keys(asHarvested[crop] || {}), (bucket) => {
-        return CONNECTION.put({
-          path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
-          tree,
-          data: asHarvested[crop][bucket]
-        })
+async function asyncForEach(array, offset, callback) {
+  for (let index = offset || 0; index < array.length; index++) {
+    await callback(array[index], index, array)
+  }
+}
+
+async function getAsHarvestedAndPush(data, CONNECTION, tree, offset) {
+  var asHarvested = {};
+	await asyncForEach(data, offset || 0, (row, i) => {
+    var geohash = gh.encode(row.Latitude, row.Longitude, 7);
+    var crop = row['Product - Name'] || row['Product'];
+    crop = crop.replace(/\w\S*/g, txt => txt.toLowerCase());
+    asHarvested[crop] = asHarvested[crop] || {};
+    asHarvested[crop][geohash] = asHarvested[crop][geohash] || {
+      'data': {},
+      templates: {},
+      _context: {
+        'crop-index': crop,
+        'geohash-length-index': 'geohash-7',
+        'geohash-index': geohash,
+        'as-harvested': 'yield-moisture-dataset',
+      }
+    };
+
+		let template = {
+			area: { units: 'acres' },
+			weight: { units: 'bushels' },
+			moisture: {
+				units: '%H2O',
+				value: tradeMoisture[crop]
+			},
+      location: { datum: 'WGS84' },
+      speed: {
+        units: 'mph'
+      },
+			crop,
+		}
+		let template_id = md5(JSON.stringify(template));
+    asHarvested[crop][geohash].templates[template_id] = template;
+
+    // Add the data point
+    var id = uuid();
+    var pt = {
+      template: template_id,
+      moisture: row['Moisture(%)'],
+      location: {
+        lat: row.Latitude,
+        lon: row.Longitude,
+        alt: row['Elevation(ft)'],
+      },
+    };
+
+    var val = +row['Estimated Volume (Wet)(bu/ac)'];
+    pt.speed = row['Speed(mph)']
+    if (!val) val = +row['Yld Vol(Wet)(bu/ac)'];
+    if (row['Swath Width(ft)']) {
+      pt.area = (row['Speed(mph)']*5280/3600)*row['Swath Width(ft)']/43560.0;
+    } else {
+      pt.area = (row['Speed(mph)']*5280/3600)*row['Swth Wdth(ft)']/43560.0;
+    }
+    pt.weight = val*pt.area;
+
+    if (isNaN(pt.weight)) {
+      console.log('````````````NEW ONE``````````');
+      console.log(val);
+      console.log(row['Speed(mph)']);
+      console.log(row['Swath Width(ft)']);
+      console.log(pt.area);
+			console.log(pt.weight);
+			return
+		}
+		var id = md5(JSON.stringify(pt));
+    pt.id = id;
+
+    var data = {
+      data: {
+        [id]: pt,
+      },
+      _context: {
+        'crop-index': crop,
+        'geohash-length-index': 'geohash-7',
+        'geohash-index': geohash,
+        'as-harvested': 'yield-moisture-dataset',
+      }
+    }
+
+    asHarvested[crop][geohash].data[id] = pt;
+    console.log(geohash, i)
+    return Promise.delay(5000).then(() => {
+    return CONNECTION.put({
+      path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`,
+      tree,
+      data,
+    })
+    })
+  }).then(() => {
+    return asHarvested;
+  })
+}
+
+function pushAsHarvested(asHarvested, CONNECTION, tree) {
+  return Promise.mapSeries(Object.keys(asHarvested || {}), (crop) => {
+    return Promise.mapSeries(Object.keys(asHarvested[crop] || {}), (bucket) => {
+      console.log('pushAsHarvested', j++, bucket, crop)
+      let h = _.clone(j);
+      return CONNECTION.put({
+        path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
+        tree,
+        data: asHarvested[crop][bucket]
       })
     })
+  })
+}
+
+function deleteAsHarvested(asHarvested, CONNECTION, tree) {
+  return Promise.mapSeries(Object.keys(asHarvested || {}), (crop) => {
+    return Promise.mapSeries(Object.keys(asHarvested[crop] || {}), (bucket) => {
+      console.log('pushAsHarvested', j++, bucket, crop)
+      let h = _.clone(j);
+      return CONNECTION.delete({
+        path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
+        tree,
+      })
+    })
+  })
 }
 
 function getTiledMaps(asHarvested, levels) {
@@ -264,6 +265,12 @@ function getTiledMaps(asHarvested, levels) {
             },
             datum: 'WGS84',
             'geohash-data': {},
+            _context: {
+              'tiled-maps': 'dry-yield-map',
+              'crop-index': crop,
+              'geohash-length-index': 'geohash-'+bucketGh.length,
+              'geohash-index': bucketGh,
+            }
           };
  
           var template = {
@@ -295,7 +302,7 @@ function getTiledMaps(asHarvested, levels) {
             'yield-squared-area': 0,
           }
           tiledMaps[crop][bucketGh]['geohash-data'][aggregateGh] = recomputeStats(tiledMaps[crop][bucketGh]['geohash-data'][aggregateGh], additionalStats);
-          return tree;
+          return
         });
       });
     });
@@ -316,10 +323,10 @@ function recomputeStats(currentStats, additionalStats) {
   return currentStats;
 };
 
-function pushTiledMaps(tiledMaps) {
-  return Promise.map(Object.keys(tiledMaps || {}), (crop) => {
+function pushTiledMaps(tiledMaps, CONNECTION, tree) {
+  return Promise.mapSeries(Object.keys(tiledMaps || {}), (crop) => {
     return Promise.mapSeries(Object.keys(tiledMaps[crop] || {}), (bucket) => {
-      console.log('pushing tiled map', crop, bucket);
+      console.log('pushTiledMaps', i++, crop, bucket)
       return CONNECTION.put({
         path: `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
         tree,
@@ -329,8 +336,31 @@ function pushTiledMaps(tiledMaps) {
         return
       })
     })
-  }).then(() => {
-    console.log('doneso')
-    return CONNECTION.disconnect()
   })
+}
+
+function deleteTiledMaps(tiledMaps, CONNECTION, tree) {
+  return Promise.mapSeries(Object.keys(tiledMaps || {}), (crop) => {
+    return Promise.mapSeries(Object.keys(tiledMaps[crop] || {}), (bucket) => {
+      console.log('pushTiledMaps', i++, crop, bucket)
+      return CONNECTION.delete({
+        path: `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
+        tree,
+      }).catch((err)=> {
+        console.log(err)
+        return
+      })
+    })
+  })
+}
+
+module.exports = {
+  getAsHarvested,
+  getAsHarvestedAndPush,
+  pushAsHarvested,
+  deleteAsHarvested,
+  getTiledMaps,
+  pushTiledMaps,
+  deleteTiledMaps,
+  recomputeStats,
 }

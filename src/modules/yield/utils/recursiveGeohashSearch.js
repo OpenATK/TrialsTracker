@@ -40,9 +40,13 @@ export function recursiveGeohashSearch(polygon, geohash, geohashes, max) {
 //   need be tested because no lines intersect in Step 1.
     let pt = {"type":"Point","coordinates": geohashPolygon[0]};
     let poly = {"type":"Polygon","coordinates": [polygon]};
-		if (gju.pointInPolygon(pt, poly)) {
-			geohashes[geohash.slice(0, geohash.length-2)] = geohashes[geohash.slice(0,geohash.length-2)] || {};
-			geohashes[geohash.slice(0, geohash.length-2)][geohash] = geohash;
+    if (gju.pointInPolygon(pt, poly)) {
+      if (geohash.length > 7) {
+        geohashes[geohash.slice(0, geohash.length-2)] = geohashes[geohash.slice(0,geohash.length-2)] || {};
+        geohashes[geohash.slice(0, geohash.length-2)][geohash] = true;
+      } else {
+        geohashes[geohash] = true;
+      }
       return geohashes;
     }
 //3. If polygon is completely inside geohash, dig deeper. Only one point

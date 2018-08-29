@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const controller = Controller(app, {
-	devtools: Devtools && Devtools({host:'localhost:8686'})//+devPort}),
+  devtools: Devtools && Devtools({host:'localhost:8686'})//+devPort}),
 })
 
 export default controller

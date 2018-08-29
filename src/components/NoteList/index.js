@@ -39,7 +39,7 @@ class NoteList extends React.Component {
 		//TODO: either make this a computed, or put this into actions
 		//		let notesArray = _.sortBy(_.toPairs(this.props.notes), 1.date)
 		let self = this;
-		let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}), [function(key) {
+    let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}), [function(key) {
 			return self.props.notes[key].created}]).reverse();
 		let notes = sorted_notes.map((key, i) => {
 			let comparisons = Object.keys(this.props.notes[key].fields || {}).map((field) => {
@@ -57,6 +57,7 @@ class NoteList extends React.Component {
 				comparisons={comparisons}
       />)
     });
+
 
 		let fields = Object.keys(this.props.fields || {}).map((field) => {
 			let comparisons = [];
@@ -88,13 +89,18 @@ class NoteList extends React.Component {
             onClick={(evt) => {this.handleClick(evt)}}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+              onClick={(e) => this.props.addNoteButtonClicked({type: 'notes'})}>
               Create a new note...
             </div>
             {notes} 
           </div>
           <div
             className={'notes-container'}>
+            <div
+              className={this.props.editing ? 'hidden' : 'add-note'}
+              onClick={(e) => this.props.addNoteButtonClicked({type:'fields'})}>
+              Create a new field...
+            </div>
             {fields} 
           </div>
           <div>
@@ -103,8 +109,8 @@ class NoteList extends React.Component {
         </SwipeableViews>
         <FloatingActionButton
           className={'add-note-button'}
-          style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : null}
-          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : {display: 'none'}}
+          onClick={(e) => this.props.addNoteButtonClicked({type: this.props.tab === 0 ? 'notes': 'fields'})}>
           <ContentAdd />
 				</FloatingActionButton>
 				{this.props.loading ? <LoadingScreen /> : null}

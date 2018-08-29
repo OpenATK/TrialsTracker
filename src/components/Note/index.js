@@ -26,7 +26,7 @@ export default connect({
 
   class Note extends React.Component {
 
-		render() {
+    render() {
 			let selected = this.props.selectedNote && this.props.id === this.props.selectedNote.id;
 			const inputField = this.props.type === 'note' && this.props.selectedNote && this.props.editing ? input => {
         if (input) setTimeout(() => input.focus(), 100);
@@ -34,36 +34,40 @@ export default connect({
 			let color = this.props.note ? Color(this.props.note.color || '#fff').alpha(0.4).rgb() : null;
 
       let yields = [];
-      if (this.props.note && this.props.note.stats && this.props.note.stats.computing) {
-        yields.push(
-          <span
-            key={'yield-waiting-'+this.props.id}
-            className={this.props.note.stats.computing ? 'blinker': 'hidden'}>
-              {'Computing average yield...'}
-          </span>
-        )
-			} else if (this.props.note) {
-				Object.keys(this.props.note.stats || {}).forEach((crop) => {
+      try {
+        if (this.props.note['yield-stats'].stats.computing) {
           yields.push(
-            <div
-              key={this.props.id+'-yield-text-'+crop}
-              className={'yield-text'}>
-              <span
-                key={this.props.id+'-yield-text-'+crop+'-header'}
-                className={'yield-text-header'}>
-                  {crop.charAt(0).toUpperCase() + crop.slice(1) + ' Yield'}
-               </span>
-              <span
-                key={this.props.id+'-yield-text-'+crop+'-value'}
-                className={'yield-text-value'}>
-                  {this.props.note.stats[crop].yield.mean.toFixed(2) + ' bu/ac'}
-              </span>
-            </div>
+            <span
+              key={'yield-waiting-'+this.props.id}
+              className={this.props.note['yield-stats'].stats.computing ? 'blinker': 'hidden'}>
+                {'Computing average yield...'}
+            </span>
           )
-          yields.push(
-            <br key={this.props.id + '-yieldsbreak-'+crop}/>
-					);
-		  	})
+        } else throw new Error('not computing')
+      } catch(err) {
+        try{
+          Object.keys(this.props.note['yield-stats'].stats || {}).forEach((crop) => {
+            yields.push(
+              <div
+                key={this.props.id+'-yield-text-'+crop}
+                className={'yield-text'}>
+                <span
+                  key={this.props.id+'-yield-text-'+crop+'-header'}
+                  className={'yield-text-header'}>
+                    {crop.charAt(0).toUpperCase() + crop.slice(1) + ' Yield'}
+                 </span>
+                <span
+                  key={this.props.id+'-yield-text-'+crop+'-value'}
+                  className={'yield-text-value'}>
+                    {this.props.note['yield-stats'].stats[crop].yield.mean.toFixed(2) + ' bu/ac'}
+                </span>
+              </div>
+            )
+            yields.push(
+              <br key={this.props.id + '-yieldsbreak-'+crop}/>
+            );
+          })
+        } catch(error) {}
 			}
 
       let areaContent = null;
@@ -113,7 +117,7 @@ export default connect({
                 key={this.props.id+'-'+comp.text+'-'+crop+'-value'}
 							  style={{color:sign === '-' ? '#F00' : '#0F0'}}
                 className={'comparison-value'}>
-                {comp.stats[crop].yield.mean.toFixed(2) +
+                {comp['yield-stats'].stats[crop].yield.mean.toFixed(2) +
                 ' (' + sign + Math.abs(comp.comparison[crop].comparison.differenceMeans).toFixed(2) + ') bu/ac' }
               </span>
             </div>

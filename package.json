@@ -11,9 +11,9 @@
     "@cerebral/react": "^3.2.2",
     "@mapbox/geojson-area": "^0.2.2",
     "@material-ui/core": "^1.0.0-rc.1",
-    "@oada/cerebral-module": "^0.8.26",
-    "@oada/cerebral-provider": "^1.9.10",
-    "@oada/fields-module": "^1.0.11",
+    "@oada/cerebral-module": "^0.8.29",
+    "@oada/cerebral-provider": "^1.9.12",
+    "@oada/fields-module": "^1.0.13",
     "aws-v4-sign-small": "^1.1.1",
     "axios": "^0.18.0",
     "babel-jest": "^22.4.3",
@@ -56,7 +56,7 @@
     "start": "PORT=8000 react-scripts start",
     "build": "react-scripts build",
     "test": "jest -v --watch",
-    "dev": "cpx --watch --verbose '../cerebral-provider/**' './node_modules/@oada/cerebral-provider'",
+    "dev": "cpx --watch --verbose '../cerebral-provider/**' './node_modules/@oada/cerebral-provider' && cpx --watch --verbose '../cerebral-module/**' './node_modules/@oada/cerebral-module' && cpx --watch --verbose '../fields-module/**' './node_modules/@oada/fields-module' && cpx --watch --verbose '../oada-cache/**' './node_modules/@oada/oada-cache'",
     "eject": "react-scripts eject"
   }
 }

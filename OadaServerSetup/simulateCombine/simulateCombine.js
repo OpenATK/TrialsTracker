@@ -69,7 +69,7 @@ async function asyncForEach(array, offset, callback) {
   }
 }
 
-readData('./flow_rate3k-6k.csv')
+readData('./flow_rate6k-9k.csv')
 
 function readData(file) {
   var options = { delimiter : ','};
@@ -82,7 +82,7 @@ function readData(file) {
   }).then((conn) => {
     CONNECTION = conn;
     return CONNECTION.resetCache().then(() => {
-      return processData(csvData, 2377);
+      return processData(csvData, 0);
     })
   })
 }

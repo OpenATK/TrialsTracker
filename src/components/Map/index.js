@@ -17,6 +17,7 @@ export default connect({
   currentLocation: state`app.model.current_location`,
   mapZoom: state`map.zoom`,
   moving: state`map.moving`,
+  bounds: state`map.bounds`,
   dragging: state`map.dragging_marker`,
   notesLoading: state`notes.loading`,
   fieldsLoading: state`fields.loading`,
@@ -24,10 +25,10 @@ export default connect({
 	center: state`map.center`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
-  mouseDownOnMap: signal`map.mouseDownOnMap`,
+  mouseDownOnMap: signal`notes.mouseDownOnMap`,
   markerDragStarted: signal`map.markerDragStarted`,
   markerDragEnded: signal`map.markerDragEnded`,
-  markerDragged: signal`map.markerDragged`,
+  markerDragged: signal`notes.markerDragged`,
   locationFound: signal`map.locationFound`,
   mapMoved: signal`map.mapMoved`,
 	gpsButtonClicked: signal`map.currentLocationButtonClicked`,
@@ -76,11 +77,12 @@ class TrialsMap extends React.Component {
 		return (
       <div className={'map-panel'}>
         <Map 
-          onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
+          onLocationfound={(e) => this.props.locationFound({latlng: e.latlng})}
           onClick={(e) => {this.validateMouseEvent(e)}} 
           onMoveStart={(e) => {this.props.mapMoveStarted()}}
 					onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
           dragging={true}
+          bounds={this.props.bounds}
           ref='map'
           center={this.props.center}
 					attributionControl={!this.props.isMobile}

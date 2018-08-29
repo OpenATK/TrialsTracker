@@ -28,14 +28,13 @@ export function drawTile({state, props, oada}) {
 
 // Check whether the the new geohash is on screen
 export function redrawTile({state, props, oada}) {
+  console.log(props.geohash)
   let connection_id = state.get('yield.connection_id');
   let tilesOnScreen = state.get('yield.tilesOnScreen');
   return Promise.map(Object.keys(tilesOnScreen || {}), (coordsIndex) => {
     if (!tilesOnScreen[coordsIndex][props.geohash]) return
-    console.log(tilesOnScreen[coordsIndex], props.geohash)
     let tile = tiles.get(props.crop, coordsIndex)
     if (!tile) return
-    console.log('redrawing', props.geohash, 'in tile:', coordsIndex)
     return fetchGeohashData(tile, [props.geohash], oada, props.crop, tilesOnScreen[coordsIndex].coords, props.legend, coordsIndex, connection_id)
   }).then(() => {
     return
@@ -43,7 +42,7 @@ export function redrawTile({state, props, oada}) {
 }
 
 export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, coordsIndex, connection_id) {
-	// GET the geohashData and draw it on the canvas
+  // GET the geohashData and draw it on the canvas
 	return Promise.map(geohashes, (geohash) => {
     let path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
     return oada.get({
@@ -57,7 +56,7 @@ export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, co
 	}, {concurrency: 10}).then(() => {
 		//Save the tile and call done
 		tiles.set(crop, coordsIndex, tile);
-		return { geohashes }
+		return { geohashes: {[crop]: geohashes} }
   })
 }
 

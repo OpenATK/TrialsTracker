@@ -39,7 +39,20 @@ class LayerControl extends React.Component {
 	    onClick={() => this.props.noteClicked({id, type:'notes'})}
       dragging={true} 
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
-		/>})
+    />})
+
+		let fieldPolygons = Object.keys(this.props.fields || {}).filter(id => 
+			this.props.fields[id].geometry 
+			&& this.props.fields[id].geometry.geojson 
+			&& this.props.fields[id].geometry.geojson.coordinates[0].length > 0
+    ).map(field => <GeoJSON 
+      className={'field-polygon'}
+      onClick={() => this.props.noteClicked({id:field, type: 'fields'})}
+      color={this.props.fields[field].color} 
+      style={{color: this.props.fields[field].color}}
+      data={this.props.fields[field].geometry.geojson} 
+      key={field}
+    />)
 
     return (
       <LayersControl 
@@ -60,14 +73,7 @@ class LayerControl extends React.Component {
           checked={this.props.layers.Fields.visible}
           name='Fields'>
 				  <FeatureGroup>
-					  {Object.keys(this.props.fields || {}).map(field => <GeoJSON 
-							className={'field-polygon'}
-							onClick={() => this.props.noteClicked({id:field, type: 'fields'})}
-							color={this.props.fields[field].color} 
-							style={{color: this.props.fields[field].color}}
-              data={this.props.fields[field].geometry.geojson} 
-              key={field}
-					  />)}
+					  {fieldPolygons}
          </FeatureGroup>
 				</Overlay> : null }
 				{Object.keys(this.props.index || {}).map(crop => 

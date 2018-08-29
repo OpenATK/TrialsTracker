@@ -8,6 +8,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 export default connect({
   index: state`yield.index`,
   currentLocation: state`app.model.current_location`,
+  selected: state`notes.selected_note.`,
   selectedNote: state`notes.notes.${state`notes.selected_note.id`}`,
   open: state`MenuBar.open`,
   editing: state`app.view.editing`,
@@ -17,11 +18,11 @@ export default connect({
   connectionsClicked: signal`MenuBar.connectionsClicked`,
   runLiveDataClicked: signal`yield.runLiveDataClicked`,
   clearCacheButtonClicked: signal`clearCacheButtonClicked`,
-  gpsButtonClicked: signal`map.currentLocationButtonClicked`,
+  gpsButtonClicked: signal`map.myLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
-  undoButtonClicked: signal`map.undoButtonClicked`,
+  undoButtonClicked: signal`notes.undoButtonClicked`,
 	mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
 	connectToDataSilo: signal`datasilo.connectToDataSilo`,
 },
@@ -66,7 +67,7 @@ class MenuBar extends React.Component {
             key={3}
             style={this.props.editing ? {} : {display:'none'}}
             disabled={!undoEnabled}
-            onClick={() => this.props.undoButtonClicked({})}
+            onClick={() => this.props.undoButtonClicked({id:this.props.selected.id, type:this.props.selected.type})}
             iconClassName="material-icons">undo
           </IconButton>
           <IconMenu

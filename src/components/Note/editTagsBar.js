@@ -25,7 +25,7 @@ export default connect({
         <div
           className={'edit-tags-bar'}>
 						
-					{this.props.selected && this.props.editing ? this.props.tags.map((tag, idx) => 
+					{this.props.selected && this.props.editing ? (this.props.tags || []).map((tag, idx) => 
 					  <Chip
 							key={this.props.id + tag}
 							labelStyle={labelStyle}

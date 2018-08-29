@@ -69,7 +69,6 @@ function initial_notes() {
         visible: true,
       },
       tags_modal_visibility: false,
-      completions: [],
     };
     if (i === 2) {
       let created = new Date(2015, 9, 22, 18);
@@ -117,12 +116,10 @@ function initial_notes() {
           visible: true,
         },
         tags_modal_visibility: false,
-        completions: [],
       }
     }
     note.order = i;
     note.id = uuid.v4();
-    note.font_color = getFontColor(note.color); 
     notes_list[note.id] = note;
   }
   return notes_list;

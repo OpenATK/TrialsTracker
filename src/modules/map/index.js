@@ -1,19 +1,5 @@
 import { Module } from 'cerebral'
-import { 
-  endMarkerDrag,
-  doneMovingMap,
-  handleCurrentLocationButton,
-  handleFieldNoteClick,
-  handleLocationFound,
-	handleMapClick,
-  handleMapMoved,
-  markerDragged,
-  startMarkerDrag,
-  startMovingMap,
-  undoDrawPoint,
-  toggleLayer,
-  toggleNotesVisible,
-} from './sequences';
+import * as signals from './sequences';
 
 export default Module({
 
@@ -29,20 +15,5 @@ export default Module({
 		crop_layers: {},
 	},
   
-  signals: {
-    currentLocationButtonClicked: handleCurrentLocationButton,
-    fieldNoteClicked: handleFieldNoteClick,
-    locationFound: handleLocationFound,
-    mapMoved: [
-      ...handleMapMoved, ...doneMovingMap,
-    ],
-    mapMoveStarted: startMovingMap,    
-    markerDragEnded: endMarkerDrag,
-    markerDragStarted: startMarkerDrag,
-    markerDragged,
-    mouseDownOnMap: handleMapClick,
-    toggleLayer,
-    toggleNotesVisible: toggleNotesVisible,
-    undoButtonClicked: undoDrawPoint,
-  }
+  signals,
 })

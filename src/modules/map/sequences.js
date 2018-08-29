@@ -1,114 +1,72 @@
 import { when, set, toggle } from 'cerebral/operators';
+import L from 'leaflet';
 import computeBoundingBox from './utils/computeBoundingBox.js';
 import { state, props } from 'cerebral/tags'
 import gjArea from '@mapbox/geojson-area';
+import { sequence } from 'cerebral'
 
-export let startMovingMap = [
+export let mapMoveStarted = sequence('mapMoveStarted', [
   set(state`map.moving`, true)
-];
+]);
 
-export var toggleLayer = [
+export var toggleLayer = sequence('toggleLayer', [
 	when (state`map.layers.${props`name`}`), {
 		true: [toggle(state`map.layers.${props`name`}.visible`)],
 		false: []
 	}
-]
+]);
 
-export var toggleNotesVisible = [
-  toggle('notes.visible'),
-]
+export var fieldNoteClicked = sequence('map.fieldNoteClicked', [
+  mapToFieldPolygon,
+]);
 
-export let doneMovingMap = [
+
+
+export let markerDragEnded = sequence('map.markerDragEnded', [
+  set(state`map.dragging_marker`, false),
+]);
+
+export let markerDragStarted = sequence('map.markerDragStarted', [
+  set(state`map.dragging_marker`, true),
+]);
+
+export const locationFound = sequence('map.locationFound', [
+  set(state`app.model.current_location`, props`latlng`),
+]);
+
+export let myLocationButtonClicked = sequence('map.myLocationButtonClicked', [
+  ({state, props}) => ({
+    latlng: state.get('app.model.current_location'),
+  }),
+  setMapLocation,
+])
+
+export let mapMoved = [
+  setMapLocation,
   set(state`map.moving`, false)
 ];
 
-export let handleMapClick = [
-	({state, props}) => ({
-		type: state.get('notes.selected_note.type'),
-		id: state.get('notes.selected_note.id'),
-	}),
-  dropPoint, 
-  recalculateArea, 
-  getNoteBoundingBox, 
-];
-
-export let handleLocationFound = [
-  setCurrentLocation,
-];
-
-export var handleFieldNoteClick = [
-  mapToFieldPolygon,
-];
-
-export let undoDrawPoint = [
-  undo, 
-  recalculateArea,
-  getNoteBoundingBox
-];
-
-export let endMarkerDrag = [
-  set(state`map.dragging_marker`, false),
-];
-
-export let startMarkerDrag = [
-  set(state`map.dragging_marker`, true),
-];
-
-export let markerDragged = [
-  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.0`, props`lng`),
-  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.1`, props`lat`),
-  recalculateArea
-];
-
-export let handleCurrentLocationButton = [
-  setMapToCurrentLocation,
-]
-
-export let handleMapMoved = [
-  setMapLocation,
-];
-
-export function mapToNotePolygon({props, state}) {
-  var note = state.get(`notes.${props.type}.${props.id}`);
-  if (note && note.geometry.centroid) state.set('map.center', note.geometry.centroid);
-}
-
-function setMapToCurrentLocation({state}) {
-  let loc = state.get('app.model.current_location');
-  if (loc) state.set('map.center', [loc.lat, loc.lng]);
-}
-
 function setMapLocation({props, state}) {
-  state.set('map.center', [props.latlng.lat, props.latlng.lng]);
-  state.set('map.zoom', props.zoom);
+  if (props.latlng) state.set('map.center', [props.latlng.lat, props.latlng.lng]);
+  if (props.zoom) state.set('map.zoom', props.zoom);
 }
 
-function setCurrentLocation({props, state}) {
-  let obj = {
-    lat: props.lat,
-    lng: props.lng,
-  }
-  state.set('app.model.current_location', obj);
-}
-
-function recalculateArea({state}) {
-	let selectedNote = state.get(`notes.selected_note`);
-	let note = state.get(`notes.${selectedNote.type}.${selectedNote.id}`);
-  if (note.geometry.geojson) {
-    if (note.geometry.geojson.coordinates[0].length > 2) {
-      let area = gjArea.geometry(note.geometry.geojson)/4046.86;
-      state.set(`notes.${selectedNote.type}.${selectedNote.id}.geometry.area`, area);
+export const fitGeometry = sequence('map.fitGeometry', [
+  ({state, props}) => {
+    if (props.geometry && props.geometry.geojson && props.geometry.geojson.coordinates && props.geometry.geojson.coordinates.length > 0) {
+      state.set('map.bounds', L.geoJson(props.geometry.geojson).getBounds());
     }
-  }
-}
+  },
+])
 
-function undo({props, state}) {
-	let selected = state.get('notes.selected_note');
-	let points = state.get(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`);
-	console.log(state.get(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`));
-	console.log(points)
-  if (points.length > 0) {
-    state.pop(`notes.${selected.type}.${selected.id}.geometry.geojson.coordinates.0`);
+export function getGeojsonArea({props}) {
+  if (props.geometry && props.geometry.geojson) {
+    if (props.geometry.geojson.coordinates[0].length > 2) {
+      let area = gjArea.geometry(props.geometry.geojson)/4046.86;
+      let geometry = props.geometry;
+      geometry.area = area;
+      return {geometry}
+    }
   }
 }
 
@@ -117,28 +75,19 @@ function mapToFieldPolygon({props, state}) {
   if (field) state.set('map.center', field.boundary.centroid);
 }
 
-export function getNoteBoundingBox({props, state}) {
-	let selected = state.get('notes.selected_note');
-  let note = state.get(`notes.${selected.type}.${selected.id}`);
-  let bbox = computeBoundingBox(note.geometry.geojson);
-  state.set(`notes.${selected.type}.${selected.id}.geometry.bbox`, bbox);
-  state.set(`notes.${selected.type}.${selected.id}.geometry.centroid`, [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2]);
+export function getGeojsonBoundingBox({props, state}) {
+  let geometry = props.geometry;
+  if (props.geometry && props.geometry.geojson) {
+    let bbox = computeBoundingBox(props.geometry.geojson);
+    let centroid = [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2];
+    geometry.bbox = bbox;
+    geometry.centroid = centroid;
+  }
+  return {geometry}
 }
 
-function dropPoint ({props, state}) {
-	let note = state.get(`notes.${props.type}.${props.id}`);
-	console.log(note, props)
-	if (!note.geometry || !note.geometry.geojson) {
-		state.set(`notes.${props.type}.${props.id}.geometry`, {
-			geojson: {
-				type: "Polygon",
-				coordinates: [[props.pt]]
-			}
-		});
-	} else {
-		state.push(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`, props.pt);
-	}
-	return {
-		note
-	}
-}
+export const updateGeometry = sequence('map.updateGeometry', [
+  set(props`geometry`, state`notes.${props`type`}.${props`id`}.geometry`),
+  getGeojsonArea,
+  getGeojsonBoundingBox,
+])
