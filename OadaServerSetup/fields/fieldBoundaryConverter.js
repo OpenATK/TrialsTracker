@@ -68,8 +68,8 @@ fieldsToOadaFormat = function(file) {
       _type: 'application/vnd.oada.field.1+json',
       name: fieldName,
       context: {
-        grower: {_id: grower},
-        farm: {_id: farmName},
+        grower,
+        //        farm: farmName,
       },
       boundary: {
         geojson: feature.geometry,

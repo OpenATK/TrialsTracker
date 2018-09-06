@@ -177,13 +177,13 @@ async function getAsHarvestedAndPush(data, CONNECTION, tree, offset) {
 
     asHarvested[crop][geohash].data[id] = pt;
     console.log(geohash, i)
-    return Promise.delay(5000).then(() => {
+    //    return Promise.delay(5000).then(() => {
     return CONNECTION.put({
       path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`,
       tree,
       data,
     })
-    })
+      //    })
   }).then(() => {
     return asHarvested;
   })

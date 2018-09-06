@@ -35,10 +35,12 @@ const tree = {
             '_rev': '0-0',
             'geohashes': {
               '*': {
-                '*': {
-                  'bucket': {
-                    '_type': 'application/vnd.oada.yield.1+json',
-                    '_rev': '0-0'
+                'crop-index': {
+                  '*': {
+                    'bucket': {
+                      '_type': 'application/vnd.oada.yield.1+json',
+                      '_rev': '0-0'
+                    }
                   }
                 }
               }
@@ -55,10 +57,12 @@ const tree = {
             '_rev': '0-0',
             'geohashes': {
               '*': {
-                '*': {
-                  'bucket': {
-                    '_type': 'application/vnd.oada.yield.1+json',
-                    '_rev': '0-0'
+                'crop-index': {
+                  '*': {
+                    'bucket': {
+                      '_type': 'application/vnd.oada.yield.1+json',
+                      '_rev': '0-0'
+                    }
                   }
                 }
               }
@@ -124,6 +128,10 @@ export const oadaUpdateNotes = sequence('notes.updateNotes', [
 export const createYieldStats = sequence('notes.createYieldStats', [
   ({state,props,oada}) => {
     return Promise.map(props.polygons || [], (obj) => {
+      console.log('~~~~~~~~~~~~~~~~~~~~~')
+      console.log('~~~~~~~~~~~~~~~~~~~~~')
+      console.log(obj)
+      console.log('~~~~~~~~~~~~~~~~~~~~~')
       return {
         path: `/bookmarks/notes/${props.type === 'notes' ? 'notes' : 'fields'}-index/${obj.id}/yield-stats`,
         data: {
@@ -220,23 +228,23 @@ export const getYieldStats = sequence('notes.getYieldStats', [
       if (yieldStats && yieldStats.stats) return
       yieldStats = state.get(`notes.notes.${id}.yield-stats`);
       return Promise.map(Object.keys(yieldStats.geohashes || {}), (geohash) => {
-        return Promise.map(Object.keys(yieldStats.geohashes[geohash] || {}), (crop) => {
-          if (yieldStats.geohashes[geohash][crop].bucket) {
+        return Promise.map(Object.keys(yieldStats.geohashes[geohash]['crop-index'] || {}), (crop) => {
+          if (yieldStats.geohashes[geohash]['crop-index'][crop].bucket) {
             if (yieldStats.geohashes[geohash].aggregates) {
               return Promise.map(Object.keys(yieldStats.geohashes[geohash].aggregates || {}), (aggregate) => {
                 console.log('4', yieldStats.geohashes)
                 console.log('5', yieldStats.geohashes[geohash])
                 stats = stats || {};
                 stats[crop] = stats[crop] || {};
-                return stats[crop] = harvest.recomputeStats(stats[crop], yieldStats.geohashes[geohash][crop].bucket['geohash-data'][aggregate]);
+                return stats[crop] = harvest.recomputeStats(stats[crop], yieldStats.geohashes[geohash]['crop-index'][crop].bucket['geohash-data'][aggregate]);
               })
             } else {
               console.log('1', yieldStats.geohashes)
               console.log('2', yieldStats.geohashes[geohash])
-              console.log('3', yieldStats.geohashes[geohash][crop].bucket.stats)
+              console.log('3', yieldStats.geohashes[geohash]['crop-index'][crop].bucket.stats)
               stats = stats || {};
               stats[crop] = stats[crop] || {};
-              return stats[crop] = harvest.recomputeStats(stats[crop], yieldStats.geohashes[geohash][crop].bucket.stats);
+              return stats[crop] = harvest.recomputeStats(stats[crop], yieldStats.geohashes[geohash]['crop-index'][crop].bucket.stats);
             }
           } else return
         })
@@ -821,25 +829,24 @@ export const addNoteButtonClicked = sequence('notes.addNoteButtonClicked', [
 	set(state`app.view.editing`, true),
 ])
 
+// Create links for relevant yield-stats geohashes for each note
+//
 export const updateYieldStatsGeohashes = sequence('notes.updateYieldStatsGeohashes', [
   ({state, props, oada}) => {
     var connection_id = state.get('yield.connection_id');
     var body = props.response.change.body;
     var notes = {};
-    console.log('update', body)
     return Promise.map(Object.keys(body['crop-index'] || {}), (crop) => {
-      console.log('update crop', crop)
       return Promise.map(Object.keys(body['crop-index'][crop]['geohash-length-index'] || {}), (ghLength) => {
-        console.log('update ghLength', ghLength)
         return Promise.map(Object.keys(body['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index'] || {}), (geohash) => {
-          console.log('updateYieldStats', geohash)
           // If that geohash belongs to a particular note, recalulate stats
           // If it hasn't been watched, setup the link(!!!) The watch is already established
           var stateNotes = state.get('notes.notes')
           return Promise.map(Object.keys(stateNotes || {}), (id) => {
-            if (stateNotes[id]['yield-stats'].geohashes[geohash] ) {
+            if (stateNotes[id]['yield-stats'].geohashes[geohash]) {
               notes[id] = stateNotes[id];
-              if (stateNotes[id]['yield-stats'].geohashes[geohash]._id) {
+              if (props.response.change.type === 'delete') return
+              if (stateNotes[id]['yield-stats'].geohashes[geohash][crop] && !stateNotes[id]['yield-stats'].geohashes[geohash][crop]._id) {
                 return oada.put({
                   path: `/bookmarks/notes/notes-index/${id}/yield-stats/geohashes/${geohash}/${crop}/bucket`,
                   data: {
@@ -852,13 +859,12 @@ export const updateYieldStatsGeohashes = sequence('notes.updateYieldStatsGeohash
             } else return
           })
         })
-			})
-		}).then(() => {
+      })
+    }).then(() => {
       return {notes}
     })
   },
-
-  getNoteStats,
+  getYieldStats,
 ])
 
 export const incrementalUpdateYieldStats = sequence('notes.incrementalUpdateYieldStats', [
