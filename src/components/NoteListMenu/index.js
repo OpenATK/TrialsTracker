@@ -46,7 +46,7 @@ export default connect({
             onClick={() => this.props.sortingTabClicked({newSortMode: 'fields'})}>
             FIELDS
           </button>
-          <button 
+          {/*<button 
             type="button" 
             disabled={true}
             className={this.props.editing ? 'hidden' :
@@ -58,7 +58,7 @@ export default connect({
             name='search'
             className={this.props.editing ? 'hidden' : 'search-button'}
             onClick={() => {}}
-          />
+          />*/}
         </div>
       );
     }

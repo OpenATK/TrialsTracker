@@ -67,7 +67,8 @@ export default connect({
               <br key={this.props.id + '-yieldsbreak-'+crop}/>
             );
           })
-        } catch(error) {}
+        } catch(error) {
+        }
 			}
 
       let areaContent = null;
@@ -94,7 +95,7 @@ export default connect({
       }
 
 			let comps = [];
-
+      
 		  (this.props.comparisons || {}).forEach((comp) => {
         Object.keys(comp.comparison).forEach((crop) => {
 					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);

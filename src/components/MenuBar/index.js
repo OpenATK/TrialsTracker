@@ -12,7 +12,7 @@ export default connect({
   selectedNote: state`notes.notes.${state`notes.selected_note.id`}`,
   open: state`MenuBar.open`,
   editing: state`app.view.editing`,
-  isMobile: state`app.is_mobile`,
+  isMobile: state`view.is_mobile`,
   legendVisible: state`app.view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
@@ -24,7 +24,8 @@ export default connect({
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
   undoButtonClicked: signal`notes.undoButtonClicked`,
 	mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
-	connectToDataSilo: signal`datasilo.connectToDataSilo`,
+  connectToDataSilo: signal`datasilo.connectToDataSilo`,
+  addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
 },
 class MenuBar extends React.Component {
 
@@ -57,6 +58,12 @@ class MenuBar extends React.Component {
               iconClassName="material-icons">info
             </IconButton>
           : null }
+          <IconButton
+            key={0}
+            style={this.props.isMobile && !this.props.editing ? {} : {display:'none'}}
+            onClick={() => this.props.addNoteButtonClicked({})}
+            iconClassName="material-icons">note_add
+          </IconButton>
           <IconButton
             key={2}
             style={this.props.currentLocation ? {} : {display:'none'}}

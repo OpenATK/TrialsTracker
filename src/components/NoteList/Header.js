@@ -6,7 +6,7 @@ import {state, signal } from 'cerebral/tags'
 
 export default connect({
   tab: state`notes.tab`,
-  isMobile: state`app.is_mobile`,
+  isMobile: state`view.is_mobile`,
   editing: state`app.view.editing`,
   selectedNote: state`notes.selected_note`,
 
@@ -45,7 +45,7 @@ class Header extends React.Component {
           value={this.props.tab}>
           <Tab label="NOTES" value={0} />
           <Tab label="FIELDS" value={1} />
-          <Tab label="TAGS" value={2} />
+          {/*<Tab label="TAGS" value={2} />*/}
 				</Tabs>
 				}
 			</div>

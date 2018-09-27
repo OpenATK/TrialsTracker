@@ -10,7 +10,7 @@ export default connect({
   legends: state`yield.legends`,
   yieldDataIndex: state`yield.index`,
   layers: state`map.layers`,
-  isMobile: state`app.is_mobile`,
+  isMobile: state`view.is_mobile`,
 },
 
 class LegendControl extends React.Component {  

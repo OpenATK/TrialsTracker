@@ -12,10 +12,10 @@ import _ from 'lodash';
 
 export default connect({
   notes: state`notes.notes`, 
-  tags: state`app.model.tags`,
+  tags: state`model.tags`,
   tab: state`notes.tab`, 
-  isMobile: state`app.is_mobile`,
-  editing: state`app.view.editing`,
+  isMobile: state`view.is_mobile`,
+  editing: state`view.editing`,
 	fields: state`notes.fields`,
 	loading: state`notes.loading`,
 
@@ -109,7 +109,7 @@ class NoteList extends React.Component {
         </SwipeableViews>
         <FloatingActionButton
           className={'add-note-button'}
-          style={(this.props.editing && this.props.tab === 0) ? {display: 'none'} : {display: 'none'}}
+          style={(!this.props.editing && this.props.tab === 0 && this.props.isMobile) ? {} : {display: 'none'}}
           onClick={(e) => this.props.addNoteButtonClicked({type: this.props.tab === 0 ? 'notes': 'fields'})}>
           <ContentAdd />
 				</FloatingActionButton>

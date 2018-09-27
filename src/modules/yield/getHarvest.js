@@ -5,6 +5,8 @@ var gh = require('ngeohash');
 var Promise = require('bluebird');
 var uuid = require('uuid');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+var paused = true;
+var speed;
 var tradeMoisture = {
   soybeans:  13,
   corn: 15,
@@ -15,7 +17,8 @@ var j = 0;
 
 async function getAsHarvested(data, offset) {
   var asHarvested = {};
-	return Promise.mapSeries(data, (row, i) => {
+  return Promise.mapSeries(data, (row, i) => {
+    if (i < offset) return;
     var geohash = gh.encode(row.Latitude, row.Longitude, 7);
     var crop = row['Product - Name'] || row['Product'];
     crop = crop.replace(/\w\S*/g, txt => txt.toLowerCase());
@@ -94,9 +97,12 @@ async function asyncForEach(array, offset, callback) {
   }
 }
 
-async function getAsHarvestedAndPush(data, CONNECTION, connection_id, tree, offset, delay) {
+async function getAsHarvestedAndPush(data, state, CONNECTION, connection_id, tree, offset, delay) {
+  paused = false;
   var asHarvested = {};
-	await asyncForEach(data, offset || 0, (row, i) => {
+  await asyncForEach(data, offset || 0, (row, i) => {
+    if (paused) throw 'paused'
+    if (i < offset) return
     var geohash = gh.encode(row.Latitude, row.Longitude, 7);
     var crop = row['Product - Name'] || row['Product'];
     crop = crop.replace(/\w\S*/g, txt => txt.toLowerCase());
@@ -175,24 +181,29 @@ async function getAsHarvestedAndPush(data, CONNECTION, connection_id, tree, offs
     }
 
     asHarvested[crop][geohash].data[id] = pt;
-    console.log(geohash, i)
-    return Promise.delay(delay*1000).then(() => {
+    return Promise.delay(speed || delay).then(() => {
       return CONNECTION.put({
         connection_id,
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`,
         tree,
         data,
+      }).then(() => {
+        state.set('livedemo.text', 'Pushing harvest data...'+i.toString());
+        state.set('livedemo.index', i)
+        return
       })
     })
   }).then(() => {
     return asHarvested;
+  }).catch((err) => {
+    return
   })
 }
 
 async function getAsHarvestedAndDelete(data, CONNECTION, connection_id, tree, offset, delay) {
   var asHarvested = {};
   console.log('DATA LENGTH', data.length)
-	return Promise.map(data || [], (row, i) => {
+  return Promise.map(data || [], (row, i) => {
     var geohash = gh.encode(row.Latitude, row.Longitude, 7);
     var crop = row['Product - Name'] || row['Product'];
     crop = crop.replace(/\w\S*/g, txt => txt.toLowerCase());
@@ -398,7 +409,22 @@ function getTiledMaps(asHarvested, levels) {
   })
 };
 
-function recomputeStats(currentStats, additionalStats) {
+function recomputeStats(currentStats, additionalStats, factor) {
+  factor = factor || 1;
+  // Handle when whole thing is undefined
+  currentStats = currentStats || {
+    count: 0,
+    weight: {
+      sum: 0, 
+      'sum-of-squares': 0,
+    },
+    area: {
+      sum: 0,
+      'sum-of-squares': 0,
+    },
+    'sum-yield-squared-area': 0,
+  }
+  // Handle sub-pieces that are undefined
   currentStats.count = currentStats.count || 0;
   currentStats.area = currentStats.area || {};
   currentStats.area.sum = currentStats.area.sum || 0;
@@ -408,21 +434,40 @@ function recomputeStats(currentStats, additionalStats) {
 	currentStats.weight['sum-of-squares'] = currentStats.weight['sum-of-squares'] || 0;
   currentStats['sum-yield-squared-area'] = currentStats['sum-yield-squared-area'] || 0;
 
-  if (!additionalStats) return currentStats
-  currentStats.count += additionalStats.count;
-  currentStats.area.sum += additionalStats.area.sum;
-  currentStats.area['sum-of-squares'] += additionalStats.area['sum-of-squares'];
-  currentStats.weight.sum += additionalStats.weight.sum;
-	currentStats.weight['sum-of-squares'] += additionalStats.weight['sum-of-squares'];
-  currentStats['sum-yield-squared-area'] += additionalStats['sum-yield-squared-area'];
+  //handle when additionalStats is undefined
+  if (!additionalStats) {
+    currentStats.yield = {
+      mean: currentStats.weight.sum/currentStats.area.sum,
+      variance: currentStats['sum-yield-squared-area']/currentStats.area.sum,
+    }
+    currentStats.yield.standardDeviation = Math.pow(currentStats.yield.variance, 0.5);
+    return currentStats
+  }
 
+  // Sum the two
+  currentStats.count += additionalStats.count*factor;
+  currentStats.area.sum += additionalStats.area.sum*factor;
+  currentStats.area['sum-of-squares'] += additionalStats.area['sum-of-squares']*factor;
+  currentStats.weight.sum += additionalStats.weight.sum*factor;
+	currentStats.weight['sum-of-squares'] += additionalStats.weight['sum-of-squares']*factor;
+  currentStats['sum-yield-squared-area'] += additionalStats['sum-yield-squared-area']*factor;
+
+  //Handle negative values
+  if (currentStats.count < 0) currentStats.count = 0;
+  if (currentStats.area.sum < 0) currentStats.area.sum = 0;
+  if (currentStats.area['sum-of-squares'] < 0) currentStats.area['sum-of-squares'] = 0;
+  if (currentStats.weight.sum < 0) currentStats.weight.sum = 0;
+  if (currentStats.weight['sum-of-squares'] < 0) currentStats.weight['sum-of-squares'] = 0;
+  if (currentStats['sum-yield-squared-area'] < 0) currentStats['sum-yield-squared-area'] = 0;
+
+  // Compute Yield
   currentStats.yield = {
     mean: currentStats.weight.sum/currentStats.area.sum,
     variance: currentStats['sum-yield-squared-area']/currentStats.area.sum,
   }
   currentStats.yield.standardDeviation = Math.pow(currentStats.yield.variance, 0.5);
   return currentStats;
-};
+}
 
 function pushTiledMaps(tiledMaps, CONNECTION, tree) {
   var i = 0;
@@ -468,4 +513,6 @@ export default {
   pushTiledMaps,
   deleteTiledMaps,
   recomputeStats,
+  setPause: (val) => paused = val,
+  setSpeed: (val) => speed = val,
 }

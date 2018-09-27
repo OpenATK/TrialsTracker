@@ -3,9 +3,6 @@ let stateTree = {
 	model: {
     tags: initial_tags(),
   },
-  is_mobile: false,
-  settings: {
-  },
   view: {
     note_dropdown: {
       visible: false,
@@ -16,8 +13,6 @@ let stateTree = {
     crop_dropdown_visible: false,
     sort_mode: 0, //0 - notes; 1 - fields; 2 - tags; 3 - search;
     editing: false,
-    settings: {
-    },
   }
 }; 
 

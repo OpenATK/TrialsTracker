@@ -2,8 +2,8 @@ import MobileDetect from 'mobile-detect';
 import { sequence } from 'cerebral'
 import { set } from 'cerebral/operators'
 import { props } from 'cerebral/tags'
+import * as oada from '@oada/cerebral-module/sequences'
 import * as fields from '@oada/fields-module/sequences'
-import oada from '@oada/cerebral-module/sequences'
 import * as notes from '../notes/sequences'
 import * as yieldMod from '../yield/sequences'
 
@@ -18,7 +18,7 @@ export const init = sequence('init', [
 			scope: 'oada.yield:all'
     }, 
   }),
-  ({props}) =>({signals:['notes.updateYieldStatsGeohashes']}),
+  ({props}) =>({signals:['notes.handleYieldStatsGeohashes']}),
   yieldMod.init,
   ({props}) => ({signals: ['notes.getFieldNotes']}),
   fields.init,
@@ -28,7 +28,7 @@ export const init = sequence('init', [
 
 export const clearCacheButtonClicked = sequence('app.clearCache', [
   ({state, props}) => ({
-    connection_id: 'vip3',
+    domain: 'https://vip3.ecn.purdue.edu',
   }),
   oada.resetCache,
 	init
@@ -36,5 +36,6 @@ export const clearCacheButtonClicked = sequence('app.clearCache', [
 
 function setMobile({state}) {
   var md = new MobileDetect(window.navigator.userAgent);
-  state.set(`app.is_mobile`, (md.mobile() !== null));
+  var mobile = md.mobile();
+  state.set(`view.is_mobile`, (mobile ? true : false));
 }

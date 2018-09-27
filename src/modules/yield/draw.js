@@ -5,79 +5,74 @@ import Color from 'color'
 import tiles from './tileManager.js'
 import L from 'leaflet'
 
-//export function drawTile(coords, precision, canvas, geohashes, done) {
+// Get geohash->tile index and call fetchGeohashData
 export function drawTile({state, props, oada}) {
-	var connection_id = state.get('yield.connection_id');
-  var tileSwPt = new L.Point(props.coords.x*256, (props.coords.y*256)+256);
-  var tileNePt = new L.Point((props.coords.x*256)+256, props.coords.y*256);
-	var sw = CRS.EPSG3857.pointToLatLng(tileSwPt, props.coords.z);
-	var ne = CRS.EPSG3857.pointToLatLng(tileNePt, props.coords.z);
-  var precision = getGeohashLevel(props.coords.z, sw, ne);
-	var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
-	var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-  var tile = tiles.get(props.layer, coordsIndex)
-
-	// Only get those that we know to be available (this "available" list can also
-  // be utilized to filter what is drawn).
-	var filtGeohashes = geohashes.filter((geohash) => {
-		if (!props.index['geohash-'+geohash.length]) return false
-		return (props.index['geohash-'+geohash.length][geohash]) ? true : false;
-  })
-
-  return fetchGeohashData(tile, filtGeohashes, oada, props.layer, props.coords, props.legend, coordsIndex, connection_id).then(() => {
-    return {geohashes: {[props.layer]: geohashes}}
-  })
-}
-
-// Check whether the new geohash is on screen
-export function redrawTile({state, props, oada}) {
   var connection_id = state.get('yield.connection_id');
   var tilesOnScreen = state.get('yield.tilesOnScreen');
-  return Promise.map(Object.keys(tilesOnScreen || {}), (coordsIndex) => {
-    if (!tilesOnScreen[coordsIndex][props.geohash]) return
-    var tile = tiles.get(props.crop, coordsIndex)
-    if (!tile) return
-    return fetchGeohashData(tile, [props.geohash], oada, props.crop, tilesOnScreen[coordsIndex].coords, props.legend, coordsIndex, connection_id)
+  var legends = state.get('yield.legends');
+  var coordsIndex;
+  if (props.coords) coordsIndex = [props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString()];
+  return Promise.map(coordsIndex || Object.keys(tilesOnScreen || {}), (coordsIndex) => {
+    return Promise.map(Object.keys(props.geohashes || {}), (crop) => {
+      var index = state.get(`yield.index.${crop}`);
+      var filtGeohashes = props.geohashes[crop].filter((geohash) => {
+        return (index['geohash-'+geohash.length] && index['geohash-'+geohash.length][geohash]) ? true : false
+      })
+      return Promise.map(filtGeohashes, (geohash) => {
+        if (!tilesOnScreen[coordsIndex][geohash]) return
+        var tile = tiles.get(crop, coordsIndex)
+        if (!tile) return
+        var path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
+        var body = (props.response && props.response.change.body['geohash-data']) ? {data:props.response.change.body} : undefined;
+        return fetchGeohashData(tile, path, geohash, oada, crop, tilesOnScreen[coordsIndex].coords, legends[crop], coordsIndex, connection_id, body).then(() => {
+          state.set(`oada.${connection_id}.watches.${path}`, true)
+          var pieces = coordsIndex.split('-');
+          return tiles.set(crop, coordsIndex, tile);
+        }, {concurrency: 10})
+      })
+    })
   }).then(() => {
     return
   })
 }
 
-export function fetchGeohashData(tile, geohashes, oada, crop, coords, legend, coordsIndex, connection_id) {
-  // GET the geohashData and draw it on the canvas
-	return Promise.map(geohashes || [], (geohash) => {
-    var path =	'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop+'/geohash-length-index/geohash-'+(geohash.length)+'/geohash-index/'+geohash;
-    return oada.get({
+// Fetch the data to be rendered. At the same time, setup a watch.
+// GET/cache misses will clear that geohash data from the tile canvas (for delete
+// case)
+export async function fetchGeohashData(tile, path, geohash, oada, crop, coords, legend, coordsIndex, connection_id, data) {
+  try {
+    var response = data ? data : await oada.get({
       connection_id: connection_id,
-			path, 
-		}).then((response) => {
-			return recursiveDrawOnCanvas(coords, response.data['geohash-data'], 0, tile, legend);
-    }).catch((err) => {
-			var ghBounds = gh.decode_bbox(geohash);
-			var swLatLng = new latLng(ghBounds[0], ghBounds[1]);
-			var neLatLng = new latLng(ghBounds[2], ghBounds[3]);
-			var sw = CRS.EPSG3857.latLngToPoint(swLatLng, coords.z);
-			var ne = CRS.EPSG3857.latLngToPoint(neLatLng, coords.z);
-			var w = sw.x - coords.x*256;
-			var n = ne.y - coords.y*256;
-			var e = ne.x - coords.x*256;
-			var s = sw.y - coords.y*256;
-			var width = Math.ceil(e-w);
-			var height = Math.ceil(s-n);
-			//Fill the entire geohash aggregate with the appropriate color
-			var context = tile.getContext('2d');
-			context.lineWidth = 0;
-      context.beginPath();
-			context.clearRect(w, n, width, height);
-      //			context.fillStyle = "rgba(0, 0, 0, 0)";
-      //      context.fill();
-      return
-		})
-	}, {concurrency: 10}).then(() => {
-		//Save the tile and call done
-		tiles.set(crop, coordsIndex, tile);
-    return 
-  })
+      path, 
+      watch: {
+        signals: ['yield.handleGeohashesOnScreen'],
+        payload: {
+          geohashes: {[crop]: [geohash]},
+        }
+      }
+    })
+    return recursiveDrawOnCanvas(coords, response.data['geohash-data'], 0, tile, legend);
+  } catch(err) {
+    var ghBounds = gh.decode_bbox(geohash);
+    var swLatLng = new latLng(ghBounds[0], ghBounds[1]);
+    var neLatLng = new latLng(ghBounds[2], ghBounds[3]);
+    var sw = CRS.EPSG3857.latLngToPoint(swLatLng, coords.z);
+    var ne = CRS.EPSG3857.latLngToPoint(neLatLng, coords.z);
+    var w = sw.x - coords.x*256;
+    var n = ne.y - coords.y*256;
+    var e = ne.x - coords.x*256;
+    var s = sw.y - coords.y*256;
+    var width = Math.ceil(e-w);
+    var height = Math.ceil(s-n);
+    //Fill the entire geohash aggregate with the appropriate color
+    var context = tile.getContext('2d');
+    context.lineWidth = 0;
+    context.beginPath();
+    context.clearRect(w, n, width, height);
+    //			context.fillStyle = "rgba(0, 0, 0, 0)";
+    //      context.fill();
+    return
+  }
 }
 
 function getGeohashLevel(zoom, sw, ne) {
@@ -113,7 +108,7 @@ export function recursiveDrawOnCanvas(coords, data, startIndex, canvas, legend) 
 			context.lineWidth = 0;
 			var col = colorForvalue(val.weight.sum/val.area.sum, levels);
 			context.beginPath();
-			context.rect(w, n, width, height);
+      context.rect(w, n, width, height);
 			context.fillStyle = Color(col).hexString();
 			context.fill();
 		}
@@ -155,4 +150,15 @@ function blendColors(c1, c2, percent) {
 		a: 0.9999,
 //      a:   a1 * percent +   a2 * (1-percent),
 	};
+}
+
+export function geohashesFromTile({props, state}) {
+ 	var connection_id = state.get('yield.connection_id');
+  var tileSwPt = new L.Point(props.coords.x*256, (props.coords.y*256)+256);
+  var tileNePt = new L.Point((props.coords.x*256)+256, props.coords.y*256);
+	var sw = CRS.EPSG3857.pointToLatLng(tileSwPt, props.coords.z);
+	var ne = CRS.EPSG3857.pointToLatLng(tileNePt, props.coords.z);
+  var precision = getGeohashLevel(props.coords.z, sw, ne);
+	var geohashes = gh.bboxes(sw.lat, sw.lng, ne.lat, ne.lng, precision);
+  return { geohashes: {[props.layer]: geohashes}}
 }

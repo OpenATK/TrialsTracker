@@ -21,7 +21,7 @@ export default connect({
   dragging: state`map.dragging_marker`,
   notesLoading: state`notes.loading`,
   fieldsLoading: state`fields.loading`,
-  isMobile: state`app.is_mobile`,
+  isMobile: state`view.is_mobile`,
 	center: state`map.center`,
 
   mapMoveStarted: signal`map.mapMoveStarted`,
@@ -85,7 +85,7 @@ class TrialsMap extends React.Component {
           bounds={this.props.bounds}
           ref='map'
           center={this.props.center}
-					attributionControl={!this.props.isMobile}
+					attributionControl={this.props.isMobile ? !this.props.isMobile : false}
 					zoomControl={true/*!this.props.isMobile*/}
           zoom={this.props.mapZoom || 15}>
           {this.props.currentLocation ? <CircleMarker

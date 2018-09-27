@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@cerebral/react": "^3.2.2",
+    "@cerebral/storage": "^4.2.2",
     "@mapbox/geojson-area": "^0.2.2",
     "@material-ui/core": "^1.0.0-rc.1",
     "@oada/cerebral-module": "^0.8.29",
