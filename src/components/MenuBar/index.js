@@ -7,13 +7,13 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
   index: state`yield.index`,
-  currentLocation: state`app.model.current_location`,
+  currentLocation: state`model.current_location`,
   selected: state`notes.selected_note.`,
   selectedNote: state`notes.notes.${state`notes.selected_note.id`}`,
   open: state`MenuBar.open`,
-  editing: state`app.view.editing`,
+  editing: state`view.editing`,
   isMobile: state`view.is_mobile`,
-  legendVisible: state`app.view.legend.visible`,
+  legendVisible: state`view.legend.visible`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
   runLiveDataClicked: signal`yield.runLiveDataClicked`,
@@ -41,9 +41,9 @@ class MenuBar extends React.Component {
 
 	render() {
 		let undoEnabled = this.props.selectedNote 
-			&& this.props.selectedNote.geometry 
-			&& this.props.selectedNote.geometry.geojson ?
-			this.props.selectedNote.geometry.geojson.coordinates[0].length > 0 
+			&& this.props.selectedNote.boundary 
+			&& this.props.selectedNote.boundary.geojson ?
+			this.props.selectedNote.boundary.geojson.coordinates[0].length > 0 
 			: false;
     return (
       <AppBar

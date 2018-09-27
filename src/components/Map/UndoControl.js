@@ -6,7 +6,7 @@ import Control from 'react-leaflet-control';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  editing: state`app.view.editing`,
+  editing: state`view.editing`,
 
   undoButtonClicked: signal`map.undoButtonClicked`,
 },

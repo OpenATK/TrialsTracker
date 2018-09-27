@@ -5,8 +5,8 @@ import FontAwesome from 'react-fontawesome';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`app.view.sort_mode`,
-  editing: state`app.view.editing`,
+  sortMode: state`view.sort_mode`,
+  editing: state`view.editing`,
   selectedNote: state`notes.selected_note`,
 
   sortingTabClicked: signal`notes.sortingTabClicked`,

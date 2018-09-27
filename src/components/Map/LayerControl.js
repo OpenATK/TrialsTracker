@@ -12,7 +12,7 @@ export default connect({
 	notes: state`notes.notes`,
 	notesVisible: state`notes.visible`,
   selectedNote: state`notes.notes.${state`notes.selected_note`}`,
-	editing: state`app.view.editing`,
+	editing: state`view.editing`,
   index: state`yield.index`,
   fields: state`notes.fields`,
   domain: state`oada_domain`,
@@ -27,13 +27,13 @@ class LayerControl extends React.Component {
 	render() {
 
 		let notePolygons = Object.keys(this.props.notes || {}).filter(id => 
-			this.props.notes[id].geometry 
-			&& this.props.notes[id].geometry.geojson 
-			&& this.props.notes[id].geometry.geojson.coordinates[0].length > 0
+			this.props.notes[id].boundary 
+			&& this.props.notes[id].boundary.geojson 
+			&& this.props.notes[id].boundary.geojson.coordinates[0].length > 0
 		).map(id => {
 			return <GeoJSON 
       className={'note-polygon'}
-      data={this.props.notes[id].geometry.geojson} 
+      data={this.props.notes[id].boundary.geojson} 
       color={this.props.notes[id].color} 
   	  style={{fillOpacity:0.4}}
 	    onClick={() => this.props.noteClicked({id, type:'notes'})}
@@ -42,15 +42,15 @@ class LayerControl extends React.Component {
     />})
 
 		let fieldPolygons = Object.keys(this.props.fields || {}).filter(id => 
-			this.props.fields[id].geometry 
-			&& this.props.fields[id].geometry.geojson 
-			&& this.props.fields[id].geometry.geojson.coordinates[0].length > 0
+			this.props.fields[id].boundary 
+			&& this.props.fields[id].boundary.geojson 
+			&& this.props.fields[id].boundary.geojson.coordinates[0].length > 0
     ).map(field => <GeoJSON 
       className={'field-polygon'}
       onClick={() => this.props.noteClicked({id:field, type: 'fields'})}
       color={this.props.fields[field].color} 
       style={{color: this.props.fields[field].color}}
-      data={this.props.fields[field].geometry.geojson} 
+      data={this.props.fields[field].boundary.geojson} 
       key={field}
     />)
 

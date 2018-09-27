@@ -9,9 +9,9 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
 	note: state`notes.${props`type`}.${props`id`}`,
-  editing: state`app.view.editing`,
-  noteDropdownVisible: state`app.view.note_dropdown.visible`,
-	noteDropdown: state`app.view.note_dropdown.note`,
+  editing: state`view.editing`,
+  noteDropdownVisible: state`view.note_dropdown.visible`,
+	noteDropdown: state`view.note_dropdown.note`,
 	selectedNote: state`notes.selected_note`,
 
   deleteNoteButtonClicked: signal`notes.deleteNoteButtonClicked`,
@@ -72,7 +72,7 @@ export default connect({
 			}
 
       let areaContent = null;
-      if (this.props.note && this.props.note.geometry && this.props.note.geometry.area) {
+      if (this.props.note && this.props.note.boundary && this.props.note.boundary.area) {
         areaContent = 
           <div
             key={'area'}
@@ -89,7 +89,7 @@ export default connect({
             </span>
             <span 
               className={'area-value'}>
-              {this.props.note.geometry.area.toFixed(2) + ' acres'}
+              {this.props.note.boundary.area.toFixed(2) + ' acres'}
             </span>
           </div>
       }
@@ -193,7 +193,7 @@ export default connect({
             </IconMenu>
           </CardHeader>
           <div
-						className={this.props.note && this.props.note.geometry && this.props.note.geometry.area ? 'note-main-info' : 'hidden'}>
+						className={this.props.note && this.props.note.boundary && this.props.note.boundary.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}

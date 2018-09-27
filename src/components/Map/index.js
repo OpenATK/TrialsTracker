@@ -11,10 +11,10 @@ import LoadingScreen from '../LoadingScreen'
 export default connect({
 	selectedNote: state`notes.${state`notes.selected_note.type`}.${state`notes.selected_note.id`}`,
 	selected: state`notes.selected_note`,
-  editing: state`app.view.editing`,
-  legends: state`app.view.legends`,
-  legendVisible: state`app.view.legend.visible`,
-  currentLocation: state`app.model.current_location`,
+  editing: state`view.editing`,
+  legends: state`view.legends`,
+  legendVisible: state`view.legend.visible`,
+  currentLocation: state`model.current_location`,
   mapZoom: state`map.zoom`,
   moving: state`map.moving`,
   bounds: state`map.bounds`,
@@ -59,8 +59,8 @@ class TrialsMap extends React.Component {
 	render() {
 
 		let markerList = [];
-		if (this.props.selectedNote && this.props.selectedNote.geometry && this.props.selectedNote.geometry.geojson && this.props.editing) {
-			markerList = this.props.selectedNote.geometry.geojson.coordinates[0].map((pt, i) =>
+		if (this.props.selectedNote && this.props.selectedNote.boundary && this.props.selectedNote.boundary.geojson && this.props.editing) {
+			markerList = this.props.selectedNote.boundary.geojson.coordinates[0].map((pt, i) =>
 				<Marker
 					className={'selected-note-marker'}
 					key={this.props.selectedNote+'-'+i}

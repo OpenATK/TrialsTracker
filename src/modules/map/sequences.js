@@ -53,19 +53,19 @@ function setMapLocation({props, state}) {
 
 export const fitGeometry = sequence('map.fitGeometry', [
   ({state, props}) => {
-    if (props.geometry && props.geometry.geojson && props.geometry.geojson.coordinates && props.geometry.geojson.coordinates.length > 0) {
-      state.set('map.bounds', L.geoJson(props.geometry.geojson).getBounds());
+    if (props.boundary && props.boundary.geojson && props.boundary.geojson.coordinates && props.boundary.geojson.coordinates.length > 0) {
+      state.set('map.bounds', L.geoJson(props.boundary.geojson).getBounds());
     }
   },
 ])
 
 export function getGeojsonArea({props}) {
-  if (props.geometry && props.geometry.geojson) {
-    if (props.geometry.geojson.coordinates[0].length > 2) {
-      let area = gjArea.geometry(props.geometry.geojson)/4046.86;
-      let geometry = props.geometry;
-      geometry.area = area;
-      return {geometry}
+  if (props.boundary && props.boundary.geojson) {
+    if (props.boundary.geojson.coordinates[0].length > 2) {
+      let area = gjArea.geometry(props.boundary.geojson)/4046.86;
+      let boundary = props.boundary;
+      boundary.area = area;
+      return {boundary}
     }
   }
 }
@@ -76,18 +76,18 @@ function mapToFieldPolygon({props, state}) {
 }
 
 export function getGeojsonBoundingBox({props, state}) {
-  let geometry = props.geometry;
-  if (props.geometry && props.geometry.geojson) {
-    let bbox = computeBoundingBox(props.geometry.geojson);
+  let boundary = props.boundary;
+  if (props.boundary && props.boundary.geojson) {
+    let bbox = computeBoundingBox(props.boundary.geojson);
     let centroid = [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2];
-    geometry.bbox = bbox;
-    geometry.centroid = centroid;
+    boundary.bbox = bbox;
+    boundary.centroid = centroid;
   }
-  return {geometry}
+  return {boundary}
 }
 
 export const updateGeometry = sequence('map.updateGeometry', [
-  set(props`geometry`, state`notes.${props`type`}.${props`id`}.geometry`),
+  set(props`boundary`, state`notes.${props`type`}.${props`id`}.boundary`),
   getGeojsonArea,
   getGeojsonBoundingBox,
 ])

@@ -7,7 +7,7 @@ import {state, signal } from 'cerebral/tags'
 export default connect({
   tab: state`notes.tab`,
   isMobile: state`view.is_mobile`,
-  editing: state`app.view.editing`,
+  editing: state`view.editing`,
   selectedNote: state`notes.selected_note`,
 
   tabClicked: signal`notes.tabClicked`,

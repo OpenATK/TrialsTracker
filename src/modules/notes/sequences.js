@@ -117,6 +117,7 @@ export const mapOadaToRecords = sequence('notes.mapOadaToRecords', [
     return Promise.map(Object.keys(oadaNotes || {}), (index) => {
       if (index.charAt(0) === '_') return
       var recordsIndex = index.replace(/\-index/, '');
+      console.log(recordsIndex)
       state.set(`notes.${recordsIndex}`, {})
       notes[index] = notes[index] || {};
       return Promise.map(Object.keys(oadaNotes[index] || {}), (key) => {
@@ -231,8 +232,8 @@ export function getPolygons({state, props}) {
       state.set(`notes.${recordsIndex}.${id}.yield-stats`, {computing:true})
       return polygons.push({
         id,
-        polygon: props.notes[index][id].geometry.geojson.coordinates[0] || [],
-        bbox: props.notes[index][id].geometry.bbox || [],
+        polygon: props.notes[index][id].boundary.geojson.coordinates[0] || [],
+        bbox: props.notes[index][id].boundary.bbox || [],
         type: props.type
       })
     })
@@ -379,7 +380,7 @@ export const doneClicked = sequence('notes.doneClicked', [
 	set(props`type`, state`notes.selected_note.type`),
 	set(props`id`, state`notes.selected_note.id`),
   //	set(props`note`, state`notes.${props`type`}.${props`id`}`),
-  set(state`app.view.editing`, false), 
+  set(state`view.editing`, false), 
   set(props`notes.${props`type`}-index.${props`id`}`, state`notes.${props`type`}.${props`id`}`),
 	oadaUpdateNotes,
   set(props`requests`, undefined),
@@ -402,6 +403,17 @@ export const createFieldNotes = sequence('notes.createFieldNotes', [
     })
   },
   oadaMod.put,
+  ({state, props}) => {
+    var fieldNotes = state.get('notes.fields')
+    var notes = {'fields-index': {}}
+    return Promise.map(Object.keys(fieldNotes || {}), (key) => {
+      if (!fieldNotes[key]['yield-stats']) return
+      notes['fields-index'][key] = fieldNotes[key];
+    }).then(() => {
+      return {notes}
+    })
+  },
+  getNoteStats,
   ({state,props}) => {
     return Promise.map(Object.keys(props.deletes || {}), (id) => {
       return {
@@ -428,7 +440,7 @@ export const getFieldNotes = sequence('notes.getFieldNotes', [
     fields: state.get(`oada.${state.get(`fields.connection_id`)}.bookmarks.fields`),
   }),
   mapOadaFieldsToRecords,
-  checkForNewFields,
+  // checkForNewFields,
   set(props`notes`, props`fieldNotes`),
 ]);
 
@@ -439,8 +451,11 @@ export const init = sequence('notes.init', [
 	//	set(state`notes.loading`, true),
 	//assumes oada has been initialized with a connection_id and valid token
   fetch,
+  ({}) => console.log('done fetching'),
   mapOadaToRecords,
+  ({}) => console.log('done mapping'),
   watchYieldStats,
+  ({}) => console.log('done watching'),
   set(state`map.layers.Notes`, {visible: true}),
 	getTagsList,
   set(state`notes.loading`, false),
@@ -463,25 +478,25 @@ export const expandComparisonsClicked = sequence('notes.expandComparisonsClicked
 ]);
 
 export const cancelNoteButtonClicked = sequence('notes.cancelNoteButtonClicked', [
-  set(state`app.view.editing`, false),
+  set(state`view.editing`, false),
   unset(state`notes.selected_note`),
   unset(state`notes.${props`type`}.${props`id`}`)
 ])
 
 export const toggleNoteDropdown = sequence('notes.toggleNoteDropdown', [
-  set(state`app.view.note_dropdown.note`, props`id`),
-  toggle(state`app.view.note_dropdown.visible`),
+  set(state`view.note_dropdown.note`, props`id`),
+  toggle(state`view.note_dropdown.visible`),
 ]);
 
 export const editNoteButtonClicked = sequence('notes.editNoteButtonClicked', [
-  set(state`app.view.editing`, true),
+  set(state`view.editing`, true),
 	set(state`notes.selected_note.id`, props`id`),
 	set(state`notes.selected_note.type`, props`type`),
   toggleNoteDropdown,
 ])
 
 export const tagAdded = sequence('notes.tagAdded', [
-  set(state`app.model.tag_input_text`, ''),
+  set(state`model.tag_input_text`, ''),
 	addTagToNote, {
 		error: [
 			set(state`notes.${props`type`}.${props`id`}.tag_error`, props`message`),
@@ -504,7 +519,7 @@ export const tagRemoved = sequence('notes.tagRemoved', [
 
 export const noteListClicked = sequence('notes.noteListClicked', [
 	unset(state`notes.selected_note`),
-  set(state`app.view.editing`, false),
+  set(state`view.editing`, false),
 ]);
 
 export const exitNoteEditMode = sequence('notes.exitNoteDitMode', [
@@ -535,7 +550,7 @@ export const unwatchNote = sequence('notes.unwatchNote', [
 
 export const deleteNoteButtonClicked = sequence('notes.deleteNoteButtonClicked', [
 	set(props`note`, state`notes.${props`type`}.${props`id`}`),
-	set(state`app.view.editing`, false),
+	set(state`view.editing`, false),
 	checkTags,
 	unwatchNote,
 	({state, props}) => ({
@@ -553,7 +568,7 @@ export const noteTextChanged = sequence('notes.noteTextChanged', [
 
 export const tagTextChanged = sequence('notes.tagTextChanged', [
 	unset(state`notes.${props`type`}.${props`id`}.tag_error`),
-  set(state`app.model.tag_input_text`, props`value`),
+  set(state`model.tag_input_text`, props`value`),
 ]);
 
 export const createNewNote = sequence('notes.createNewNote', [
@@ -573,10 +588,10 @@ export const showHideButtonClicked = sequence('notes.showHideButtonClicked', [
 ]);
 
 export const noteClicked = sequence('notes.noteClicked', [
-  when(state`app.view.editing`), {
+  when(state`view.editing`), {
     true: [],
 		false: [
-      ({state, props}) => ({geometry: state.get(`notes.${props.type}.${props.id}.geometry`)}),
+      ({state, props}) => ({boundary: state.get(`notes.${props.type}.${props.id}.boundary`)}),
       map.fitGeometry,
 			set(state`notes.selected_note.id`, props`id`),
 			set(state`notes.selected_note.type`, props`type`),
@@ -650,17 +665,17 @@ function getTagsList({state}) {
 			return
 		})
 	}).then(() => {
-		state.set(`app.model.tags`, tags)
+		state.set(`model.tags`, tags)
 		return
 	})
 }
 
 function changeShowHide ({props, state}) {
-  var geometryVisible = state.get(`notes.${props`type`}.${props.id}.geometry`, 'visible');
-  if (geometryVisible) {
-    state.set(`notes.${props`type`}.${props.id}.geometry.visible`, false);
+  var boundaryVisible = state.get(`notes.${props`type`}.${props.id}.boundary`, 'visible');
+  if (boundaryVisible) {
+    state.set(`notes.${props`type`}.${props.id}.boundary.visible`, false);
   } else {
-    state.set(`notes.${props`type`}.${props.id}.geometry.visible`, true);
+    state.set(`notes.${props`type`}.${props.id}.boundary.visible`, true);
   }
 };
 
@@ -671,7 +686,7 @@ function createNote({props, state}) {
     text: '',
     tags: [],
     fields: {},
-    geometry: { 
+    boundary: { 
       visible: true,
     },
     color: rmc.getColor(),
@@ -690,12 +705,12 @@ function getFontColor(color) {
 }
 
 function checkTags ({props, state}) {
-  var allTags = state.get(`app.model.tags`);
+  var allTags = state.get(`model.tags`);
 	var noteTags = state.get(`notes.${props.type}.${props.id}.tags`);
 	if (!noteTags) return
   noteTags.forEach((tag) => {
     if (allTags[tag].references <= 1) {
-      state.unset(`app.model.tags`, tag); 
+      state.unset(`model.tags`, tag); 
     }
   })
 }
@@ -714,26 +729,27 @@ function addTagToNote({props, state, path}) {
 };
 
 function addTagToAllTagsList({props, state}) {
-  var allTags = state.get(`app.model.tags`);
+  var allTags = state.get(`model.tags`);
   if (!allTags[props.text]) {
-    state.set(`app.model.tags.${props.text}`, { 
+    state.set(`model.tags.${props.text}`, { 
       text: props.text,
       references: 1
     });
   } else {
-    state.set(`app.model.tags.${props.text}.references`, allTags[props.text].references+1);
+    state.set(`model.tags.${props.text}.references`, allTags[props.text].references+1);
   }
 };
 
 function removeTagFromAllTagsList({props, state}) {
-  var refs = state.get(`app.model.tags.${props.tag}.references`);
+  var refs = state.get(`model.tags.${props.tag}.references`);
   if (refs === 0) {
-		state.unset(`app.model.tags.${props.tag}`);
+		state.unset(`model.tags.${props.tag}`);
   } else {
-    state.set(`app.model.tags'.${props.tag}.references`, refs - 1);
+    state.set(`model.tags'.${props.tag}.references`, refs - 1);
   }
 };
 
+//Create notes at /bookmarks/notes from each field
 function mapFieldsToNotes({state, props}) {
   let fieldNotes = {};
   let notes = _.clone(state.get(`notes.fields`));
@@ -754,7 +770,7 @@ function mapFieldsToNotes({state, props}) {
                 _id: field._id,
                 _rev: field._rev,
               },
-              geometry: {
+              boundary: {
                 geojson: field.boundary.geojson,
                 centroid:[
                   (bbox.north + bbox.south)/2, 
@@ -781,9 +797,9 @@ function getNoteComparisons({props, state}) {
   var fields = state.get('notes.fields');
   if (fields && notes) {
     return Promise.map(Object.keys(notes), (noteId) => {
-      if (notes[noteId].geometry && notes[noteId].geometry.geojson && notes[noteId].geometry.geojson.coordinates && notes[noteId].geometry.geojson.coordinates[0] && notes[noteId].geometry.geojson.coordinates[0].length > 3) {
+      if (notes[noteId].boundary && notes[noteId].boundary.geojson && notes[noteId].boundary.geojson.coordinates && notes[noteId].boundary.geojson.coordinates[0] && notes[noteId].boundary.geojson.coordinates[0].length > 3) {
         return Promise.map(Object.keys(fields), (fieldId) => {
-          if (polygonsIntersect(fields[fieldId].geometry.geojson.coordinates[0], notes[noteId].geometry.geojson.coordinates[0])) {
+          if (polygonsIntersect(fields[fieldId].boundary.geojson.coordinates[0], notes[noteId].boundary.geojson.coordinates[0])) {
             if (fields[fieldId]['yield-stats'] && fields[fieldId]['yield-stats'].stats) {
               return Promise.map(Object.keys(fields[fieldId]['yield-stats'].stats), (crop) => {
 								if (notes[noteId]['yield-stats'].stats[crop]) {
@@ -824,49 +840,49 @@ export const addPoint = sequence('notes.addPoint', [
 	}),
   dropPoint, 
   map.updateGeometry, 
-  set(state`notes.${props`type`}.${props`id`}.geometry`, props`geometry`),
+  set(state`notes.${props`type`}.${props`id`}.boundary`, props`boundary`),
 ])
 
 function dropPoint ({props, state}) {
-  let geometry = state.get(`notes.${props.type}.${props.id}.geometry`);
-	if (geometry && geometry.geojson) {
-    geometry.geojson.coordinates[0].push(props.pt);
+  let boundary = state.get(`notes.${props.type}.${props.id}.boundary`);
+	if (boundary && boundary.geojson) {
+    boundary.geojson.coordinates[0].push(props.pt);
   } else {
-		geometry = {
+		boundary = {
       geojson: {
 				type: "Polygon",
 				coordinates: [[props.pt]]
 			}
 		};
 	}
-	state.set(`notes.${props.type}.${props.id}.geometry`, geometry);
+	state.set(`notes.${props.type}.${props.id}.boundary`, boundary);
 	return {
-		geometry
+		boundary
 	}
 }
 
 export let markerDragged = sequence('notes.markerDragged', [
-  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.0`, props`lng`),
-  set(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0.${props`idx`}.1`, props`lat`),
+  set(state`notes.${props`type`}.${props`id`}.boundary.geojson.coordinates.0.${props`idx`}.0`, props`lng`),
+  set(state`notes.${props`type`}.${props`id`}.boundary.geojson.coordinates.0.${props`idx`}.1`, props`lat`),
   map.updateGeometry,
-  set(state`notes.${props`type`}.${props`id`}.geometry`, props`geometry`),
+  set(state`notes.${props`type`}.${props`id`}.boundary`, props`boundary`),
 ]);
 
 export const undo = sequence('notes.undo', [
-  when(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0`), {
+  when(state`notes.${props`type`}.${props`id`}.boundary.geojson.coordinates.0`), {
     true: [
-      pop(state`notes.${props`type`}.${props`id`}.geometry.geojson.coordinates.0`),
+      pop(state`notes.${props`type`}.${props`id`}.boundary.geojson.coordinates.0`),
     ],
     false: [],
   },
     /*  ({state,props,oada}) => {
-    let points = state.get(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
+    let points = state.get(`notes.${props.type}.${props.id}.boundary.geojson.coordinates.0`);
     if (points.length > 0) {
-      state.pop(`notes.${props.type}.${props.id}.geometry.geojson.coordinates.0`);
+      state.pop(`notes.${props.type}.${props.id}.boundary.geojson.coordinates.0`);
     }
   },*/
   map.updateGeometry,
-	set(state`notes.${props`type`}.${props`id`}.geometry`, props.geometry),
+	set(state`notes.${props`type`}.${props`id`}.boundary`, props.boundary),
 ])
 
 export const undoButtonClicked = sequence('notes.undoButtonClicked', [
@@ -898,7 +914,7 @@ export const addNoteButtonClicked = sequence('notes.addNoteButtonClicked', [
 	},
 	set(state`notes.selected_note.id`, props`note.id`),
 	set(state`notes.selected_note.type`, props`type`),
-	set(state`app.view.editing`, true),
+	set(state`view.editing`, true),
 ])
 
 

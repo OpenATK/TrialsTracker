@@ -10,7 +10,7 @@ import * as yieldMod from '../yield/sequences'
 export const init = sequence('init', [
   setMobile,
   ({state, props}) => ({
-    domain: 'https://vip3.ecn.purdue.edu',
+    domain: 'https://oada.openatk.com',
     token: 'def',
     options: {
 			redirect: 'http://vip3.ecn.purdue.edu:8000/oauth2/redirect.html',

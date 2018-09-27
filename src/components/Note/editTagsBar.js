@@ -8,9 +8,9 @@ let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
 	  tags: state`notes.${props`type`}.${props`id`}.tags`,
-    allTags: state`app.model.tags`,
-    editing: state`app.view.editing`,
-	  tagInput: state`app.model.tag_input_text`,
+    allTags: state`model.tags`,
+    editing: state`view.editing`,
+	  tagInput: state`model.tag_input_text`,
 	  error: state`notes.${props`type`}.${props`id`}.tag_error`,
 
     tagAdded: signal`notes.tagAdded`,

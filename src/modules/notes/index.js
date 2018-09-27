@@ -40,7 +40,7 @@ function initial_notes() {
 					'sum-yield-squared-area': 46824,
         },
       },
-      geometry: { 
+      boundary: { 
         area: 12.439745214592033,
         geojson: {
          "type":"Polygon",
@@ -92,7 +92,7 @@ function initial_notes() {
           },
         },
         fields: {},
-        geometry: {
+        boundary: {
           area: 0.9776069561840566,
           geojson: {
             "type":"Polygon",
