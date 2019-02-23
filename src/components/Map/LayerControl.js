@@ -11,7 +11,6 @@ export default connect({
   layers: state`map.layers`,
 	notes: state`notes.notes`,
 	notesVisible: state`notes.visible`,
-  selectedNote: state`notes.notes.${state`notes.selected_note`}`,
 	editing: state`view.editing`,
   index: state`yield.index`,
   fields: state`notes.fields`,
@@ -36,7 +35,7 @@ class LayerControl extends React.Component {
       data={this.props.notes[id].boundary.geojson} 
       color={this.props.notes[id].color} 
   	  style={{fillOpacity:0.4}}
-	    onClick={() => this.props.noteClicked({id, type:'notes'})}
+	    onClick={() => this.props.noteClicked({id, noteType:'notes'})}
       dragging={true} 
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
     />})
@@ -47,7 +46,7 @@ class LayerControl extends React.Component {
 			&& this.props.fields[id].boundary.geojson.coordinates[0].length > 0
     ).map(field => <GeoJSON 
       className={'field-polygon'}
-      onClick={() => this.props.noteClicked({id:field, type: 'fields'})}
+      onClick={() => this.props.noteClicked({id:field, noteType: 'fields'})}
       color={this.props.fields[field].color} 
       style={{color: this.props.fields[field].color}}
       data={this.props.fields[field].boundary.geojson} 

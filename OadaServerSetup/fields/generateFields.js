@@ -5,7 +5,7 @@ var createOadaFields = require('./fieldBoundaryConverter.js');
 	- type in the third domain box your host domain, e.g., 'localhost:3000'
 	- press Get Access Token
 */
-var fields_directory = process.argv[2] //|| 'fields';
+var fields_directory = process.argv[2] || 'allFields';
 var domain = process.argv[3] || 'vip3.ecn.purdue.edu';
 var token = process.argv[4] || 'def';
 var grower = process.argv[5] || 'AaronAult';

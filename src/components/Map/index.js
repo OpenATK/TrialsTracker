@@ -1,5 +1,7 @@
 import React from 'react';
+import {renderToStaticMarkup } from 'react-dom/server';
 import { connect } from '@cerebral/react';
+import { divIcon } from 'leaflet'
 import { Marker, CircleMarker, Map, TileLayer} from 'react-leaflet';
 import './map.css';
 //import DrawingMessage from './DrawingMessage';
@@ -14,7 +16,7 @@ export default connect({
   editing: state`view.editing`,
   legends: state`view.legends`,
   legendVisible: state`view.legend.visible`,
-  currentLocation: state`model.current_location`,
+  currentLocation: state`map.current_location`,
   mapZoom: state`map.zoom`,
   moving: state`map.moving`,
   bounds: state`map.bounds`,
@@ -56,22 +58,21 @@ class TrialsMap extends React.Component {
     this.refs.map.leafletElement.locate();
   }
 
-	render() {
+  render() {
 
+    // Render markers for edited polygon
 		let markerList = [];
 		if (this.props.selectedNote && this.props.selectedNote.boundary && this.props.selectedNote.boundary.geojson && this.props.editing) {
-			markerList = this.props.selectedNote.boundary.geojson.coordinates[0].map((pt, i) =>
-				<Marker
-					className={'selected-note-marker'}
+      markerList = this.props.selectedNote.boundary.geojson.coordinates[0].map((pt, i) => {
+        return <Marker
 					key={this.props.selectedNote+'-'+i}
 					position={[pt[1], pt[0]]}
-					color={this.props.selectedNote.color}
 					draggable={true}
-					onDrag={(e)=>{this.props.markerDragged({id: this.props.selected.id, type: this.props.selected.type, lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
+					onDrag={(e)=>{this.props.markerDragged({id: this.props.selected.id, noteType: this.props.selected.type, lat: e.target._latlng.lat, lng:e.target._latlng.lng, idx: i})}}
 					onDragStart={(e)=>{this.props.markerDragStarted({})}}
 					onDragEnd={(e)=>{this.props.markerDragEnded({})}}
-				/>                                                                 
-			) 
+        />
+      })
 		}
 
 		return (

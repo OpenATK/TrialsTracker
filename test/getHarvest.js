@@ -97,7 +97,7 @@ async function asyncForEach(array, offset, callback) {
   }
 }
 
-async function getAsHarvestedAndPush(data, state, CONNECTION, connection_id, tree, offset, delay) {
+async function getAsHarvestedAndPush(data, state, CONNECTION, tree, offset, delay) {
   paused = false;
   var asHarvested = {};
   await asyncForEach(data, offset || 0, (row, i) => {
@@ -183,7 +183,6 @@ async function getAsHarvestedAndPush(data, state, CONNECTION, connection_id, tre
     asHarvested[crop][geohash].data[id] = pt;
     return Promise.delay(speed || delay).then(() => {
       return CONNECTION.put({
-        connection_id,
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`,
         tree,
         data,
@@ -200,7 +199,7 @@ async function getAsHarvestedAndPush(data, state, CONNECTION, connection_id, tre
   })
 }
 
-async function getAsHarvestedAndDelete(data, CONNECTION, connection_id, tree, offset, delay) {
+async function getAsHarvestedAndDelete(data, CONNECTION, tree, offset, delay) {
   var asHarvested = {};
   console.log('DATA LENGTH', data.length)
   return Promise.map(data || [], (row, i) => {
@@ -272,7 +271,6 @@ async function getAsHarvestedAndDelete(data, CONNECTION, connection_id, tree, of
     console.log('deleting geohash/data/'+id, i)
     return Promise.delay(delay*1000).then(() => {
       return CONNECTION.delete({
-        connection_id,
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}/data/${id}`,
         tree,
       })
@@ -296,13 +294,12 @@ function pushAsHarvested(asHarvested, CONNECTION, tree) {
   })
 }
 
-function deleteAsHarvested(asHarvested, CONNECTION, connection_id, tree) {
+function deleteAsHarvested(asHarvested, CONNECTION, tree) {
   var j = 0;
   return Promise.mapSeries(Object.keys(asHarvested || {}), (crop) => {
     return Promise.mapSeries(Object.keys(asHarvested[crop] || {}), (bucket) => {
       console.log('deleteAsHarvested', j++, bucket, crop)
       return CONNECTION.delete({
-        connection_id,
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
         tree,
       })
@@ -486,7 +483,7 @@ function pushTiledMaps(tiledMaps, CONNECTION, tree) {
   })
 }
 
-function deleteTiledMaps(tiledMaps, CONNECTION, connection_id,  tree) {
+function deleteTiledMaps(tiledMaps, CONNECTION, tree) {
   var i = 0;
   return Promise.mapSeries(Object.keys(tiledMaps || {}), (crop) => {
     return Promise.mapSeries(Object.keys(tiledMaps[crop] || {}), (bucket) => {
@@ -494,7 +491,6 @@ function deleteTiledMaps(tiledMaps, CONNECTION, connection_id,  tree) {
       return CONNECTION.delete({
         path: `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
         tree,
-        connection_id,
       }).catch((err)=> {
         console.log(err)
         return

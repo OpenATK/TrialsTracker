@@ -31,7 +31,7 @@ export let markerDragStarted = sequence('map.markerDragStarted', [
 ]);
 
 export const locationFound = sequence('map.locationFound', [
-  set(state`app.model.current_location`, props`latlng`),
+  set(state`map.current_location`, props`latlng`),
 ]);
 
 export let myLocationButtonClicked = sequence('map.myLocationButtonClicked', [
@@ -87,7 +87,7 @@ export function getGeojsonBoundingBox({props, state}) {
 }
 
 export const updateGeometry = sequence('map.updateGeometry', [
-  set(props`boundary`, state`notes.${props`type`}.${props`id`}.boundary`),
+  set(props`boundary`, state`notes.${props`noteType`}.${props`id`}.boundary`),
   getGeojsonArea,
   getGeojsonBoundingBox,
 ])

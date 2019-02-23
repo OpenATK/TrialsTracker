@@ -6,6 +6,7 @@ import L from 'leaflet'
 import { props, state, signal } from 'cerebral/tags'
 import tiles from '../../modules/yield/tileManager'
 import { recursiveDrawOnCanvas } from '../../modules/yield/draw'
+//import * as THREE from 'three'
 
 export default connect({
   tileUnloaded: signal`yield.tileUnloaded`,
@@ -16,6 +17,8 @@ class RasterLayer extends GridLayer {
   
 	componentWillMount() {
     super.componentWillMount();
+    //this.scene = new THREE.Scene();
+    //this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     this.leafletElement.createTile = this.createTile.bind(this);
     this.tileUnload = this.tileUnload.bind(this);
 //    this.drawTileGrid = this.drawTileGrid.bind(this);
@@ -35,7 +38,8 @@ class RasterLayer extends GridLayer {
 		let coordsIndex = coords.z.toString() + '-' + coords.x.toString() + '-' + coords.y.toString();
 		let tile = tiles.get(this.props.layer, coordsIndex);
 		// If the tile is cached and its not on the list of geohashes to (re)draw,
-		// return the tile
+    // return the tile
+    if (tile) console.log('found tile', coordsIndex);
 		if (tile) return tile;
 
 		//Create a new tile, call a signal to draw it, and return the (empty) tile

@@ -7,11 +7,14 @@ import { props, state, signal } from 'cerebral/tags'
 import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
+const focusUsernameInputField = input => {
+  input && input.focus();
+};
+
 export default connect({
 	note: state`notes.${props`type`}.${props`id`}`,
   editing: state`view.editing`,
-  noteDropdownVisible: state`view.note_dropdown.visible`,
-	noteDropdown: state`view.note_dropdown.note`,
+	noteDropdown: state`notes.note_dropdown`,
 	selectedNote: state`notes.selected_note`,
 
   deleteNoteButtonClicked: signal`notes.deleteNoteButtonClicked`,
@@ -26,11 +29,10 @@ export default connect({
 
   class Note extends React.Component {
 
+
     render() {
+      console.log('hey!', this.props.id)
 			let selected = this.props.selectedNote && this.props.id === this.props.selectedNote.id;
-			const inputField = this.props.type === 'note' && this.props.selectedNote && this.props.editing ? input => {
-        if (input) setTimeout(() => input.focus(), 100);
-			} : null;
 			let color = this.props.note ? Color(this.props.note.color || '#fff').alpha(0.4).rgb() : null;
 
       let yields = [];
@@ -128,9 +130,9 @@ export default connect({
 
       return (
         <Card
-					onClick={() => this.props.noteClicked({id:this.props.id, type: this.props.type})}
+					onClick={() => this.props.noteClicked({id:this.props.id, noteType: this.props.type})}
           className={'note'}
-          style={{order: this.props.order}}>
+          style={{order: this.props.order, borderRadius: '5px'}}>
           <CardHeader
             className={'note-header'}
 						style={{
@@ -142,6 +144,7 @@ export default connect({
 						textStyle={{padding: '0px'}}>
 						<div className={'text'}>
 						{this.props.editing && selected ? <TextField
+              ref={focusUsernameInputField}
 							multiLine={true}
 							fullWidth={true}
               rows={1}
@@ -153,9 +156,8 @@ export default connect({
 								margin: '0px',
 							}}
 							inputStyle={{display: 'flex'}}
-							ref={inputField}
               value={this.props.note.text} 
-              onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.id, type:this.props.type})}
+              onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.id, noteType:this.props.type})}
 							tabIndex={1}
 							hintText='Type note description here...'
 							hintStyle={{bottom: '2px'}}
@@ -177,18 +179,19 @@ export default connect({
 									<MoreVertIcon />
 								</IconButton>
 							}
-              onRequestChange={()=>{this.props.toggleNoteDropdown({id:this.props.id, type:this.props.type})}}
-              open={this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id}
+              onRequestChange={()=>{this.props.toggleNoteDropdown({ id:this.props.id, noteType:this.props.type})}}
+              onClick={()=>{this.props.toggleNoteDropdown({ value: true, id:this.props.id, noteType:this.props.type})}}
+              open={this.props.noteDropdown.visible && this.props.noteDropdown.id === this.props.id}
               targetOrigin={{horizontal: 'right', vertical: 'top'}}
               anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
 							{selected && this.props.editing ? null : <MenuItem 
                 primaryText="Edit" 
-                onClick={(e)=>{this.props.editNoteButtonClicked({id:this.props.id, type:this.props.type})}}
+                onClick={(e)=>{this.props.editNoteButtonClicked({id:this.props.id, noteType:this.props.type})}}
               /> }
 							{selected && this.props.editing ? null : <Divider /> }
               <MenuItem 
                 primaryText="Delete"
-                onClick={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id, type:this.props.type})}}
+                onClick={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id, noteType:this.props.type})}}
               />
             </IconMenu>
           </CardHeader>
@@ -201,7 +204,7 @@ export default connect({
 					{comps.length ? <div
 				  	className={'comparison-container'}>
 						<div className={'comparisons-expander'}
-						  onClick={() => this.props.expandComparisonsClicked({type:this.props.type, id:this.props.id})}>
+						  onClick={() => this.props.expandComparisonsClicked({noteType:this.props.type, id:this.props.id})}>
 
 							<hr className={'comp-hr'}/>
 							{this.props.note.expanded ? 'Yield Comparisons \u25bc' : 'Yield Comparisons \u25b6'}
@@ -211,7 +214,7 @@ export default connect({
 							{this.props.note.expanded ? comps : null}
             </div>
           </div> : null }
-          {(this.props.editing && selected) || (this.props.note && this.props.note.tags && this.props.note.tags.length > 0) ? <EditTagsBar selected={selected} id={this.props.id} type={this.props.type}/> : null }
+          {(this.props.editing && selected) || (this.props.note && this.props.note.tags && Object.keys(this.props.note.tags).length > 0) ? <EditTagsBar selected={selected} id={this.props.id} type={this.props.type}/> : null }
         </Card>
       )
     }

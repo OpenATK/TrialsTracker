@@ -7,25 +7,27 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 export default connect({
   index: state`yield.index`,
-  currentLocation: state`model.current_location`,
-  selected: state`notes.selected_note.`,
+  currentLocation: state`map.current_location`,
+  selected: state`notes.selected_note`,
   selectedNote: state`notes.notes.${state`notes.selected_note.id`}`,
   open: state`MenuBar.open`,
   editing: state`view.editing`,
   isMobile: state`view.is_mobile`,
   legendVisible: state`view.legend.visible`,
+  connected: state`connections.connected`,
 
   connectionsClicked: signal`MenuBar.connectionsClicked`,
+  signOutClicked: signal`connections.signOutClicked`,
   runLiveDataClicked: signal`yield.runLiveDataClicked`,
-  clearCacheButtonClicked: signal`clearCacheButtonClicked`,
-  gpsButtonClicked: signal`map.myLocationButtonClicked`,
+  clearCacheClicked: signal`clearCacheButtonClicked`,
+  gpsClicked: signal`map.myLocationButtonClicked`,
   backgroundClicked: signal`MenuBar.menuBackgroundClicked`,
   showMenuDropdown: signal`MenuBar.showMenuDropdown`,
   downloadNotes: signal`MenuBar.downloadNotesButtonClicked`,
-  undoButtonClicked: signal`notes.undoButtonClicked`,
-	mapLegendButtonClicked: signal`MenuBar.mapLegendButtonClicked`,
+  undoClicked: signal`notes.undoButtonClicked`,
+	mapLegendClicked: signal`MenuBar.mapLegendButtonClicked`,
   connectToDataSilo: signal`datasilo.connectToDataSilo`,
-  addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
+  addNoteClicked: signal`notes.addNoteButtonClicked`,
 },
 class MenuBar extends React.Component {
 
@@ -44,7 +46,8 @@ class MenuBar extends React.Component {
 			&& this.props.selectedNote.boundary 
 			&& this.props.selectedNote.boundary.geojson ?
 			this.props.selectedNote.boundary.geojson.coordinates[0].length > 0 
-			: false;
+      : false;
+
     return (
       <AppBar
         className={'menu-bar'}
@@ -54,27 +57,27 @@ class MenuBar extends React.Component {
           {Object.keys(this.props.index || {}).length > 0 ? 
             <IconButton
               key={1}
-              onClick={() => this.props.mapLegendButtonClicked({})}
+              onClick={() => this.props.mapLegendClicked({})}
               iconClassName="material-icons">info
             </IconButton>
           : null }
           <IconButton
             key={0}
             style={this.props.isMobile && !this.props.editing ? {} : {display:'none'}}
-            onClick={() => this.props.addNoteButtonClicked({})}
+            onClick={() => this.props.addNoteClicked({})}
             iconClassName="material-icons">note_add
           </IconButton>
           <IconButton
             key={2}
             style={this.props.currentLocation ? {} : {display:'none'}}
-            onClick={() => this.props.gpsButtonClicked({})}
+            onClick={() => this.props.gpsClicked({})}
             iconClassName="material-icons">gps_fixed
           </IconButton>
           <IconButton
             key={3}
             style={this.props.editing ? {} : {display:'none'}}
             disabled={!undoEnabled}
-            onClick={() => this.props.undoButtonClicked({id:this.props.selected.id, type:this.props.selected.type})}
+            onClick={() => this.props.undoClicked({id:this.props.selected.id, noteType:this.props.selected.type})}
             iconClassName="material-icons">undo
           </IconButton>
           <IconMenu
@@ -87,7 +90,7 @@ class MenuBar extends React.Component {
             anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
               <MenuItem 
                 primaryText="Clear Cache" 
-                onClick={()=>this.props.clearCacheButtonClicked({})}
+                onClick={()=>this.props.clearCacheClicked({})}
               />
               <MenuItem
                 style={this.props.isMobile ? {} : {display:'none'}}
@@ -95,14 +98,14 @@ class MenuBar extends React.Component {
                 onClick={()=>this.reqFS()}
               />
               <Divider />
-              <MenuItem 
-                primaryText="Edit Source Data"
+              {!this.props.connected ? <MenuItem 
+                primaryText="Log in"
                 onClick={()=>this.props.connectionsClicked({})}
-              />
+              /> :
               <MenuItem 
-                primaryText="Sign Out"
+                primaryText="Sign out"
                 onClick={()=>this.props.signOutClicked({})}
-              />
+              /> }
               <MenuItem 
                 primaryText="Run Live Data"
                 onClick={()=>this.props.runLiveDataClicked({})}

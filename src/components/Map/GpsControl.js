@@ -6,7 +6,7 @@ import Control from 'react-leaflet-control';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  currentLocation: state`app.model.current_location`,
+  currentLocation: state`map.current_location`,
 
   gpsButtonClicked: signal`map.currentLocationButtonClicked`,
 },

@@ -9,6 +9,7 @@ import yieldModule from '../yield'
 import oadaModule from '@oada/cerebral-module'
 import oadaProvider from '@oada/cerebral-provider'
 import oadaFields from '@oada/fields-module'
+import connections from '../connections'
 import * as signals from './sequences';
 
 const storage = StorageModule({
@@ -30,6 +31,7 @@ export default Module({
     yield: yieldModule,
     fields: oadaFields,
     MenuBar,
+    connections,
   },
 
   providers: {

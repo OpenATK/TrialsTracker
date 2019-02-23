@@ -89,7 +89,7 @@ class NoteList extends React.Component {
             onClick={(evt) => {this.handleClick(evt)}}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onClick={(e) => this.props.addNoteButtonClicked({type: 'notes'})}>
+              onClick={(e) => this.props.addNoteButtonClicked({noteType: 'notes'})}>
               Create a new note...
             </div>
             {notes} 
@@ -98,7 +98,7 @@ class NoteList extends React.Component {
             className={'notes-container'}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onClick={(e) => this.props.addNoteButtonClicked({type:'fields'})}>
+              onClick={(e) => this.props.addNoteButtonClicked({noteType:'fields'})}>
               Create a new field...
             </div>
             {fields} 
@@ -110,7 +110,7 @@ class NoteList extends React.Component {
         <FloatingActionButton
           className={'add-note-button'}
           style={(!this.props.editing && this.props.tab === 0 && this.props.isMobile) ? {} : {display: 'none'}}
-          onClick={(e) => this.props.addNoteButtonClicked({type: this.props.tab === 0 ? 'notes': 'fields'})}>
+          onClick={(e) => this.props.addNoteButtonClicked({noteType: this.props.tab === 0 ? 'notes': 'fields'})}>
           <ContentAdd />
 				</FloatingActionButton>
 				{this.props.loading ? <LoadingScreen /> : null}

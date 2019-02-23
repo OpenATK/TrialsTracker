@@ -10,7 +10,11 @@ export default Module({
 		tab: 0,//0. notes, 1. fields, 2. tags
 		loading: false, //true,
 		visible: true,
-		notes: {},//initial_notes(),
+    notes: {},//initial_notes(),
+    note_dropdown: {
+      visible: false
+    },
+    tags: {},
 	},
 
 	signals,

@@ -24,5 +24,5 @@ const redirect = toExport.websiteDomain + '/oauth2/redirect.html';
 const metadata = toExport.metadata;
 const devtoolsPort = toExport.devtoolsPort;
 const defaultNewConnectionURL = toExport.defaultNewConnectionURL;
-
+toExport.redirect = redirect;
 module.exports = toExport;

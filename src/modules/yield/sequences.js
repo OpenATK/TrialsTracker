@@ -10,7 +10,7 @@ import _ from 'lodash';
 import {longestCommonPrefix, recursiveGeohashSearch } from './utils/recursiveGeohashSearch'
 import Promise from 'bluebird'
 import * as fields from '@oada/fields-module/sequences'
-import * as oadaMod from '@oada/cerebral-module/sequences'
+import oadaMod from '@oada/cerebral-module/sequences'
 import { geohashesFromTile, filterGeoahshes, drawTile } from './draw';
 import { getGeohashes, simulateCombine } from './simulateCombine'
 import { makeDemoWheatCO } from './makeDemoWheatCO'
@@ -173,29 +173,35 @@ export const fetch = sequence('yield.fetch', [
     var signals = props.signals ? props.signals : [];
     return {signals: [...signals, 'yield.handleYieldIndexWatch']}
   },
-	({props, state}) => ({
-    path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
-    connection_id: state.get('yield.connection_id'),
-    tree,
-    watch: {signals: props.signals},
+  ({props, state}) => ({
+    requests: [{
+      path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
+      connection_id: state.get('yield.connection_id'),
+      tree,
+      watch: {signals: props.signals},
+    }],
 	}),
   oadaMod.get,
   when(state`oada.${props`connection_id`}.bookmarks.harvest.tiled-maps.dry-yield-map`), {
     true: [],
     false: [
       ({props, state}) => ({
-        path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
-        tree,
-        connection_id: props.connection_id,
-        data: {},
+        requests: [{
+          path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
+          tree,
+          connection_id: props.connection_id,
+          data: {},
+        }]
       }),
       oadaMod.put,
 
       ({props, state}) => ({
-        path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
-        tree,
-        connection_id: props.connection_id,
-        watch: {signals: props.signals},
+        requests: [{
+          path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
+          tree,
+          connection_id: props.connection_id,
+          watch: {signals: props.signals},
+        }]
       }),
       oadaMod.get,
     ]
@@ -205,6 +211,7 @@ export const fetch = sequence('yield.fetch', [
 
 export const init = sequence('yield.init', [
   oadaMod.connect,
+  //  ({props}) => console.log(props),
   set(state`yield.connection_id`, props`connection_id`),
  	fetch,
 ])
@@ -318,6 +325,7 @@ export const runLiveDataClicked = sequence('yield.runLiveDataClicked', [
     req.open("GET", "/home_back_lane44_2015_harvest.csv", true);
     req.responseType = "text"
     var available = state.get(`yield.index`)
+    console.log(available);
     req.onload = function(evt) {
       var csvData = csvjson.toObject(evt.target.response, {delimiter: ','})
       if (offset === 0) {
@@ -326,6 +334,7 @@ export const runLiveDataClicked = sequence('yield.runLiveDataClicked', [
           console.log('~~~~~~~~~~~~~~~~~~~~~~~')
           console.log('DONE GET AS HARVEST')
           console.log('~~~~~~~~~~~~~~~~~~~~~~~')
+          console.log(asHarvested);
           Object.keys(asHarvested || {}).forEach((crop) => {
             Object.keys(asHarvested[crop] || {}).forEach((bucket) => {
               if (!available[crop]['geohash-'+bucket.length][bucket]) {
@@ -352,7 +361,7 @@ export const runLiveDataClicked = sequence('yield.runLiveDataClicked', [
           }, {concurrency: 1})
         }).then(() => {
           return Promise.delay(5000).then(() => {
-          state.set('livedemo.text', 'Pushing harvest data...')
+          state.set('livedemo.text', 'Running...')
           return harvest.getAsHarvestedAndPush(csvData, state, oada, connection_id, fullTree, offset, speed).then(() => {
             console.log('~~~~~~~~~~~~~~~~~~~~~~~')
             console.log('DONE PUSHING AS HARVESTED')

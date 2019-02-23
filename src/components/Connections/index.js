@@ -2,14 +2,17 @@ import React from 'react'
 import { connect } from '@cerebral/react'
 import { TextField, FlatButton, Dialog } from 'material-ui'
 import { state, signal } from 'cerebral/tags'
+import './connections.css'
+import isValidDomain from 'is-valid-domain'
+import {orange500} from 'material-ui/styles/colors';
 
 export default connect({
-  oadaDomainText: state`Connections.oada_domain_text`,
-  open: state`Connections.open`,
+  domain: state`connections.connection.domain`,
+  open: state`connections.open`,
 
-  submitClicked: signal`Connections.submitClicked`,
-  cancelClicked: signal`Connections.cancelClicked`,
-  oadaDomainChanged: signal`Connections.oadaDomainChanged`,
+  submitClicked: signal`connections.submitClicked`,
+  cancelClicked: signal`connections.cancelClicked`,
+  oadaDomainChanged: signal`connections.oadaDomainChanged`,
 },
 
 	class Connections extends React.Component {
@@ -28,20 +31,29 @@ export default connect({
 				onClick={()=>{this.props.submitClicked({})}}
       />,
     ];
+
 		return(
 			<Dialog
-        title="Where is your data stored?"
+        title="Do you have an OADA provider?"
         actions={actions}
         modal={false}
 				open={this.props.open}
 				contentClassName={'content'}
 				className={'connections-dialog'}
-				onRequestClose={()=>{this.props.cancelClicked({})}}>
+        onRequestClose={()=>{this.props.cancelClicked({})}}>
+          {isValidDomain(this.props.domain) ? 
           <TextField
-            value={this.props.oadaDomainText} 
-            hintText="yield.oada-dev.com"
+            value={this.props.domain} 
+            hintText="oada.openatk.com"
             onChange={(e) => this.props.oadaDomainChanged({value: e.target.value})}
-				  />
+          /> : 
+          <TextField
+            value={this.props.domain} 
+            hintText="oada.openatk.com"
+            onChange={(e) => this.props.oadaDomainChanged({value: e.target.value})}
+            errorText="Enter valid domain name"
+            errorStyle={{color:orange500}}
+          />}
 		  </Dialog>
     )
   }

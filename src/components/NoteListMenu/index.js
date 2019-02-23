@@ -23,13 +23,13 @@ export default connect({
             type="button" 
             tabIndex={2}
             className={this.props.editing ? 'done-editing-button' : 'hidden'} 
-            onClick={() => this.props.doneClicked({id:this.props.selectedNote.id, type: this.props.selectedNote.type})}>
+            onClick={() => this.props.doneClicked({id:this.props.selectedNote.id, noteType: this.props.selectedNote.type})}>
             DONE 
           </button>
           <button 
             type="button" 
             className={this.props.editing ? 'cancel-editing-button' : 'hidden'} 
-            onClick={() => this.props.cancelClicked({id:this.props.selectedNote.id, type: this.props.selectedNote.type})}>
+            onClick={() => this.props.cancelClicked({id:this.props.selectedNote.id, noteType: this.props.selectedNote.type})}>
             CANCEL
           </button>
           <button 
