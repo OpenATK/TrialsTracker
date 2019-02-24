@@ -26,14 +26,14 @@ export const connected = sequence('connected', [
   }),
   when(props`domain`), {
     true: [
-    /*
+  /*
       ({props}) => ({signals:['notes.handleYieldStatsGeohashes']}),
       set(props`options.scope`, 'oada.yield:all'),
       yieldMod.init,
-      set(props`options.scope`, 'oada.yield:all'),
-      ({props}) => ({signals: ['notes.getFieldNotes']}),
-      fields.init,
       */
+      set(props`options.scope`, 'oada.yield:all'),
+      ({props}) => ({signals: ['notes.onFieldUpdated']}),
+      fields.init,
       set(props`options.scope`, 'oada.yield:all'),
       set(props`signals`, undefined),
       notes.init,

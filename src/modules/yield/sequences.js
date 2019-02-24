@@ -404,16 +404,16 @@ function addGeohashesOnScreen({props, state}) {
 	})
 }
 
+//Takes an array of polygons and returns the minimal set of geohashes to represent
+//that polygon geometry. 
 export function polygonToGeohashes({props}) {
 	A = Date.now();
 	return Promise.map((props.polygons || []), (obj) => {
-		if (_.isEmpty(obj.polygon)) return Promise.resolve({
-			id: obj.id,
-			type: obj.type,
-			bbox: obj.bbox,
-			polygon: obj.polygon,
-			geohashes: {},
-		});
+    if (_.isEmpty(obj.polygon)) {
+      var newObj = obj;
+      newObj.geohashes = {};
+      return Promise.resolve(newObj)
+		};
     let newPoly = _.clone(obj.polygon);
 		newPoly.push(obj.polygon[0])
 		//Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box
@@ -423,13 +423,9 @@ export function polygonToGeohashes({props}) {
 			gh.encode(obj.bbox.south, obj.bbox.west, 9)];
 		let commonString = longestCommonPrefix(strings);
     return recursiveGeohashSearch(newPoly, commonString, []).then((geohashes) => {
-			return {
-				id: obj.id,
-				type: obj.type,
-				bbox: obj.bbox,
-				polygon: obj.polygon,
-				geohashes,
-			}
+      var newObj = obj;
+      newObj.geohashes = geohashes;
+      return newObj;
 		})
   }).then((polygons) => {
 		console.log('A', (Date.now() - A)/1000)
@@ -463,6 +459,9 @@ export function geohashesToGeojson({state, props}) {
 	})
 }
 
+// Takes the array of geohashes associated with each polygon and returns the
+// combined stats using those geohashes; returns the polygon object which
+// includes the following keys: id, type, polygon, geohashes, stats
 function getStatsForGeohashes({props, state, oada}) {
   C = Date.now()
   let availableGeohashes = state.get('yield.index');
@@ -518,15 +517,11 @@ function getStatsForGeohashes({props, state, oada}) {
 				if (stats[crop].count === 0) delete stats[crop]
 				return
 			})
-		}, {concurrency: 10}).then(() => {
-			return {
-				id: obj.id,
-				type: obj.type,
-				bbox: obj.bbox,
-        polygon: obj.polygon,
-        geohashes,
-				stats
-			}
+    }, {concurrency: 10}).then(() => {
+      var newObj = obj;
+      newObj.geohashes = geohashes;
+      newObj.stats = stats;
+      return newObj
 		})
   }, {concurrency: 10}).then((polygons) => {
     console.log('getStatsForGeohashes', (Date.now() - C)/1000);

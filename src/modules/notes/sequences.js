@@ -1,4 +1,5 @@
-import { pop, equals, when, set, unset, toggle, wait } from 'cerebral/operators';
+import { pop, equals, when, set, unset, toggle, wait } from 'cerebral/operators'
+import { checkFieldNotes } from './fields'
 import urlLib from 'url'
 import polygonsIntersect from '../map/utils/polygonsIntersect';
 import computeBoundingBox from '../map/utils/computeBoundingBox'
@@ -84,7 +85,8 @@ const fetch = sequence('notes.fetch', [
       tree,
       connection_id: state.get('notes.connection_id'),
       watch: {
-        signals: ['notes.handleNotesWatch',]
+        signals: ['notes.mapOadaToRecords',]
+        // signals: ['notes.handleNotesWatch',]
       },
     }]
 	}),
@@ -117,12 +119,14 @@ const fetch = sequence('notes.fetch', [
   },
 ])
 
+// Take notes from the oada part of the state to the rendered state
 export const mapOadaToRecords = sequence('notes.mapOadaToRecords', [
   ({state, props}) => {
     let connection_id = state.get('notes.connection_id');
     let notes = {};
     var oadaNotes = state.get(`oada.${connection_id}.bookmarks.notes`)
-    return Promise.map(Object.keys(oadaNotes || {}), (idx) => {
+    var noteTypes = props.noteTypes ||  Object.keys(oadaNotes || {})
+    return Promise.map(noteTypes, (idx) => {
       if (idx.charAt(0) === '_') return
       var index = idx.replace(/-index/, '');
       notes[index] = notes[index] || {};
@@ -141,6 +145,7 @@ export const mapOadaToRecords = sequence('notes.mapOadaToRecords', [
   }
 ])
 
+/*
 export const handleNotesWatch = sequence('notes.handleNotesWatch', [
   equals(props`response.change.type`), {
     'merge': [
@@ -158,28 +163,34 @@ export const handleNotesWatch = sequence('notes.handleNotesWatch', [
     ]
   },
   mapOadaToRecords,
-])
+  ])
+  */
 
 
+// Setup watches on the yield-stats of each note so that as associated yield
+// geohashes are updated, stats on each note are recalculated
 const watchYieldStats = sequence('notes.watchYieldStats', [
   ({state, props}) => {
+    var notes = state.get('notes');
     var requests = [];
-    return Promise.map(Object.keys(props.notes || {}), (noteType) => {
-      return Promise.map(Object.keys(props.notes[noteType] || {}), (key) => {
-        if (!props.notes[noteType][key]['yield-stats']) return
-        return requests.push({
-          path: `/bookmarks/notes/${noteType}-index/${key}/yield-stats`,
-          watch: {
-            signals: ['notes.handleYieldStats'],
-            payload: {
-              id: key,
-              index: noteType
-            }
-          },
-        })
+    return Promise.map(props.polygons || [], (obj) => {
+      if (!obj.geohashes || !obj.stats || !obj.id || !obj.type) return
+      return requests.push({
+        path: `/bookmarks/notes/${obj.type}-index/${obj.id}/yield-stats`,
+        watch: {
+          signals: ['notes.handleYieldStats'],
+          payload: {
+            id: obj.id,
+            noteType: obj.type,
+          }
+        },
       })
     }).then(() => {
-      return {requests, tree, connection_id: state.get('notes.connection_id')}
+      return {
+        requests, 
+        tree, 
+        connection_id: state.get('notes.connection_id')
+      }
     })
   },
   oadaMod.get
@@ -187,28 +198,38 @@ const watchYieldStats = sequence('notes.watchYieldStats', [
 
 
 // Send note changes to the server
-export const oadaUpdateNotes = sequence('notes.updateNotes', [
+export const oadaUpdateNote = sequence('notes.updateNote', [
   ({props, state}) => {
     var note = _.cloneDeep(state.get(`notes.${props.noteType}.${props.id}`));
     delete note['yield-stats'];
-    console.log(note);
     var requests = [{
       data: note,
       path: `/bookmarks/notes/${props.noteType}-index/${props.id}`,
     }];
-    return {requests, tree, connection_id: state.get('notes.connection_id')}
+    return {
+      requests, 
+      tree, 
+      connection_id: state.get('notes.connection_id'),
+      notes: {
+        [props.noteType]: {
+          [props.id]: note
+        }
+      },
+    }
 	},
   set(props`type`, undefined),
 	oadaMod.put,
 ]);
 
+// Create the yield-stats key storing stat info and links to associated geohash yield buckets
 export const createYieldStats = sequence('notes.createYieldStats', [
   ({state,props}) => {
     return Promise.map(props.polygons || [], (obj) => {
-      if (!obj.geohashes || !obj.stats || !obj.id || !props.noteType) console.log('its this one', obj.geohashes, obj.stats, obj.id, props.noteType);
-      if (!obj.geohashes || !obj.stats || !obj.id || !props.noteType) return
+      if (!obj.geohashes || !obj.stats || !obj.id || !obj.type) console.log('its this one', obj.geohashes, obj.stats, obj.id, props.noteType);
+      if (!obj.geohashes || !obj.stats || !obj.id || !obj.type) return
+      console.log(obj.type);
       return {
-        path: `/bookmarks/notes/${props.noteType}-index/${obj.id}/yield-stats`,
+        path: `/bookmarks/notes/${obj.type}-index/${obj.id}/yield-stats`,
         data: {
           geohashes: obj.geohashes,
           stats: obj.stats,
@@ -222,32 +243,34 @@ export const createYieldStats = sequence('notes.createYieldStats', [
   oadaMod.put,
 ])
 
-// 
+// Compute stats for notes.
 export const getNoteStats = sequence('notes.getNoteStats', [
   getPolygons,
   yieldMod.getPolygonStats,
-  getGeohashDistribution,
+  //getGeohashDistribution,
   createYieldStats,
   set(props`requests`, undefined),
+  watchYieldStats,
 ])
 
-// Create array of objects with id, polygon, bbox, type
+// Create array of objects with id, polygon, bbox, type for the notes passed in via props.
 export function getPolygons({state, props}) {
   var polygons = [];
-	return Promise.map(Object.keys(props.notes || {}), (noteType) => {
+  console.log(props.notes)
+  return Promise.map(Object.keys(props.notes || {}), (noteType) => {
     return Promise.map(Object.keys(props.notes[noteType] || {}), (id) => {
-      console.log('111');
-      if (!props.notes[noteType][id].boundary.geojson) return
+      if (!(props.notes[noteType][id] && props.notes[noteType][id].boundary.geojson)) return
       state.set(`notes.${noteType}.${id}.yield-stats`, {computing:true})
       return polygons.push({
         id,
         polygon: props.notes[noteType][id].boundary.geojson.coordinates[0] || [],
         bbox: props.notes[noteType][id].boundary.bbox || [],
-        type: props.noteType
+        type: noteType
       })
     })
 	}).then(() => {
-		polygons = polygons.filter((polygon) => (polygon) ? true: false);
+    polygons = polygons.filter((polygon) => (polygon) ? true: false);
+    console.log(polygons)
 		return {polygons}
 	})
 }
@@ -278,15 +301,15 @@ function addNoteToGeohashIndex({props, state}) {
 // old stats used before adding the new.
 export const getYieldStats = sequence('notes.getYieldStats', [
   ({state, props}) => {
-    console.log('GET YIELD STATS')
     var connection_id = state.get('yield.connection_id');
     var body = props.response.change.body;
     var notes = {};
-    var index = props.index;
+    var noteType = props.noteType;
+    console.log('noteType', noteType)
     var id = props.id;
     // Exclude changes to stats key of yield-stats to avoid infinite loops
     if (body.stats) return
-    var yieldStats = state.get(`notes.${index.replace(/\-index/, '')}.${id}.yield-stats`) || {};
+    var yieldStats = state.get(`notes.${noteType.replace(/\-index/, '')}.${id}.yield-stats`) || {};
     var stats = {};
     return Promise.map(Object.keys(body.geohashes || {}), (geohash) => {
       return Promise.map(Object.keys(body.geohashes[geohash]['crop-index'] || {}), (crop) => {
@@ -335,9 +358,9 @@ export const getYieldStats = sequence('notes.getYieldStats', [
       })
     }).then(() => {
       if (stats && Object.keys(stats).length > 0) {
-        notes[index] = notes[index] || {};
-        notes[index][id] = notes[index][id] || {};
-        notes[index][id].stats = stats;
+        notes[noteType] = notes[noteType] || {};
+        notes[noteType][id] = notes[noteType][id] || {};
+        notes[noteType][id].stats = stats;
       }
       return 
 		}).then(() => {
@@ -347,11 +370,11 @@ export const getYieldStats = sequence('notes.getYieldStats', [
 
   ({props, state}) => {
     var requests = [];
-    return Promise.map(Object.keys(props.notes || {}), (index) => {
-      return Promise.map(Object.keys(props.notes[index] || {}), (id) => {
+    return Promise.map(Object.keys(props.notes || {}), (noteType) => {
+      return Promise.map(Object.keys(props.notes[noteType] || {}), (id) => {
         return requests.push({
-          path: `/bookmarks/notes/${index}/${id}/yield-stats`,
-          data: { stats: props.notes[index][id].stats} ,
+          path: `/bookmarks/notes/${noteType}/${id}/yield-stats`,
+          data: { stats: props.notes[noteType][id].stats} ,
         })
       })
     }).then(() => {
@@ -364,6 +387,7 @@ export const getYieldStats = sequence('notes.getYieldStats', [
 // This sequence is used to respond to the watch on /bookmarks/notes
 export const handleYieldStats = sequence('notes.handleYieldStats', [
   getYieldStats,
+  //  set(props`noteTypes`, ['notes-index']),
   mapOadaToRecords,
 ])
 
@@ -390,102 +414,37 @@ export const doneClicked = sequence('notes.doneClicked', [
 	set(props`id`, state`notes.selected_note.id`),
   //	set(props`note`, state`notes.${props`noteType`}.${props`id`}`),
   set(state`view.editing`, false), 
-	oadaUpdateNotes,
+	oadaUpdateNote,
   set(props`requests`, undefined),
   getNoteStats,
-  watchYieldStats,
-  mapOadaToRecords,
 ]);
 
-export const createFieldNotes = sequence('notes.createFieldNotes', [
-  ({state,props}) => {
-    return Promise.map(Object.keys(props.fieldNotes || {}), (id) => {
-      return {
-        path: `/bookmarks/notes/fields-index/${id}`,
-        data: props.fieldNotes[id],
-        tree,
-        connection_id: state.get('notes.connection_id'),
-      }
-    }).then((requests) => {
-      return {requests}
-    })
-  },
-  oadaMod.put,
+export const onFieldUpdated = sequence('notes.onFieldUpdated', [
   ({state, props}) => {
-    var fieldNotes = state.get('notes.fields')
-    var notes = {'fields': {}}
-    return Promise.map(Object.keys(fieldNotes || {}), (key) => {
-      if (!fieldNotes[key]['yield-stats']) return
-      notes['fields'][key] = fieldNotes[key];
-    }).then(() => {
-      return {notes}
+    // update fields
+    return Promise.map(() => {
+      
     })
-  },
-  getNoteStats,
-  ({state,props}) => {
-    return Promise.map(Object.keys(props.deletes || {}), (id) => {
-      return {
-        path: `/bookmarks/notes/fields-index/${id}`,
-        tree,
-        connection_id: state.get('notes.connection_id'),
-      }
-    }).then((requests) => {
-      return {requests}
-    })
-  },
-  oadaMod.delete,
+  }
 ])
-
-export const checkForNewFields = sequence('notes.getFieldsNotes', [
-  mapFieldsToNotes,
-  createFieldNotes,
-])
-
-export const getFieldNotes = sequence('notes.getFieldNotes', [
-  set(state`notes.fields`, {}),
-  set(props`noteType`, 'fields'),
-  ({props, state}) => ({
-    fields: state.get(`oada.${state.get(`fields.connection_id`)}.bookmarks.fields`),
-  }),
-  mapOadaFieldsToRecords,
-  // checkForNewFields,
-  set(props`notes`, props`fieldNotes`),
-]);
 
 export const init = sequence('notes.init', [
   set(props`noteType`, 'notes'),
-  ({props}) => console.log('oada connection'),
   oadaMod.connect,
   set(state`notes.connection_id`, props`connection_id`),
-	//	set(state`notes.loading`, true),
-	//assumes oada has been initialized with a connection_id and valid token
-  ({}) => console.time('fetch'),
-  fetch,
-  ({}) => console.timeEnd('fetch'),
-  ({}) => console.log('done fetching'),
-  ({}) => console.time('mapping'),
-  mapOadaToRecords,
-  ({}) => console.timeEnd('mapping'),
-  ({}) => console.log('done mapping'),
-  /*
-  watchYieldStats,
-  ({}) => console.log('done watching'),
-  */
+  //set(state`notes.loading`, true),
+  fetch, //assumes oada has been initialized with a connection_id and valid token
   set(state`map.layers.Notes`, {visible: true}),
+  set(state`map.layers.Fields`, {visible: true}),
 	getTagsList,
   set(state`notes.loading`, false),
   set(state`fields.loading`, false),
+  //  set(props`noteTypes`, ['notes-index']),
+  mapOadaToRecords,
+  checkFieldNotes,
+  getNoteStats,
   /*
-  when(state`fields.records`), {
-    true: [getFieldNotes],
-    false: [
-    ]
-  },
-    /*
-  getNoteComparisons,
-  ({state}) => {
-    console.log(state.get('notes.notes'))
-  }
+  //getNoteComparisons,
   */
 ])
 
@@ -545,7 +504,6 @@ export const tagRemoved = sequence('notes.tagRemoved', [
     }],
   }),
   oadaMod.delete,
-
 	removeTagFromMasterTagsList,
 ]);
 
@@ -675,25 +633,7 @@ function getGeohashDistribution({state, props}) {
       })
     })
   }).then(() => {
-    // console.log(stuff);
     return
-  })
-}
-
-function mapOadaFieldsToRecords({state, props}) {
-  state.set('notes.fields', {});
-  let connection_id = state.get('notes.connection_id');
-  let oadaFieldNotes =  state.get(`oada.${connection_id}.bookmarks.notes.fields-index`);
-  let fieldNotes = {};
-  return Promise.map(Object.keys(oadaFieldNotes || {}), (key) => {
-		// ignore reserved keys used by oada
-    if (key.charAt(0) !== '_') {
-      state.set(`notes.fields.${oadaFieldNotes[key].id}`, oadaFieldNotes[key])
-      fieldNotes[key] = oadaFieldNotes[key];
-    }
-		return
-  }).then(() => {
-    return {fieldNotes}
   })
 }
 
@@ -775,9 +715,7 @@ function addTagToNote({props, state, path}) {
       });
     } else {
       var noteTags = state.get(`notes.${props.noteType}.${props.id}.tags`)
-      console.log(noteTags, !noteTags[hash]);
       if (!noteTags[hash]) { // not already accounted for on 
-        console.log('going to increment');
         state.set(`notes.tags.${hash}.references`, tags[hash].references+1);
       }
     }
@@ -789,56 +727,11 @@ function addTagToNote({props, state, path}) {
 function removeTagFromMasterTagsList({props, state}) {
   var refs = state.get(`notes.tags.${props.key}.references`);
   if (!refs || refs === 0) {
-    console.log('ifff', refs)
 		state.unset(`notes.tags.${props.key}`);
   } else {
-    console.log('else', refs)
     state.set(`notes.tags.${props.key}.references`, refs - 1);
   }
 };
-
-//Create notes at /bookmarks/notes from each field
-function mapFieldsToNotes({state, props}) {
-  let fieldNotes = {};
-  let notes = _.clone(state.get(`notes.fields`));
-  if (props.fields) {
-    return Promise.map(Object.keys(props.fields['fields-index'] || {}), (farmName) => {
-      if (props.fields['fields-index'][farmName]) {
-        return Promise.map(Object.keys(props.fields['fields-index'][farmName]['fields-index'] || {}), (fieldName) => {
-          let field = props.fields['fields-index'][farmName]['fields-index'][fieldName];
-          if (!notes[farmName+'-'+fieldName] && field.boundary) {
-            let bbox = computeBoundingBox(field.boundary.geojson);           
-            var id = farmName+'-'+fieldName;
-            fieldNotes[id] = {
-              created: Date.now(),
-              id: farmName+'-'+fieldName,
-              text: farmName+' - '+fieldName,
-              tags: [],
-              field: {
-                _id: field._id,
-                _rev: field._rev,
-              },
-              boundary: {
-                geojson: field.boundary.geojson,
-                centroid:[
-                  (bbox.north + bbox.south)/2, 
-                  (bbox.east + bbox.west)/2
-                ],
-                visible: true,
-                bbox,
-                area: gjArea.geometry(field.boundary.geojson)/4046.86,
-              },
-              color: rmc.getColor(),
-            };
-          } else delete notes[farmName+'-'+fieldName]
-          return
-        })
-      }
-    }).then(() => {
-      return {fieldNotes, deletes: notes}
-    })
-  } else return {fieldNotes}
-}
 
 function getNoteComparisons({props, state}) {
 	var notes = state.get('notes.notes');
@@ -917,7 +810,6 @@ export let markerDragged = sequence('notes.markerDragged', [
 ]);
 
 export const undo = sequence('notes.undo', [
-  ({props}) => {console.log(props)},
   when(state`notes.${props`noteType`}.${props`id`}.boundary.geojson.coordinates.0`), {
     true: [
       pop(state`notes.${props`noteType`}.${props`id`}.boundary.geojson.coordinates.0`),
@@ -925,7 +817,6 @@ export const undo = sequence('notes.undo', [
     false: [],
   },
   map.updateGeometry,
-  ({props}) => {console.log(props)},
 	set(state`notes.${props`noteType`}.${props`id`}.boundary`, props`boundary`),
 ])
 
@@ -954,7 +845,6 @@ export const addNoteButtonClicked = sequence('notes.addNoteButtonClicked', [
 	    set(state`view.editing`, true),
       fields.createNewField,
       set(props`fields`, {[props`field.name`]: props`field`}),
-      //mapFieldsToNotes,
       //set(state`notes.fields`, props`notes`),
     ],
 

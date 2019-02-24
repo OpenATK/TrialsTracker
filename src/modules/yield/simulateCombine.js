@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const md5 = require('md5');
 const uuid = require('uuid');
 const gh = require('ngeohash');
@@ -75,9 +74,8 @@ export async function simulateCombine(data, offset, connection, connection_id) {
 		let template_id = md5(JSON.stringify(template));
 
     // Add the data point
-    var id = uuid();
     var pt = {
-      id,
+      id: uuid(),
       template: template_id,
 			moisture: row['Moisture(%)'] || 13,
       location: {
@@ -116,7 +114,7 @@ export async function simulateCombine(data, offset, connection, connection_id) {
 		}
 
 		let path = '/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/'+cropType+'/geohash-length-index/geohash-7/geohash-index/'+geohash;
-    let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
+    //    let dt = (i > 0) ? (row.ts - data[i-1].ts)*1000 : 1000;
     //    await Promise.delay(dt/10)
 		return connection.put({
 			path,

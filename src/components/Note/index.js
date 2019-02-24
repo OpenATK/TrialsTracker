@@ -31,7 +31,6 @@ export default connect({
 
 
     render() {
-      console.log('hey!', this.props.id)
 			let selected = this.props.selectedNote && this.props.id === this.props.selectedNote.id;
 			let color = this.props.note ? Color(this.props.note.color || '#fff').alpha(0.4).rgb() : null;
 

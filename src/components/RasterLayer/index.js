@@ -39,7 +39,6 @@ class RasterLayer extends GridLayer {
 		let tile = tiles.get(this.props.layer, coordsIndex);
 		// If the tile is cached and its not on the list of geohashes to (re)draw,
     // return the tile
-    if (tile) console.log('found tile', coordsIndex);
 		if (tile) return tile;
 
 		//Create a new tile, call a signal to draw it, and return the (empty) tile

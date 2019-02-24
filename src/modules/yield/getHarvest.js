@@ -1,6 +1,5 @@
 var _ = require('lodash');
 var md5 = require('md5');
-var uuid = require('uuid');
 var gh = require('ngeohash');
 var Promise = require('bluebird');
 var uuid = require('uuid');
@@ -12,7 +11,6 @@ var tradeMoisture = {
   corn: 15,
   wheat: 13,
 };
-var sampleRate = 1; // msg/s
 var j = 0;
 
 async function getAsHarvested(data, offset) {
@@ -283,10 +281,8 @@ async function getAsHarvestedAndDelete(data, CONNECTION, connection_id, tree, of
 }
 
 function pushAsHarvested(asHarvested, CONNECTION, tree) {
-  var j = 0;
   return Promise.mapSeries(Object.keys(asHarvested || {}), (crop) => {
     return Promise.mapSeries(Object.keys(asHarvested[crop] || {}), (bucket) => {
-      console.log('pushAsHarvested', j++, bucket, crop)
       return CONNECTION.put({
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
         tree,
@@ -297,10 +293,8 @@ function pushAsHarvested(asHarvested, CONNECTION, tree) {
 }
 
 function deleteAsHarvested(asHarvested, CONNECTION, connection_id, tree) {
-  var j = 0;
   return Promise.mapSeries(Object.keys(asHarvested || {}), (crop) => {
     return Promise.mapSeries(Object.keys(asHarvested[crop] || {}), (bucket) => {
-      console.log('deleteAsHarvested', j++, bucket, crop)
       return CONNECTION.delete({
         connection_id,
         path: `/bookmarks/harvest/as-harvested/yield-moisture-dataset/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
@@ -395,14 +389,12 @@ function getTiledMaps(asHarvested, levels) {
             'sum-yield-squared-area': 0,
             'yield-squared-area': 0,
           }
-          console.log(i++)
           tiledMaps[crop][bucketGh]['geohash-data'][aggregateGh] = recomputeStats(tiledMaps[crop][bucketGh]['geohash-data'][aggregateGh], additionalStats);
           return
         });
       });
     });
   }).then(() => {
-    console.log(i)
     return tiledMaps;
   }).catch((err) => {
     console.log(err)
@@ -470,10 +462,8 @@ function recomputeStats(currentStats, additionalStats, factor) {
 }
 
 function pushTiledMaps(tiledMaps, CONNECTION, tree) {
-  var i = 0;
   return Promise.mapSeries(Object.keys(tiledMaps || {}), (crop) => {
     return Promise.mapSeries(Object.keys(tiledMaps[crop] || {}), (bucket) => {
-      console.log('pushTiledMaps', i++, crop, bucket)
       return CONNECTION.put({
         path: `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${crop}/geohash-length-index/geohash-${bucket.length}/geohash-index/${bucket}`,
         tree,

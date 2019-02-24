@@ -39,19 +39,21 @@ class LayerControl extends React.Component {
       dragging={true} 
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
     />})
-
-		let fieldPolygons = Object.keys(this.props.fields || {}).filter(id => 
-			this.props.fields[id].boundary 
-			&& this.props.fields[id].boundary.geojson 
-			&& this.props.fields[id].boundary.geojson.coordinates[0].length > 0
-    ).map(field => <GeoJSON 
-      className={'field-polygon'}
-      onClick={() => this.props.noteClicked({id:field, noteType: 'fields'})}
-      color={this.props.fields[field].color} 
-      style={{color: this.props.fields[field].color}}
-      data={this.props.fields[field].boundary.geojson} 
-      key={field}
-    />)
+		let fieldPolygons = [];
+    //if (this.props.layers && this.props.layers.Fields && this.props.layers.Fields.visible) {
+      fieldPolygons = Object.keys(this.props.fields || {}).filter(id => 
+        this.props.fields[id].boundary 
+        && this.props.fields[id].boundary.geojson 
+        && this.props.fields[id].boundary.geojson.coordinates[0].length > 0
+      ).map(field => <GeoJSON 
+        className={'field-polygon'}
+        onClick={() => this.props.noteClicked({id:field, noteType: 'fields'})}
+        color={this.props.fields[field].color} 
+        style={{color: this.props.fields[field].color}}
+        data={this.props.fields[field].boundary.geojson} 
+        key={field}
+      />)
+//    }
 
     return (
       <LayersControl 
@@ -68,13 +70,13 @@ class LayerControl extends React.Component {
          </FeatureGroup>
 				</Overlay> : null }
 
-				{this.props.layers && this.props.layers.Fields ? <Overlay 
+        {this.props.layers && this.props.layers.Fields ? <Overlay 
           checked={this.props.layers.Fields.visible}
           name='Fields'>
 				  <FeatureGroup>
 					  {fieldPolygons}
          </FeatureGroup>
-				</Overlay> : null }
+        </Overlay> : null }
 				{Object.keys(this.props.index || {}).map(crop => 
 					<Overlay 
           checked={this.props.layers[crop.charAt(0).toUpperCase() + crop.slice(1)].visible}
