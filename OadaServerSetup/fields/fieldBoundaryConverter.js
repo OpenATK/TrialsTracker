@@ -86,6 +86,7 @@ fieldsToOadaFormat = function(file) {
     tree.fields.growers[grower].farms[farmName].fields[fieldName] = field;
     tree.fields['fields-index'][farmName] = tree.fields['fields-index'][farmName] || {
       _type: 'application/vnd.oada.field.1+json',
+      name: farmName,
       'fields-index': {},
     }
     tree.fields['fields-index'][farmName]['fields-index'][fieldName] = field;

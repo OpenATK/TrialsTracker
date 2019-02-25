@@ -116,21 +116,38 @@ function findNewFields({state, props}) {
       return Promise.map(Object.keys(oadaFields['fields-index'][farmName]['fields-index'] || {}), (fieldName) => {
         let field = oadaFields['fields-index'][farmName]['fields-index'][fieldName];
         var id = field._id.replace(/^resources\//, '');
-        console.log(fieldName, Object.keys(fieldNotes).some(key => key == id))
         if (!Object.keys(fieldNotes).some(key => key == id)) {
-          console.log(fieldName);
-          console.log(oadaFields);
-          console.log(fieldNotes);
           newNotes[id] = {
             created: Date.now(),
             id,
-            text: farmName+' - '+fieldName,
+            text: oadaFields['fields-index'][farmName].name+' - '+oadaFields['fields-index'][farmName]['fields-index'][fieldName].name,
             tags: [],
             field: {
-              _id: field._id,
-              _rev: field._rev,
+              id: field._id,
+              rev: field._rev,
             },
             color: rmc.getColor(),
+          }
+          if (field.boundary) {
+            let bbox = computeBoundingBox(field.boundary.geojson);           
+            newNotes[id].boundary = {
+              geojson: field.boundary.geojson,
+              centroid:[
+                (bbox.north + bbox.south)/2, 
+                (bbox.east + bbox.west)/2
+              ],
+              visible: true,
+              bbox,
+              area: gjArea.geometry(field.boundary.geojson)/4046.86,
+            };
+          }
+        } else if (field._rev !== fieldNotes[id].field.rev) {
+          console.log('got one', field, fieldNotes[id]);
+          newNotes[id] = {
+            text: oadaFields['fields-index'][farmName].name+' - '+oadaFields['fields-index'][farmName]['fields-index'][fieldName].name,
+            field: {
+              rev: field._rev,
+            },
           }
           if (field.boundary) {
             let bbox = computeBoundingBox(field.boundary.geojson);           

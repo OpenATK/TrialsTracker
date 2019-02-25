@@ -5,6 +5,7 @@ import './map.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
 import uuid from 'uuid'
+import FieldsOverlay from './FieldsLayer'
 const { Overlay } = LayersControl;
 
 export default connect({
@@ -13,7 +14,6 @@ export default connect({
 	notesVisible: state`notes.visible`,
 	editing: state`view.editing`,
   index: state`yield.index`,
-  fields: state`notes.fields`,
   domain: state`oada_domain`,
 	isLoading: state`map.isLoading`,
 	geohashPolygons: state`map.geohashPolygons`,
@@ -39,21 +39,6 @@ class LayerControl extends React.Component {
       dragging={true} 
 			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
     />})
-		let fieldPolygons = [];
-    //if (this.props.layers && this.props.layers.Fields && this.props.layers.Fields.visible) {
-      fieldPolygons = Object.keys(this.props.fields || {}).filter(id => 
-        this.props.fields[id].boundary 
-        && this.props.fields[id].boundary.geojson 
-        && this.props.fields[id].boundary.geojson.coordinates[0].length > 0
-      ).map(field => <GeoJSON 
-        className={'field-polygon'}
-        onClick={() => this.props.noteClicked({id:field, noteType: 'fields'})}
-        color={this.props.fields[field].color} 
-        style={{color: this.props.fields[field].color}}
-        data={this.props.fields[field].boundary.geojson} 
-        key={field}
-      />)
-//    }
 
     return (
       <LayersControl 
@@ -70,12 +55,10 @@ class LayerControl extends React.Component {
          </FeatureGroup>
 				</Overlay> : null }
 
-        {this.props.layers && this.props.layers.Fields ? <Overlay 
+        {this.props.layers && this.props.layers.Fields ? <Overlay
           checked={this.props.layers.Fields.visible}
           name='Fields'>
-				  <FeatureGroup>
-					  {fieldPolygons}
-         </FeatureGroup>
+          <FieldsOverlay />
         </Overlay> : null }
 				{Object.keys(this.props.index || {}).map(crop => 
 					<Overlay 

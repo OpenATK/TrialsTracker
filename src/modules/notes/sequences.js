@@ -121,6 +121,8 @@ const fetch = sequence('notes.fetch', [
 
 // Take notes from the oada part of the state to the rendered state
 export const mapOadaToRecords = sequence('notes.mapOadaToRecords', [
+  unset(state`notes.notes`),
+  unset(state`notes.fields`),
   ({state, props}) => {
     let connection_id = state.get('notes.connection_id');
     let notes = {};
@@ -256,7 +258,6 @@ export const getNoteStats = sequence('notes.getNoteStats', [
 // Create array of objects with id, polygon, bbox, type for the notes passed in via props.
 export function getPolygons({state, props}) {
   var polygons = [];
-  console.log(props.notes)
   return Promise.map(Object.keys(props.notes || {}), (noteType) => {
     return Promise.map(Object.keys(props.notes[noteType] || {}), (id) => {
       if (!(props.notes[noteType][id] && props.notes[noteType][id].boundary.geojson)) return
@@ -270,7 +271,6 @@ export function getPolygons({state, props}) {
     })
 	}).then(() => {
     polygons = polygons.filter((polygon) => (polygon) ? true: false);
-    console.log(polygons)
 		return {polygons}
 	})
 }
@@ -420,12 +420,8 @@ export const doneClicked = sequence('notes.doneClicked', [
 ]);
 
 export const onFieldUpdated = sequence('notes.onFieldUpdated', [
-  ({state, props}) => {
-    // update fields
-    return Promise.map(() => {
-      
-    })
-  }
+  checkFieldNotes,
+  mapOadaToRecords,
 ])
 
 export const init = sequence('notes.init', [
@@ -433,6 +429,7 @@ export const init = sequence('notes.init', [
   oadaMod.connect,
   set(state`notes.connection_id`, props`connection_id`),
   //set(state`notes.loading`, true),
+  set(state`notes.loading`, false),
   fetch, //assumes oada has been initialized with a connection_id and valid token
   set(state`map.layers.Notes`, {visible: true}),
   set(state`map.layers.Fields`, {visible: true}),
