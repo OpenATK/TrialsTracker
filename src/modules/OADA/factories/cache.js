@@ -15,7 +15,6 @@ function cache(websocket, dbName) {
 		}).catch((err)=> {
 			// Cache lookup failed, try the server
 			let url = domain+'/bookmarks'+resPath;
-			let request = (websocket === null || websocket.url !== domain) ? axios : websocket.http;
 			return axios({
 				method: 'GET',
 				url,

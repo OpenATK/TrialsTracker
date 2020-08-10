@@ -1,25 +1,28 @@
-import React from 'react'
-import {render} from 'react-dom'
-import {Container} from '@cerebral/react';
-import App from './components/App/';
-import controller from './controller';
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import injectTapEventPlugin from 'react-tap-event-plugin';
-import Promise from 'bluebird'
-import './index.css'
-injectTapEventPlugin();
-global.Promise = Promise;
-Promise.config({
-    // Enables all warnings except forgotten return statements.
-    warnings: {
-        wForgottenReturn: false
-    }
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as serviceWorker from './serviceWorker';
+
+import './index.css';
+
+import App from './view/App'
+
+import { createOvermind } from "overmind";
+import { Provider } from "overmind-react";
+import { config } from "./overmind"
+
+const app = createOvermind(config,
+{
+  devtools: true//'192.168.50.112:3031',
 });
 
-render((
-  <Container controller={controller}>
-  <MuiThemeProvider>
+ReactDOM.render(
+  <Provider value={app}>
     <App />
-  </MuiThemeProvider>
-  </Container>
-), document.querySelector('#root'))
+  </Provider>,
+  document.getElementById('root')
+)
+
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+serviceWorker.unregister();
