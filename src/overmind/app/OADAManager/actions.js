@@ -12,6 +12,7 @@ export default {
     */
     const myState = state.app.OADAManager;
     if (myState.token) return myState.token;
+    console.log(config.METADATA);
     let res = await getAccessToken(domain.replace(/^https?:\/\//, ''), {
       metadata: config.METADATA,
       scope: config.SCOPE,

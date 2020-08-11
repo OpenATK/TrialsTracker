@@ -1,4 +1,11 @@
+import filter from "lodash/fp/filter";
+import values from "lodash/fp/values";
+import mapValues from "lodash/fp/mapValues";
+import compose from "lodash/fp/compose";
+import flow from "lodash/fp/flow";
 import _ from "lodash";
+import get from "lodash/fp/get";
+import path from "lodash/fp/path";
 
 export default {
 	geohashPolygons: [],
@@ -21,37 +28,15 @@ export default {
     ]
   ],
   notePolygons: (local, state) => 
-    _.chain(state.notes)
-    .filter(note => 
-			note.geometry.geojson.coordinates[0].length > 0
-		)
+    flow
+      (mapValues(state.notes))
+      (filter(x => x.geometry.geojson.coordinates[0].length > 0))
   ,
   fields: (local, state) => {
-    const fieldStyles = _.get(state, `view.Map.fieldStyles`)
-    const editingField = _.get(state, `view.Map.editingField`)
-    const operation = _.get(state, `view.TopBar.OperationDropdown.selectedOperation`)
-    const fieldsToRender = _.get(state, `app.seasonFields`);
-    return _.chain(fieldsToRender).mapValues((field, id) => {
-      if (field === null) return null;
-      if (field.boundary === null) return null;
-      if (editingField === id) return null; //Don't show this field.
-      var styledField = _.clone(field);
-      //Add any styles
-      if (fieldStyles[id] != null) styledField.style = fieldStyles[id];
-      //Fill based on status of current operation
-      if (operation) {
-        var color = "white"
-        if (operation.fields && operation.fields[id]) {
-          if (operation.fields[id].status === 'planned') color = 'red'
-          if (operation.fields[id].status === 'started') color = 'orange'
-          if (operation.fields[id].status === 'done') color = '#0acd00' //Green
-        }
-        styledField.style = _.merge({}, styledField.style, {fillColor: color, color})
-      }
-      return styledField;
-    }).omitBy((v, k) => {
-      if (v === null) return true;
-    }).value();
+    const fieldStyles = get(state)(`view.Map.fieldStyles`)
+    const editingField = path(state)(`view.Map.editingField`)
+    const operation = path(state)(`view.TopBar.OperationDropdown.selectedOperation`)
+    const fieldsToRender = path(state)(`app.seasonFields`);
   },
   LayerControl: {
     cropLayers: {},

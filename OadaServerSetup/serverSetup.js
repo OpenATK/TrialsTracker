@@ -23,44 +23,28 @@ var DOMAIN;
 
 var tree = {
   harvest: {
-    _type: 'application/vnd.oada.harvest.1+json',
+		_type: 'application/vnd.oada.harvest.1+json',
+		_rev: '0-0',
     'as-harvested': {
       _type: 'application/vnd.oada.as-harvested.1+json',
+			_rev: '0-0',
       'yield-moisture-dataset': {
         _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+				_rev: '0-0',
         'crop-index': {}
       },
     },
     'tiled-maps': {
-       _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+      _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+			_rev: '0-0',
       'dry-yield-map': {
-         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+        _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
+				_rev: '0-0',
         'crop-index': {},
       },
     },
   },
 };
-
-var btree = {
-  a: {
-    _type: 'application/vnd.oada.harvest.1+json',
-    'b': {
-      _type: 'application/vnd.oada.as-harvested.1+json',
-      'c': {
-        _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
-        'd': {}
-      },
-    },
-    'e': {
-       _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-      'f': {
-         _type: 'application/vnd.oada.data-index.tiled-maps.1+json',
-        'g': {},
-      },
-    },
-  },
-};
-
 
 module.exports = function(yield_data_directory, domain, token) {
   TOKEN = token;
@@ -144,6 +128,7 @@ processRawData = function(csvJson, filename) {
     //Handle new crop types
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType] || {
       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
+			_rev: '0-0',
       'geohash-length-index': {
         'geohash-7': {
          'geohash-index': {},
@@ -152,6 +137,7 @@ processRawData = function(csvJson, filename) {
     };
     //Handle new geohashes
     tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] = tree.harvest['as-harvested']['yield-moisture-dataset']['crop-index'][cropType]['geohash-length-index']['geohash-7']['geohash-index'][geohash] || {
+			_rev: '0-0',
       _type: 'application/vnd.oada.as-harvested.yield-moisture-dataset.1+json',
       data: { },
     };
@@ -238,11 +224,13 @@ createAggregates = function(levels) {
 						'sum-yield-squared-area': Math.pow(weight/pt.area, 2)*pt.area,
 					};
           //Handle new crop types
-          tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
+					tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType] || {
+						_rev: '0-0',
             _type: 'application/vnd.oada.tiled-maps.dry-yield-map.1+json',
             'geohash-length-index': {},
           };
           tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] = tree.harvest['tiled-maps']['dry-yield-map']['crop-index'][cropType]['geohash-length-index'][ghlen] || {
+					 _rev: '0-0',
            'geohash-index': {},
           }
           //Handle new geohashes
@@ -321,30 +309,34 @@ recomputeStats = function(currentStats, additionalStats) {
 };
 
 var _Setup = {
+	// Handle a large json of oada data
+	putLinkedTree: function(setupTree, pathString) {
 
-  putLinkedTree: function(dataTree, pathString) {
-    return Promise.each(Object.keys(dataTree), (key) => {
-      if (typeof dataTree[key] === 'object' && dataTree[key]) {
-        return _Setup.putLinkedTree(dataTree[key], pathString+'/'+key).then((res) => {
-          return dataTree[key] = res;
+    return Promise.each(Object.keys(setupTree || {}), (key) => {
+      if (typeof setupTree[key] === 'object' && setupTree[key]) {
+        return _Setup.putLinkedTree(setupTree[key], pathString+'/'+key).then((res) => {
+          return setupTree[key] = res;
         })
-      } else return dataTree[key] = dataTree[key];
-    }, {concurrency: 5}).then((results) => {
-      if (dataTree._type) {
+      } else return setupTree[key] = setupTree[key];
+		}, {concurrency: 5}).then((results) => {
+			// if it has _type, post a new resource
+      if (setupTree._type) {
         return axios({
           method:'post', 
           url:'https://'+DOMAIN+'/resources/',
           headers: {
             'Authorization': 'Bearer '+ TOKEN,
-            'Content-Type': dataTree._type,
+            'Content-Type': setupTree._type,
           },
-          data: dataTree,
-        }).then((response) => {
-          var resId = response.headers.location.replace(/^\/resources\//, '');
-					return {_id: 'resources/'+resId, _rev: '0-0'};
+          data: setupTree,
+				}).then((response) => {
+					// Then return only a link to this resource
+					let ret = {	_id: response.headers.location.replace(/^\//, '')}
+					if (setupTree._rev) ret._rev = '0-0';
+					return ret 
         })
       } else {
-        return dataTree
+        return setupTree
       }
     }).catch((e) => {
       if(!e.cancel) {
@@ -363,7 +355,6 @@ var _Setup = {
         return;
       }
       if (val._id) { // If it's an object, and has an '_id', make it a link from descriptor
-
         ret[key] = { _id: desc[key]._id, _rev: '0-0' };
         return;
       }

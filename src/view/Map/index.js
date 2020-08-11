@@ -17,14 +17,14 @@ export default function Map() {
         bounds={myState.bounds} 
         center={myState.center}
         onClick={(evt) => myActions.onMapClick({...evt.latlng})} 
-        onLocationfound={(e) => this.props.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
-        onMoveStart={(e) => {this.props.mapMoveStarted()}}
-        onMoveend={(e) => {this.props.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
+        onLocationfound={(e) => myActions.locationFound({lat:e.latlng.lat, lng:e.latlng.lng})}
+        onMoveStart={(e) => {myActions.mapMoveStarted()}}
+        onMoveend={(e) => {myActions.mapMoved({latlng:this.refs.map.leafletElement.getCenter(), zoom: this.refs.map.leafletElement.getZoom()})}}
         zoomControl={false}>
         zoom={myState.zoom || 15}
-        {this.props.currentLocation ? <CircleMarker
+        {myState.currentLocation ? <CircleMarker
           key={'currentLocationMarker'}
-          center={this.props.currentLocation}
+          center={myState.currentLocation}
           radius={8}
           opacity={1.0}
           color={"white"}
@@ -33,10 +33,10 @@ export default function Map() {
           fillOpacity={0.8}
           >
         </CircleMarker> : null}
-        {this.props.legendVisible ? <LegendControl
+        {myState.legendVisible ? <LegendControl
           position={'bottomright'} 
         /> : null}
-        {myState.notePolygons.map(np => 
+        {Object.values(myState.notePolygons || {}).map(np => 
           <GeoJSON                                                      
             className={'note-polygon'}                                           
             data={np.geometry.geojson}                         

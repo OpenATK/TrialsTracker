@@ -12,7 +12,7 @@ import { config } from "./overmind"
 
 const app = createOvermind(config,
 {
-  devtools: true//'192.168.50.112:3031',
+  devtools: true,
 });
 
 ReactDOM.render(

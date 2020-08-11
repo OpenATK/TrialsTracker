@@ -4,6 +4,7 @@ import _ from 'lodash';
 import geojsonArea from '@mapbox/geojson-area';
 
 export default {
+  sortMode: 'notes',
   acresStatus: (local, state) => {
     //Get id's of all fields in this operation
     const operationFields = state.app.operationFields;

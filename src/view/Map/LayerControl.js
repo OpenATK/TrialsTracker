@@ -11,17 +11,18 @@ export default function LayerControl() {
   const {actions, state} = overmind();
   const myActions = actions.view.LayerControl;
   const myState = state.view.Control;
+  const yieldState = state.yield;
 
-  let yieldDataIndex = state.Yield.data_index;
-  let fields = state.Fields;
+  let yieldDataIndex = state.yield.data_index;
+  let fields = state.app.seasonFields
 
   return (
     <LayersControl 
       position='topright'>
-      {myState.geohashPolygons.length ? <Overlay 
+      {yieldState.geohashPolygons.length ? <Overlay 
         name='Geohash Polygons'>
         <FeatureGroup>
-          {myState.geohashPolygons.map(polygon => <GeoJSON 
+          {yieldState.geohashPolygons.map(polygon => <GeoJSON 
             className={'geohash-polygon'}
             data={polygon} 
             style={{fillOpacity:0.0, strokeWidth: 1}}                                  
@@ -30,7 +31,7 @@ export default function LayerControl() {
        </FeatureGroup>
       </Overlay> : null }
 
-      {Object.keys(myState.fields).length ? <Overlay 
+      {Object.keys(fields).length ? <Overlay 
         checked 
         name='Fields'>
         <FeatureGroup>
@@ -43,7 +44,7 @@ export default function LayerControl() {
       </Overlay> : null }
       {Object.keys(yieldDataIndex || {}).map(crop => 
         <Overlay 
-        checked={myState.cropLayers[crop].visible}
+        checked={yieldState.cropLayers[crop].visible}
         onChange={() => myActions.toggleCropLayer({crop})}
         name={crop.charAt(0).toUpperCase() + crop.slice(1)}
         key={crop+'-overlay'}>
@@ -51,7 +52,7 @@ export default function LayerControl() {
           key={'RasterLayer-'+crop}
           data={'Yield.data_index.'+crop}
           layer={crop}
-          url={myState.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
+          url={yieldState.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
           geohashGridlines={false}
           tileGridlines={false}
         />

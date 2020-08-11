@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>AultFarmsFieldOutlines.kml</name>
+	<StyleMap id="msn_ylw-pushpin0001">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin0010000</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin000</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin00001">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin0010</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin000100</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sh_ylw-pushpin000100000">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin0001">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin001000">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin00001002">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin001001</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin000100000</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_ylw-pushpin001001">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin000100">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin00001000">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin001000</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin0001000</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin10">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#failed</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#failed0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sh_ylw-pushpin0001000">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin00001001">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin00100</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin00010000</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="failed0">
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin0010011">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin0010">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin0001000001">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin0002">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin001</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin0001</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_ylw-pushpin0010000">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="failed">
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin00010000">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin000">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin0000100">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin0010011</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin0001000001</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_ylw-pushpin00100">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin001">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<PolyStyle>
+			<color>995f76ff</color>
+		</PolyStyle>
+	</Style>
+	<Folder>
+		<name>Ault Farms - Field Outlines</name>
+		<open>1</open>
+		<Placemark>
+			<name>Smith30</name>
+			<styleUrl>#msn_ylw-pushpin00001002</styleUrl>
+			<Polygon>
+				<tessellate>1</tessellate>
+				<outerBoundaryIs>
+					<LinearRing>
+						<coordinates>
+							-86.17337564122545,40.96390255012258,0 -86.17355756982253,40.96385187893882,0 -86.17361141475472,40.96376540290082,0 -86.173655964308,40.96123693369455,0 -86.17345505457075,40.96112401397199,0 -86.17310403676515,40.96113416849468,0 -86.17280689061708,40.96111391080724,0 -86.17261835588486,40.96095545438939,0 -86.17240927078346,40.96072584769644,0 -86.17226757896059,40.96048628634204,0 -86.17200413376047,40.96042119799373,0 -86.17064602526081,40.96044859845942,0 -86.17059894103195,40.96060584794325,0 -86.17063993815654,40.9613066958594,0 -86.17059346771998,40.96134761837835,0 -86.16983684155214,40.96137841587257,0 -86.16974991317886,40.9614493508233,0 -86.16977400357599,40.96155281431584,0 -86.16938581039409,40.96155706351865,0 -86.16929983885346,40.9614594739926,0 -86.16917506886668,40.96142798181696,0 -86.16906933884206,40.96144355376875,0 -86.16902027352286,40.9614856809271,0 -86.16900219422814,40.96155124582332,0 -86.16897415142654,40.96215790682042,0 -86.1689670149206,40.96275657369995,0 -86.16895915791417,40.96312569887029,0 -86.16895730902823,40.96361862872794,0 -86.16897624812576,40.96391389955109,0 -86.16904777725914,40.9639429018228,0 -86.16945284060706,40.96394300672861,0 -86.16957799527003,40.96389839426269,0 -86.1696181257937,40.96384182640426,0 -86.1696644199433,40.96374512999354,0 -86.16971081817081,40.96366914637613,0 -86.16981428030206,40.96363193835661,0 -86.16999227266696,40.96360447746053,0 -86.1700843448893,40.96358183624294,0 -86.17015708932531,40.96353304161363,0 -86.17017582341721,40.96346417119418,0 -86.17011908924029,40.96333647246223,0 -86.1698919001026,40.96282518069743,0 -86.16972073253288,40.96237945987814,0 -86.16951281001933,40.96189875087158,0 -86.16938730519992,40.96156408117943,0 -86.16977712445329,40.96156102631025,0 -86.17076632417067,40.96387111905722,0 -86.170846603016,40.96393242137714,0 -86.17096678133161,40.96394919107419,0 -86.17337564122545,40.96390255012258,0 
+						</coordinates>
+					</LinearRing>
+				</outerBoundaryIs>
+			</Polygon>
+		</Placemark>
+	</Folder>
+</Document>
+</kml>
