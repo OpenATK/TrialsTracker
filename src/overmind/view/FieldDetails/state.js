@@ -13,7 +13,7 @@ export default {
     let field = null;
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-      field = _.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}`); //TODO year
+      field = _.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}`); //TODO year
     } else {
       field = _.get(state, `app.localData.abc123.seasons.2020.fields.${selectedFieldId}`); //TODO year, organization
     }
@@ -27,8 +27,8 @@ export default {
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
       if (_.get(field, 'farm._id')) {
-        const farmId = _.get(state, `app.oadaSeasonFarmsIdBy_id.${_.get(field, 'farm._id')}.id`)
-        farm = _.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.farms.${farmId}`); //TODO year
+        const farmId = _.get(state, `oada.easonFarmsIdBy_id.${_.get(field, 'farm._id')}.id`)
+        farm = _.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.farms.${farmId}`); //TODO year
       }
     } else {
       if (_.get(field, 'farm.id')) {
@@ -40,7 +40,7 @@ export default {
   showAddOperationButton: (local, state) => {
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-      return _.isEmpty(_.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations`)); //TODO year
+      return _.isEmpty(_.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations`)); //TODO year
     } else {
       return _.isEmpty(_.get(state, `app.localData.abc123.seasons.2020.operations`)); //TODO year
     }

@@ -5,30 +5,45 @@ import './map.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {state, signal} from 'cerebral/tags'
 import uuid from 'uuid'
+import FieldsOverlay from './FieldsLayer'
 const { Overlay } = LayersControl;
 
 export default connect({
-  cropLayers: state`Map.crop_layers`,
-  notes: state`Note.notes`,
-  selectedNote: state`Note.selected_note`,
-  editing: state`App.view.editing`,
-  yieldDataIndex: state`Yield.data_index`,
-  fields: state`Fields`,
-  domain: state`Connections.oada_domain`,
-	isLoading: state`Map.isLoading`,
-	geohashPolygons: state`Map.geohashPolygons`,
+  layers: state`map.layers`,
+	notes: state`notes.notes`,
+	notesVisible: state`notes.visible`,
+	editing: state`view.editing`,
+  index: state`yield.index`,
+  domain: state`oada_domain`,
+	isLoading: state`map.isLoading`,
+	geohashPolygons: state`map.geohashPolygons`,
 
-  toggleCropLayer: signal`Map.toggleCropLayer`,
+	noteClicked: signal`notes.noteClicked`,
 },
 
 class LayerControl extends React.Component {
 
 	render() {
 
+		let notePolygons = Object.keys(this.props.notes || {}).filter(id => 
+			this.props.notes[id].boundary 
+			&& this.props.notes[id].boundary.geojson 
+			&& this.props.notes[id].boundary.geojson.coordinates[0].length > 0
+		).map(id => {
+			return <GeoJSON 
+      className={'note-polygon'}
+      data={this.props.notes[id].boundary.geojson} 
+      color={this.props.notes[id].color} 
+  	  style={{fillOpacity:0.4}}
+	    onClick={() => this.props.noteClicked({id, noteType:'notes'})}
+      dragging={true} 
+			key={'note-'+id+'-polygon'+uuid()} //TODO: don't do this
+    />})
+
     return (
       <LayersControl 
 				position='topright'>
-				{this.props.geohashPolygons.length ? <Overlay 
+				{this.props.geohashPolygons && this.props.geohashPolygons.length ? <Overlay 
           name='Geohash Polygons'>
 				  <FeatureGroup>
 					  {this.props.geohashPolygons.map(polygon => <GeoJSON 
@@ -40,34 +55,32 @@ class LayerControl extends React.Component {
          </FeatureGroup>
 				</Overlay> : null }
 
-				{Object.keys(this.props.fields).length ? <Overlay 
-          checked 
+        {this.props.layers && this.props.layers.Fields ? <Overlay
+          checked={this.props.layers.Fields.visible}
           name='Fields'>
-				  <FeatureGroup>
-					  {Object.keys(this.props.fields).map(field => <GeoJSON 
-              className={'field-polygon'}
-              data={this.props.fields[field].boundary.geojson} 
-              key={field}
-					  />)}
-         </FeatureGroup>
-				</Overlay> : null }
-				{Object.keys(this.props.yieldDataIndex || {}).map(crop => 
+          <FieldsOverlay />
+        </Overlay> : null }
+				{Object.keys(this.props.index || {}).map(crop => 
 					<Overlay 
-          checked={this.props.cropLayers[crop].visible}
-          onChange={()=>this.props.toggleCropLayer({crop})}
+          checked={this.props.layers[crop.charAt(0).toUpperCase() + crop.slice(1)].visible}
           name={crop.charAt(0).toUpperCase() + crop.slice(1)}
           key={crop+'-overlay'}>
           <RasterLayer
             key={'RasterLayer-'+crop}
-            data={'Yield.data_index.'+crop}
             layer={crop}
-            url={this.props.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
             geohashGridlines={false}
             tileGridlines={false}
 					/>
-				</Overlay>
-      )}
-      </LayersControl>
+				</Overlay> : null )}
+				{this.props.layers && this.props.layers.Notes ? <Overlay 
+					checked={this.props.layers.Notes.visible}
+					name='Notes'
+					key={'notes-polygons'}>
+				  <FeatureGroup>
+						{notePolygons}
+					</FeatureGroup>
+				</Overlay> : null}
+			</LayersControl>
     )
   }
 })

@@ -15,16 +15,16 @@ export default {
     const operationId = _.get(state, `view.TopBar.OperationDropdown.selectedOperationId`)
 
     let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-    let field = _.clone(_.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`)) || {}; //TODO year, organization
+    let field = _.clone(_.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`)) || {}; //TODO year, organization
     let newStatus = status;
     if (field.status === status) newStatus = null; //Unchecking
     field.status = newStatus;
     if (field.status === null) {
       //Optimistic Update
       //Remove field from operation
-      _.unset(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`) //TODO year, organization
+      _.unset(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`) //TODO year, organization
       //Remove operation from season's field's operation list
-      _.unset(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations.${operationId}`) //TODO year, organization
+      _.unset(state, `oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations.${operationId}`) //TODO year, organization
 
       //Change on server
       let requests = [
@@ -37,15 +37,15 @@ export default {
           path: `/bookmarks/seasons/2020/fields/${selectedFieldId}/operations/${operationId}` //TODO year
         }
       ];
-      actions.app.oada.delete({requests, connection_id: currentConnection});
+      actions.oada.delete({requests, connection_id: currentConnection});
     } else {
       //Optimistic Update
       //Add field to operation
-      _.set(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`, field) //TODO year, organization
+      _.set(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields.${selectedFieldId}`, field) //TODO year, organization
       //Create operations key on season's field list if doesn't exist
-      if (_.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations`) === null) _.set(state, `app.localData.abc123.seasons.2020.fields.${selectedFieldId}.operations`, {}) //TODO year, organization
+      if (_.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations`) === null) _.set(state, `app.localData.abc123.seasons.2020.fields.${selectedFieldId}.operations`, {}) //TODO year, organization
       //Add operation to field in season's field's operation list
-      _.set(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations.${operationId}`, {}) //TODO year, organization
+      _.set(state, `oada.${currentConnection}.bookmarks.seasons.2020.fields.${selectedFieldId}.operations.${operationId}`, {}) //TODO year, organization
 
       //Change on server
       const operation = _.get(state, `view.TopBar.OperationDropdown.selectedOperation`)
@@ -63,7 +63,7 @@ export default {
           path: `/bookmarks/seasons/2020/fields/${selectedFieldId}/operations/${operationId}` //TODO year
         }
       ];
-      actions.app.oada.put({requests, connection_id: currentConnection});
+      actions.oada.put({requests, connection_id: currentConnection});
     }
   },
   changeLocalFieldStatus({state}, status) {

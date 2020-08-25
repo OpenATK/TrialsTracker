@@ -7,41 +7,41 @@ import { state, signal, props } from 'cerebral/tags'
 let labelStyle = {paddingLeft: '6px', paddingRight: '6px', lineHeight:'26px'}
 
 export default connect({
-	  tags: state`Note.notes.${props`id`}.tags`,
-	  selected: state`Note.notes.${props`id`}.selected`,
-    allTags: state`App.model.tags`,
-    editing: state`App.view.editing`,
-	  tagInput: state`App.model.tag_input_text`,
-	  error: state`Note.notes.${props`id`}.tag_error`,
+	  tags: state`notes.${props`type`}.${props`id`}.tags`,
+    allTags: state`notes.tags`,
+    editing: state`view.editing`,
+	  tagInput: state`notes.tag_input_text`,
+	  error: state`notes.${props`type`}.${props`id`}.tag_error`,
 
-    tagAdded: signal`Note.tagAdded`,
-    tagRemoved: signal`Note.tagRemoved`,
-    tagInputTextChanged: signal`Note.tagInputTextChanged`,
+    tagAdded: signal`notes.tagAdded`,
+    tagRemoved: signal`notes.tagRemoved`,
+    tagTextChanged: signal`notes.tagTextChanged`,
 },
 
   class EditTagsBar extends React.Component {
   
-		render() {
+    render() {
       return (
         <div
           className={'edit-tags-bar'}>
 						
-					{this.props.selected && this.props.editing ? this.props.tags.map((tag, idx) => 
+          {this.props.selected && this.props.editing ? 
+            Object.keys(this.props.tags || []).map((key, idx) => 
 					  <Chip
-							key={this.props.id + tag}
+							key={key+'-'+this.props.id}
 							labelStyle={labelStyle}
 							style={{marginLeft: idx>0 ? '3px' : '0px'}}
-							onRequestDelete={() => this.props.tagRemoved({idx})} 
+							onRequestDelete={() => this.props.tagRemoved({id: this.props.id, noteType: this.props.type, key})} 
 						  className={'tag'}>
-						  {tag}
+						  {this.props.tags[key]}
 						</Chip>) 
-					: this.props.tags.map((tag, idx) => 
+					: Object.keys(this.props.tags).map((key, idx) => 
 					  <Chip
-              key={this.props.id + tag} 
+							key={key+'-'+this.props.id}
 							labelStyle={labelStyle}
 							style={{marginLeft: idx>0 ? '3px' : '0px'}}
 						  className={'tag'}>
-						  {tag}
+						  {this.props.tags[key]}
 						</Chip>) 
 					}
 				  {this.props.editing && this.props.selected ? <AutoComplete
@@ -53,9 +53,9 @@ export default connect({
             className={'input'}
 						hintText={this.props.error ? null : 'Add a new tag...'}
 						errorText={this.props.error ? this.props.error : null}
-						dataSource={Object.keys(this.props.allTags).filter(tag => tag.indexOf(this.props.tagInput) > -1)}
-            onUpdateInput={(value) => this.props.tagInputTextChanged({value, noteId:this.props.id})}
-            onNewRequest={(text, id) => this.props.tagAdded({text, noteId:this.props.id})}
+            dataSource={Object.values(this.props.allTags || {}).map(obj => obj.text)}
+            onUpdateInput={(value) => this.props.tagTextChanged({value, noteType: this.props.type, id:this.props.id})}
+            onNewRequest={(text, id) => this.props.tagAdded({text, id:this.props.id, noteType: this.props.type})}
             searchText={this.props.tagInput}
 					  onKeyDown={this.handleKeyDown}
 					  tabIndex={2}

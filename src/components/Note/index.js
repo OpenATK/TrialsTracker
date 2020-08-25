@@ -1,79 +1,79 @@
 import React from 'react';
 import {connect} from '@cerebral/react'
 import EditTagsBar from './editTagsBar.js';
-import uuid from 'uuid';
 import './note.css';
 import Color from 'color'; 
 import { props, state, signal } from 'cerebral/tags'
 import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
-export default connect({
-  note: state`Note.notes.${props`id`}`,
-  text: state`Note.notes.${props`id`}.text`,
-  selected: state`Note.notes.${props`id`}.selected`,
-  editing: state`App.view.editing`,
-  geometryVisible: state`Note.notes.${props`id`}.geometry_visible`,
-  noteFields: state`Note.notes.${props`id`}.fields`,
-  fields: state`Fields`,
-  isMobile: state`App.is_mobile`,
-  noteDropdownVisible: state`App.view.note_dropdown.visible`,
-  noteDropdown: state`App.view.note_dropdown.note`,
+const focusUsernameInputField = input => {
+  input && input.focus();
+};
 
-  deleteNoteButtonClicked: signal`Note.deleteNoteButtonClicked`,
-  editNoteButtonClicked: signal`Note.editNoteButtonClicked`,
-  noteClicked: signal`Note.noteClicked`,
-  noteTextChanged: signal`Note.noteTextChanged`,
-  backgroundClicked: signal`Note.noteBackgroundClicked`,
-	showNoteDropdown: signal`Note.showNoteDropdown`,
+export default connect({
+	note: state`notes.${props`type`}.${props`id`}`,
+  editing: state`view.editing`,
+	noteDropdown: state`notes.note_dropdown`,
+	selectedNote: state`notes.selected_note`,
+
+  deleteNoteButtonClicked: signal`notes.deleteNoteButtonClicked`,
+  editNoteButtonClicked: signal`notes.editNoteButtonClicked`,
+  noteClicked: signal`notes.noteClicked`,
+  fieldClicked: signal`fields.fieldClicked`,
+  noteTextChanged: signal`notes.noteTextChanged`,
+  backgroundClicked: signal`notes.noteBackgroundClicked`,
+	toggleNoteDropdown: signal`notes.toggleNoteDropdown`,
+	expandComparisonsClicked: signal`notes.expandComparisonsClicked`,
 },
 
   class Note extends React.Component {
 
-		render() {
-			const inputField = this.props.selected && this.props.editing ? input => {
-        if (input) setTimeout(() => input.focus(), 100);
-      } : null;
-      let color = Color(this.props.note.color).alpha(0.4).rgb();
-      if (!this.props.note) return null;
+
+    render() {
+			let selected = this.props.selectedNote && this.props.id === this.props.selectedNote.id;
+			let color = this.props.note ? Color(this.props.note.color || '#fff').alpha(0.4).rgb() : null;
+
       let yields = [];
-      if (this.props.note.stats.computing) {
-        yields.push(
-          <span
-            key={'yield-waiting-2-'+this.props.note.id}
-            className={this.props.note.stats.computing ? 'blinker': 'hidden'}>
-              {'Computing average yield...'}
-          </span>
-        )
-      } else {
-        Object.keys(this.props.note.stats).forEach((crop) => {
-          let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-          if (!isNaN(this.props.note.stats[crop].mean_yield)) {
+      try {
+        if (this.props.note['yield-stats'].stats.computing) {
+          yields.push(
+            <span
+              key={'yield-waiting-'+this.props.id}
+              className={this.props.note['yield-stats'].stats.computing ? 'blinker': 'hidden'}>
+                {'Computing average yield...'}
+            </span>
+          )
+        } else throw new Error('not computing')
+      } catch(err) {
+        try{
+          Object.keys(this.props.note['yield-stats'].stats || {}).forEach((crop) => {
             yields.push(
               <div
-                key={this.props.note.id+'-yield-text-'+crop}
+                key={this.props.id+'-yield-text-'+crop}
                 className={'yield-text'}>
                 <span
-                  key={this.props.note.id+'-yield-text-'+crop+'-header'}
+                  key={this.props.id+'-yield-text-'+crop+'-header'}
                   className={'yield-text-header'}>
-                    {cropStr + ' Yield'}
-                </span>
+                    {crop.charAt(0).toUpperCase() + crop.slice(1) + ' Yield'}
+                 </span>
                 <span
-                  key={this.props.note.id+'-yield-text-'+crop+'-value'}
+                  key={this.props.id+'-yield-text-'+crop+'-value'}
                   className={'yield-text-value'}>
-                    {this.props.note.stats[crop].mean_yield.toFixed(1) + ' bu/ac'}
+                    {this.props.note['yield-stats'].stats[crop].yield.mean.toFixed(2) + ' bu/ac'}
                 </span>
               </div>
             )
             yields.push(
-              <br key={uuid.v4()}/>
+              <br key={this.props.id + '-yieldsbreak-'+crop}/>
             );
-          }
-        })
-      }
+          })
+        } catch(error) {
+        }
+			}
 
       let areaContent = null;
-      if (this.props.note.geometry.area) {
+      if (this.props.note && this.props.note.boundary && this.props.note.boundary.area) {
         areaContent = 
           <div
             key={'area'}
@@ -81,60 +81,69 @@ export default connect({
             <span 
               className={'area-header'}>
               Area  <div
-                style={{color: this.props.note.color, backgroundColor:`rgba(${color.r},${color.g},${color.b},${color.a})`}}
+								style={{
+									color: this.props.note.color || '#000',
+									backgroundColor: `rgba(${color.r },${color.g},${color.b},${color.a})` || '#fff',
+								}}
                 className={'note-area-box'}
               />
             </span>
             <span 
               className={'area-value'}>
-              {this.props.note.geometry.area.toFixed(2) + ' acres'}
+              {this.props.note.boundary.area.toFixed(2) + ' acres'}
             </span>
           </div>
       }
 
-      let fieldComparisons = [];
-      Object.keys(this.props.noteFields || {}).forEach((field) => {
-        Object.keys(this.props.note.stats).forEach((crop, idx) => {
-          if (this.props.noteFields[field][crop]) {
-            let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
-            let sign = (this.props.noteFields[field][crop].difference < 0) ? '' : '+';
-            fieldComparisons.push(
+			let comps = [];
+      
+		  (this.props.comparisons || {}).forEach((comp) => {
+        Object.keys(comp.comparison).forEach((crop) => {
+					let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
+					let sign = (comp.comparison[crop].comparison.differenceMeans < 0) ? '+' : '-';
+          comps.push(
+            <div
+              key={this.props.id+'-'+comp.text+'-'+crop+'-comparison'}
+              className={'comparison'}>
               <div
-                key={this.props.note.id+'-'+field+'-'+crop+'-comparison'}
-                style={{order:idx}}
-                className={'field-comparison'}>
-                 <span
-                  key={this.props.note.id+'-'+field+'-'+crop+'-field'}
-                  className={'field-comparison-header'}>
-                  {field + ' ' +cropStr}
-                </span>
-                 <span
-                  key={this.props.note.id+'-'+field+'-'+crop+'-value'}
-                  className={'field-comparison-value'}>
-                  {this.props.fields[field].stats[crop].mean_yield.toFixed(1) +
-                  ' (' + sign + (this.props.noteFields[field][crop].difference).toFixed(2) + ') bu/ac' }
-                </span>
+                key={this.props.id+'-'+comp.text+'-'+crop}
+                className={'comparison-header'}>
+								<div
+									className={'comparison-text'}
+									key={this.props.id+'-'+comp.text+'-'+crop}>
+                  {comp.text}
+								</div>
+								{' ' + cropStr}
               </div>
-            );
-          }
-        })
-      })
+              <span
+                key={this.props.id+'-'+comp.text+'-'+crop+'-value'}
+							  style={{color:sign === '-' ? '#F00' : '#0F0'}}
+                className={'comparison-value'}>
+                {comp['yield-stats'].stats[crop].yield.mean.toFixed(2) +
+                ' (' + sign + Math.abs(comp.comparison[crop].comparison.differenceMeans).toFixed(2) + ') bu/ac' }
+              </span>
+            </div>
+          )
+				})
+			})
 
       return (
         <Card
-          onTouchTap={(e) => this.props.noteClicked({id:this.props.id})}
+					onClick={() => this.props.noteClicked({id:this.props.id, noteType: this.props.type})}
           className={'note'}
-          style={{order: this.props.note.order}}>
+          style={{order: this.props.order, borderRadius: '5px'}}>
           <CardHeader
             className={'note-header'}
 						style={{
 							padding: '0px 0px 0px 10px',
-							backgroundColor: this.props.note.color, 
-							fontWeight: this.props.selected ? 'bold' : 'normal',
+							backgroundColor: (this.props.note) ? this.props.note.color || '#000' : '#000', 
+							color: this.props.type === 'field' ? '#fff' : '#000', 
+							fontWeight: selected ? 'bold' : 'normal',
 						}}
 						textStyle={{padding: '0px'}}>
 						<div className={'text'}>
-						{this.props.editing && this.props.selected ? <TextField
+						{this.props.editing && selected ? <TextField
+              ref={focusUsernameInputField}
 							multiLine={true}
 							fullWidth={true}
               rows={1}
@@ -146,8 +155,8 @@ export default connect({
 								margin: '0px',
 							}}
 							inputStyle={{display: 'flex'}}
-              value={this.props.text} 
-              onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.id})}
+              value={this.props.note.text} 
+              onChange={(e, value) => this.props.noteTextChanged({value, id:this.props.id, noteType:this.props.type})}
 							tabIndex={1}
 							hintText='Type note description here...'
 							hintStyle={{bottom: '2px'}}
@@ -156,7 +165,7 @@ export default connect({
 						: 
 						<div
 						  className={'note-text'}>
-							{this.props.text}
+							{this.props.note ? this.props.note.text: ''}
 					  </div>
 						}
 					</div>
@@ -165,46 +174,46 @@ export default connect({
 							iconButtonElement={
 								<IconButton 
 									style={{height:'25px', padding: '0px'}}
-									onTouchTap={(e)=>{e.stopPropagation()}}>
+									onClick={(e)=>{e.stopPropagation()}}>
 									<MoreVertIcon />
 								</IconButton>
 							}
-              onRequestChange={()=>{this.props.showNoteDropdown({id:this.props.id})}}
-              open={this.props.noteDropdownVisible && this.props.noteDropdown ===this.props.id}
+              onRequestChange={()=>{this.props.toggleNoteDropdown({ id:this.props.id, noteType:this.props.type})}}
+              onClick={()=>{this.props.toggleNoteDropdown({ value: true, id:this.props.id, noteType:this.props.type})}}
+              open={this.props.noteDropdown.visible && this.props.noteDropdown.id === this.props.id}
               targetOrigin={{horizontal: 'right', vertical: 'top'}}
               anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
-							{this.props.selected && this.props.editing ? null : <MenuItem 
+							{selected && this.props.editing ? null : <MenuItem 
                 primaryText="Edit" 
-                onTouchTap={(e)=>{this.props.editNoteButtonClicked({id:this.props.id})}}
+                onClick={(e)=>{this.props.editNoteButtonClicked({id:this.props.id, noteType:this.props.type})}}
               /> }
-							{this.props.selected && this.props.editing ? null : <Divider /> }
+							{selected && this.props.editing ? null : <Divider /> }
               <MenuItem 
                 primaryText="Delete"
-                onTouchTap={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id})}}
+                onClick={(e) => {this.props.deleteNoteButtonClicked({id:this.props.id, noteType:this.props.type})}}
               />
             </IconMenu>
           </CardHeader>
           <div
-            className={this.props.note.geometry.area ? 'note-main-info' : 'hidden'}>
+						className={this.props.note && this.props.note.boundary && this.props.note.boundary.area ? 'note-main-info' : 'hidden'}>
             {areaContent}
             {yields.length < 1 ? null : <br/>}
             {yields}
-            {fieldComparisons.length === 1 ? 
-            <div
-              className={'field-comparisons'}>
-              {fieldComparisons}
-            </div> : null}
-          </div>
-          <div 
-            className={'field-comparisons-section'}>
-            {fieldComparisons.length > 1 ? <hr/> : null}
-            {fieldComparisons.length > 1 ? 
-            <div
-              className={'field-comparisons'}>
-              {fieldComparisons}
-            </div> : null}
-          </div>
-          {(this.props.editing && this.props.selected) || this.props.note.tags.length > 0 ? <EditTagsBar id={this.props.id}/> : null }
+					</div>
+					{comps.length ? <div
+				  	className={'comparison-container'}>
+						<div className={'comparisons-expander'}
+						  onClick={() => this.props.expandComparisonsClicked({noteType:this.props.type, id:this.props.id})}>
+
+							<hr className={'comp-hr'}/>
+							{this.props.note.expanded ? 'Yield Comparisons \u25bc' : 'Yield Comparisons \u25b6'}
+							<hr className={'comp-hr'}/>
+						</div>
+					  <div className={'comparisons'}>
+							{this.props.note.expanded ? comps : null}
+            </div>
+          </div> : null }
+          {(this.props.editing && selected) || (this.props.note && this.props.note.tags && Object.keys(this.props.note.tags).length > 0) ? <EditTagsBar selected={selected} id={this.props.id} type={this.props.type}/> : null }
         </Card>
       )
     }

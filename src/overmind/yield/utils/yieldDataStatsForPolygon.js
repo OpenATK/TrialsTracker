@@ -5,6 +5,7 @@ import Promise from 'bluebird';
 import geohashNoteIndexManager from './geohashNoteIndexManager';
 
 export default function yieldDataStatsForPolygon(polygon, bbox) {
+  if (polygon.length < 1 || !bbox.north) return Promise.resolve([]);
   let newPoly = _.clone(polygon);
   newPoly.push(polygon[0])
   //Get the four corners, convert to geohashes, and find the smallest common geohash of the bounding box

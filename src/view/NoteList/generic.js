@@ -14,7 +14,7 @@ export default connect({
   sortMode: state`App.view.sort_mode`, 
   isMobile: state`App.is_mobile`,
   editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
+  selectedNote: state`Note.selectedNote`,
   fields: state`Fields`,
 
   sortingTabClicked: signal`Note.sortingTabClicked`,
@@ -88,10 +88,10 @@ class NoteList extends React.Component {
           onChangeIndex={(val) => this.props.sortingTabClicked({newSortMode: val})}>
           <div
             className={'notes-container'}
-            onTouchTap={(evt) => {this.handleClick(evt)}}>
+            onClick={(evt) => {this.handleClick(evt)}}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+              onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
               Create a new note...
             </div>
             {notes_array} 
@@ -107,7 +107,7 @@ class NoteList extends React.Component {
         <FloatingActionButton
           className={'add-note-button'}
           style={(this.props.editing && this.props.sortMode === 0) ? {display: 'none'} : null}
-          onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          onClick={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
           <ContentAdd />
         </FloatingActionButton>
       </div>

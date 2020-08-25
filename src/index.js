@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as serviceWorker from './serviceWorker';
+import 'semantic-ui-css/semantic.min.css'
 
 import './index.css';
 
@@ -10,10 +11,7 @@ import { createOvermind } from "overmind";
 import { Provider } from "overmind-react";
 import { config } from "./overmind"
 
-const app = createOvermind(config,
-{
-  devtools: true,
-});
+const app = createOvermind(config);
 
 ReactDOM.render(
   <Provider value={app}>

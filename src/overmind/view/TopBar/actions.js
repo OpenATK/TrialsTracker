@@ -41,7 +41,7 @@ export default {
     actions.view.Map.unselectField()
   },
   async onResetCache({actions}) {
-    await actions.app.oada.resetCache();
+    await actions.oada.resetCache();
     //Refresh the page
     //location.reload();
   },

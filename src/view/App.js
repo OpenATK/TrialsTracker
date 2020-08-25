@@ -17,8 +17,8 @@ function App() {
 
   return (
     <div className="App">
-      <Map />
       <NoteList />
+      <Map />
     </div>
   );
 }

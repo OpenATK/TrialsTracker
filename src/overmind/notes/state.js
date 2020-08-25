@@ -1,6 +1,8 @@
 export default {
   notes: {},
+  noteDropdown: {},
   noteDropdownVisible: false,
-  noteDropdown: undefined,
   tags: {},
+  tab: 0,
+  selectedNote: {}
 }

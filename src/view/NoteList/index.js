@@ -53,10 +53,10 @@ export default function NoteList() {
         onChangeIndex={(val) => myActions.sortingTabClicked({newSortMode: val})}>
         <div
           className={'notes-container'}
-          onTouchTap={(evt) => {this.handleClick(evt)}}>
+          onClick={(evt) => {handleClick(evt)}}>
           <div
             className={myState.editing ? 'hidden' : 'add-note'}
-            onTouchTap={(e) => myActions.addNoteButtonClicked({drawMode: true})}>
+            onClick={(e) => myActions.addNoteButtonClicked({drawMode: true})}>
             Create a new note...
           </div>
           {notes_array} 
@@ -72,7 +72,7 @@ export default function NoteList() {
       <FloatingActionButton
         className={'add-note-button'}
         style={(myState.editing && appState.sortMode === 0) ? {display: 'none'} : null}
-        onTouchTap={(e) => myActions.addNoteButtonClicked({drawMode: true})}>
+        onClick={(e) => myActions.addNoteButtonClicked({drawMode: true})}>
         <ContentAdd />
       </FloatingActionButton>
     </div>

@@ -1,31 +1,10 @@
-import {
-	showConnections,
-	signOut,
-} from '../Connections/chains'
+import { Module } from 'cerebral'
+import * as signals from './sequences' 
 
-import {
-	clearCache,
-} from '../App/chains'
-
-import {
-  toggleMenuDropdown,
-  downloadNotes,
-	toggleMapLegend,
-} from './chains'
-
-
-export default {
+export default Module({
 	state: {
     open: false
   },
 
-  signals: {
-    clearCacheButtonClicked: clearCache,
-    signOutClicked: signOut,
-		connectionsClicked: showConnections,
-    menuBackgroundClicked: toggleMenuDropdown,
-    mapLegendButtonClicked: toggleMapLegend,
-    showMenuDropdown: toggleMenuDropdown,
-    downloadNotesButtonClicked: downloadNotes,
-  }
-}
+  signals,
+})

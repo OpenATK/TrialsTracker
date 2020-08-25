@@ -5,13 +5,13 @@ import {Tabs, Tab} from 'material-ui';
 import {state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`App.view.sort_mode`,
-  isMobile: state`App.is_mobile`,
-  editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
+  tab: state`notes.tab`,
+  isMobile: state`view.is_mobile`,
+  editing: state`view.editing`,
+  selectedNote: state`notes.selected_note`,
 
-  sortingTabClicked: signal`Note.sortingTabClicked`,
-  doneClicked: signal`Note.doneEditingButtonClicked`,
+  tabClicked: signal`notes.tabClicked`,
+  doneClicked: signal`notes.doneClicked`,
 },
 
 class Header extends React.Component {
@@ -31,7 +31,7 @@ class Header extends React.Component {
 				className={'note-list-header'}>
 				{this.props.editing ? 
         <Tabs
-          onTouchTap={() => this.props.doneClicked({id:this.props.selectedNote})}
+          onClick={() => this.props.doneClicked({id:this.props.selectedNote.id})}
           value={0}>
 					<Tab 
 						label="DONE" 
@@ -41,11 +41,11 @@ class Header extends React.Component {
 				</Tabs>
 				:
         <Tabs
-          onChange={(val) => this.props.sortingTabClicked({newSortMode: val})}
-          value={this.props.sortMode}>
+          onChange={(tab) => this.props.tabClicked({tab})}
+          value={this.props.tab}>
           <Tab label="NOTES" value={0} />
           <Tab label="FIELDS" value={1} />
-          <Tab label="TAGS" value={2} />
+          {/*<Tab label="TAGS" value={2} />*/}
 				</Tabs>
 				}
 			</div>

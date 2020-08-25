@@ -1,4 +1,5 @@
 .note {
+  border-radius: 5px;
   margin-bottom: 5px;
   cursor: pointer;
 }
@@ -6,7 +7,7 @@
 	flex: 1;
 }
 .selected-note {
-  border-radius: 3px;
+  border-radius: 5px;
   margin-bottom: 5px;
   box-shadow: 0px 0px 3px 3px #0000FF;
   background-color: #fff;
@@ -17,6 +18,7 @@
 	height: unset !important;
 	white-space: unset !important;
 	overflow: hidden;
+  border-radius: 5px 5px 0px 0px;
 }
 .note-textfield {
 	height: unset !important;
@@ -117,7 +119,7 @@
   display: flex;
   flex-wrap: wrap;
   white-space: nowrap;
-  overflow: scroll;
+  overflow-y: scroll;
 }
 .note-area-box {
   height: 11px;

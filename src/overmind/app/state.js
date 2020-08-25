@@ -4,7 +4,7 @@ import _ from 'lodash';
 import geojsonArea from '@mapbox/geojson-area';
 
 export default {
-  sortMode: 'notes',
+  sortMode: 0,
   acresStatus: (local, state) => {
     //Get id's of all fields in this operation
     const operationFields = state.app.operationFields;
@@ -42,7 +42,7 @@ export default {
     let farms;
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-      farms = _.chain(state).get(`app.oada.${currentConnection}.bookmarks.seasons.2020.farms`).omitBy((v, k) => { //TODO year
+      farms = _.chain(state).get(`oada.${currentConnection}.bookmarks.seasons.2020.farms`).omitBy((v, k) => { //TODO year
         if (_.startsWith(k, '_')) return true;
         if (v === null) return true;
       }).value();
@@ -55,7 +55,7 @@ export default {
     let fields;
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-      fields = _.chain(state).get(`app.oada.${currentConnection}.bookmarks.seasons.2020.fields`).omitBy((v, k) => { //TODO year
+      fields = _.chain(state).get(`oada.${currentConnection}.bookmarks.seasons.2020.fields`).omitBy((v, k) => { //TODO year
         if (_.startsWith(k, '_')) return true;
         if (v === null) return true;
       }).value();
@@ -70,7 +70,7 @@ export default {
     if (operationId != null) {
       if (_.get(state, `app.OADAManager.connected`) === true) {
         let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-        operationFields = _.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields`) || []; //TODO year
+        operationFields = _.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations.${operationId}.fields`) || []; //TODO year
       } else {
         operationFields = _.get(state, `app.localData.abc123.seasons.2020.operations.${operationId}.fields`) || []; //TODO year, organization
       }
@@ -81,7 +81,7 @@ export default {
     if (state.app.OADAManager.connected) {
       const currentConnection = state.app.OADAManager.currentConnection;
       if (!currentConnection) return;
-      return state.app.oada[currentConnection];
+      return state.oada[currentConnection];
     }
   },
   oadaOrgData: ({currentOADA}) => {

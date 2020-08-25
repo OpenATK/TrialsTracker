@@ -11,8 +11,7 @@ export default {
       Get token from local storage or request one
     */
     const myState = state.app.OADAManager;
-    if (myState.token) return myState.token;
-    console.log(config.METADATA);
+    if (myState.token && myState.token !== 'undefined') return myState.token;
     let res = await getAccessToken(domain.replace(/^https?:\/\//, ''), {
       metadata: config.METADATA,
       scope: config.SCOPE,
@@ -25,11 +24,12 @@ export default {
     const myActions = actions.app.OADAManager;
     if (token) myState.token = token;
     token = await myActions.getToken(domain);
-    return actions.app.oada.connect({
+    return actions.oada.connect({
       token,
       domain: domain,
       options: config.OPTIONS,
-      cache: false
+      cache: false,
+      concurrency: 1,
     }).then((response) => {
       if (!response.error) {
         myState.currentConnection = response.connectionId;
@@ -44,8 +44,8 @@ export default {
   async logout({actions, state}) {
     const myState = state.app.OADAManager;
     const {currentConnection: connection_id} = myState;
-    myState.token = null;
-    await actions.app.oada.disconnect({connection_id})
+    delete myState.token;
+    await actions.oada.disconnect({connection_id})
   },
   async getUserInfo({actions, state}) {
     const myState = state.app.OADAManager;
@@ -53,7 +53,7 @@ export default {
     let requests = [{
       path: '/users/me',
     }];
-    await actions.app.oada.get({requests, connection_id})
+    await actions.oada.get({requests, connection_id})
   },
   async fetchAndWatch({actions, state}) {
     const myState = state.app.OADAManager;
@@ -75,9 +75,8 @@ export default {
         },
       }
     ];
-    const ret = await actions.app.oada.get({requests: watchRequests, connection_id})
+    const ret = await actions.oada.get({requests: watchRequests, connection_id})
     let rewatchRequests = [];
-    console.log('SOMETIMES ERRORS:', ret);
     if (ret.responses[0].error) {
       //On 404 create and rewatch
       if (ret.responses[0].status !== 404) throw ret.responses[0].error;
@@ -91,7 +90,7 @@ export default {
         path: '/bookmarks/fields'
       }];
       //Create
-      await actions.app.oada.put({requests, connection_id})
+      await actions.oada.put({requests, connection_id})
       //Rewatch
       rewatchRequests.push(watchRequests[0]);
     }
@@ -105,11 +104,11 @@ export default {
         path: '/bookmarks/seasons'
       }];
       //Create
-      await actions.app.oada.put({requests, connection_id})
+      await actions.oada.put({requests, connection_id})
       //Rewatch
       rewatchRequests.push(watchRequests[1]);
     }
-    if (rewatchRequests.length > 0) await actions.app.oada.get({requests: rewatchRequests, connection_id})
+    if (rewatchRequests.length > 0) await actions.oada.get({requests: rewatchRequests, connection_id})
   },
   initSeasonFields({state, actions}) {
     /*
@@ -118,7 +117,7 @@ export default {
     const myActions = actions.app.OADAManager;
     //Get master field list fields
     var fieldsChanged = [];
-    _.forEach(_.get(state, 'app.oadaOrgData.fields.fields'), (obj, key) => {
+    _.forEach(_.get(state, 'oada.rgData.fields.fields'), (obj, key) => {
       if (_.startsWith(key, '_')) return;
       fieldsChanged.push({fieldId: key, name: obj.name, boundary: obj.boundary, farm: obj.farm});
     })
@@ -131,7 +130,7 @@ export default {
     const myActions = actions.app.OADAManager;
     //Get master field list fields
     var changed = [];
-    _.forEach(_.get(state, 'app.oadaOrgData.fields.farms'), (obj, key) => {
+    _.forEach(_.get(state, 'oada.rgData.fields.farms'), (obj, key) => {
       if (_.startsWith(key, '_')) return;
       changed.push({farmId: key, name: obj.name});
     })
@@ -164,7 +163,7 @@ export default {
         //Find new season farm id from farm id
         const farmId = _.get(fieldChange, 'farm._id');
         if (farmId) {
-          const seasonFarmId = _.get(state, `app.oadaSeasonFarms_idByFarm_id.${farmId}.seasonFarm_id`)
+          const seasonFarmId = _.get(state, `oada.easonFarms_idByFarm_id.${farmId}.seasonFarm_id`)
           if (!seasonFarmId) {
             console.log('No matching season farm found for farmId:', farmId, 'Cannot check if season fields farm has changed. Data:', fieldChange);
           } else if (seasonField === null || seasonField.farm === null || seasonField.farm._id === null || (seasonFarmId !== null && seasonField.farm._id !== seasonFarmId)) {
@@ -183,7 +182,7 @@ export default {
       )
     })
     if (requests.length === 0) return;
-    await actions.app.oada.put({requests, connection_id})
+    await actions.oada.put({requests, connection_id})
   },
   async changeSeasonFarms({state, actions}, changed) {
     /*
@@ -215,7 +214,7 @@ export default {
       )
     })
     if (requests.length === 0) return;
-    await actions.app.oada.put({requests, connection_id})
+    await actions.oada.put({requests, connection_id})
   },
   async deleteSeasonFields({state, actions}, deleted) {
     console.log('delete season fields', deleted);
@@ -236,7 +235,7 @@ export default {
       )
     })
     if (requests.length === 0) return;
-    await actions.app.oada.delete({requests, connection_id})
+    await actions.oada.delete({requests, connection_id})
   },
   async deleteSeasonFarms({state, actions}, deleted) {
     console.log('delete season farms', deleted);
@@ -257,7 +256,7 @@ export default {
       )
     })
     if (requests.length === 0) return;
-    await actions.app.oada.delete({requests, connection_id})
+    await actions.oada.delete({requests, connection_id})
   },
   async login({actions, state}, {domain, token}) {
     const myState = state.app.OADAManager;
@@ -266,10 +265,12 @@ export default {
     const {error} = await myActions.connect({domain, token});
     if (!error) {
       await myActions.getUserInfo();
-      await myActions.fetchAndWatch();
-      await myActions.initSeasonFarms();
-      await myActions.initSeasonFields();
+//      await myActions.fetchAndWatch();
+//      await myActions.initSeasonFarms();
+//      await myActions.initSeasonFields();
       await actions.view.Map.zoomBounds();
+      await actions.notes.initialize();
+//      await actions.yield.initialize();
     }
   },
   async onFieldChanged({state, actions}, props) {

@@ -1,33 +1,32 @@
 import React from 'react'
 import {connect} from '@cerebral/react'
-import Note from '../Note/'
-import FieldNote from '../FieldNote/'
+import Note from '../Note'
 import Header from './Header'
 import './styles.css'
-import {Tabs, Tab, FloatingActionButton} from 'material-ui';
+import {FloatingActionButton} from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import {state, signal } from 'cerebral/tags'
 import ContentAdd from 'material-ui/svg-icons/content/add';
-import _ from 'lodash'
+import LoadingScreen from '../LoadingScreen';
+import _ from 'lodash';
 
 export default connect({
-  notes: state`Note.notes`, 
-  tags: state`App.model.tags`,
-  sortMode: state`App.view.sort_mode`, 
-  isMobile: state`App.is_mobile`,
-  editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
-  fields: state`Fields`,
+  notes: state`notes.notes`, 
+  tags: state`model.tags`,
+  tab: state`notes.tab`, 
+  isMobile: state`view.is_mobile`,
+  editing: state`view.editing`,
+	fields: state`notes.fields`,
+	loading: state`notes.loading`,
 
-  sortingTabClicked: signal`Note.sortingTabClicked`,
-  noteListClicked: signal`Note.noteListClicked`,
-  addNoteButtonClicked: signal`Note.addNoteButtonClicked`,
-  doneClicked: signal`Note.doneEditingButtonClicked`,
+  tabClicked: signal`notes.tabClicked`,
+  noteListClicked: signal`notes.noteListClicked`,
+  addNoteButtonClicked: signal`notes.addNoteButtonClicked`,
 },
 
 class NoteList extends React.Component {
 
-  handleClick(evt) {
+	handleClick(evt) {
     // call only for note-list element, not children note elements;
     if (!this.props.editing) {
       if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
@@ -37,19 +36,44 @@ class NoteList extends React.Component {
   }
 
 	render() {
-		console.log(_.values(this.props.notes))
-		let notes_array = _.sortBy(_.values(this.props.notes), 'order').map(obj => {
-			console.log(obj)
-			return <Note 
-        id={obj.id} 
-        key={obj.id}
-      />}
-    );
+		//TODO: either make this a computed, or put this into actions
+		//		let notesArray = _.sortBy(_.toPairs(this.props.notes), 1.date)
+		let self = this;
+    let sorted_notes = _.sortBy(Object.keys(this.props.notes || {}), [function(key) {
+			return self.props.notes[key].created}]).reverse();
+		let notes = sorted_notes.map((key, i) => {
+			let comparisons = Object.keys(this.props.notes[key].fields || {}).map((field) => {
+				return {
+					text: field,
+					stats: this.props.fields[field].stats,
+					comparison: this.props.notes[key].fields[field]
+				}
+			})
+			return (<Note 
+				order={i}
+        id={key} 
+				key={'notekey'+key}
+				type='notes'
+				comparisons={comparisons}
+      />)
+    });
 
-    let fields_array = Object.keys(this.props.fields || {}).map((field) => {
-      return(<FieldNote 
+
+		let fields = Object.keys(this.props.fields || {}).map((field) => {
+			let comparisons = [];
+      Object.keys(this.props.notes || {}).forEach((id) => {
+				if (this.props.notes[id].fields && this.props.notes[id].fields[field]) comparisons.push({
+					text: this.props.notes[id].text,
+					stats: this.props.notes[id].stats,
+					comparison: this.props.notes[id].fields[field]
+				}) 
+			})
+			return(<Note 
+				order={this.props.fields[field].stats && !_.isEmpty(this.props.fields[field].stats) ? 0 : 1}
         id={field} 
-        key={field}
+				key={'notekey'+field}
+				type='fields'
+				comparisons={comparisons}
       />)  
     })
 
@@ -58,21 +82,26 @@ class NoteList extends React.Component {
 				className={'note-list'}>
 				<Header />
         <SwipeableViews
-          index={this.props.sortMode}
-          onChangeIndex={(val) => this.props.sortingTabClicked({newSortMode: val})}>
+          index={this.props.tab}
+          onChangeIndex={(tab) => this.props.tabClicked({tab})}>
           <div
             className={'notes-container'}
-            onTouchTap={(evt) => {this.handleClick(evt)}}>
+            onClick={(evt) => {this.handleClick(evt)}}>
             <div
               className={this.props.editing ? 'hidden' : 'add-note'}
-              onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+              onClick={(e) => this.props.addNoteButtonClicked({noteType: 'notes'})}>
               Create a new note...
             </div>
-            {notes_array} 
+            {notes} 
           </div>
           <div
             className={'notes-container'}>
-            {fields_array} 
+            <div
+              className={this.props.editing ? 'hidden' : 'add-note'}
+              onClick={(e) => this.props.addNoteButtonClicked({noteType:'fields'})}>
+              Create a new field...
+            </div>
+            {fields} 
           </div>
           <div>
             TAG CARDS
@@ -80,10 +109,11 @@ class NoteList extends React.Component {
         </SwipeableViews>
         <FloatingActionButton
           className={'add-note-button'}
-          style={(this.props.editing && this.props.sortMode === 0) ? {display: 'none'} : null}
-          onTouchTap={(e) => this.props.addNoteButtonClicked({drawMode: true})}>
+          style={(!this.props.editing && this.props.tab === 0 && this.props.isMobile) ? {} : {display: 'none'}}
+          onClick={(e) => this.props.addNoteButtonClicked({noteType: this.props.tab === 0 ? 'notes': 'fields'})}>
           <ContentAdd />
-        </FloatingActionButton>
+				</FloatingActionButton>
+				{this.props.loading ? <LoadingScreen /> : null}
       </div>
     );
   }

@@ -10,10 +10,10 @@ export default function Note({note}) {
   const { actions, state } = overmind();
   const myState = state.notes;
   const myActions = actions.notes;
-  const fieldActions = actions.app.Fields;
+  const fieldActions = actions.view.FieldDetails;
+  const selected = myState.selectedNote.id === note.id;
 
-
-  const inputField = note.type === 'note' && note.selected && myState.editing ? input => {
+  const inputField = note.type === 'note' && selected && myState.editing ? input => {
     if (input) setTimeout(() => input.focus(), 100);
   } : null;
   let color = Color(note.color || '#000').alpha(0.4).rgb();
@@ -29,6 +29,7 @@ export default function Note({note}) {
     )
   } else {
     Object.keys(note.stats || {}).forEach((crop) => {
+      console.log('NOTE', crop);
       yields.push(
         <div
           key={note.id+'-yield-text-'+crop}
@@ -74,7 +75,7 @@ export default function Note({note}) {
   }
 
   let comps = [];
-  (myState.comparisons || {}).forEach((comp) => {
+  (myState.comparisons || []).forEach((comp) => {
     Object.keys(comp.comparison).forEach((crop) => {
       let cropStr = crop.charAt(0).toUpperCase() + crop.slice(1);
       let sign = (comp.comparison[crop].comparison.differenceMeans < 0 ^ note.type === 'note') ? '-' : '+';
@@ -105,7 +106,7 @@ export default function Note({note}) {
 
   return (
     <Card
-      onTouchTap={note.type === 'note' ? (e) => myActions.noteClicked({id:note.id}) : (e) => fieldActions.fieldClicked({id:note.id})}
+      onClick={(e) => myActions.noteClicked({id:note.id})}
       className={'note'}
       style={{order: note.order ? myState.order : note.stats ? '0' : '1'}}>
       <CardHeader
@@ -114,11 +115,11 @@ export default function Note({note}) {
           padding: '0px 0px 0px 10px',
           backgroundColor: note.color || '#000', 
           color: note.type === 'field' ? '#fff' : '#000', 
-          fontWeight: note.selected ? 'bold' : 'normal',
+          fontWeight: selected ? 'bold' : 'normal',
         }}
         textStyle={{padding: '0px'}}>
         <div className={'text'}>
-        {myState.editing && note.selected ? <TextField
+        {myState.editing && selected ? <TextField
           multiLine={true}
           fullWidth={true}
           rows={1}
@@ -134,7 +135,7 @@ export default function Note({note}) {
           value={note.text} 
           onChange={(e, value) => myActions.noteTextChanged({value, id:note.id})}
           tabIndex={1}
-          hintText='Type note description here...'
+          hintText='Enter trial text here...'
           hintStyle={{bottom: '2px'}}
           underlineShow={false}
         /> 
@@ -150,22 +151,22 @@ export default function Note({note}) {
           iconButtonElement={
             <IconButton 
               style={{height:'25px', padding: '0px'}}
-              onTouchTap={(e)=>{e.stopPropagation()}}>
+              onClick={(e)=>{e.stopPropagation()}}>
               <MoreVertIcon />
             </IconButton>
           }
-          onRequestChange={()=>{myActions.showNoteDropdown({id:note.id})}}
-          open={myState.noteDropdownVisible && myState.noteDropdown ===note.id}
+          onRequestChange={()=>{myActions.toggleNoteDropdown({id:note.id})}}
+          open={myState.noteDropdownVisible && myState.noteDropdown === note.id}
           targetOrigin={{horizontal: 'right', vertical: 'top'}}
           anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
-          {note.selected && myState.editing ? null : <MenuItem 
+          {selected && myState.editing ? null : <MenuItem 
             primaryText="Edit" 
-            onTouchTap={(e)=>{myActions.editNoteButtonClicked({id:note.id})}}
+            onClick={(e)=>{myActions.editNoteButtonClicked({id:note.id})}}
           /> }
-          {note.selected && myState.editing ? null : <Divider /> }
+          {selected && myState.editing ? null : <Divider /> }
           <MenuItem 
             primaryText="Delete"
-            onTouchTap={(e) => {myActions.deleteNoteButtonClicked({id:note.id})}}
+            onClick={(e) => {myActions.deleteNoteButtonClicked({id:note.id})}}
           />
         </IconMenu>
       </CardHeader>
@@ -187,7 +188,8 @@ export default function Note({note}) {
           {note.expanded ? comps : null}
         </div>
       </div> : null }
-      {(myState.editing && note.selected) || (note.tags && note.tags.length > 0) ? <EditTagsBar note={note} id={note.id}/> : null }
+      {(myState.editing && selected) || (note.tags && note.tags.length > 0) ? 
+          <EditTagsBar note={note} selected={selected} id={note.id}/> : null }
     </Card>
   )
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import overmind from "../../overmind"
 import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 //import './map.css';
-import './index.css';
+import './styles.css';
 import RasterLayer from '../RasterLayer/index.js';
 import {v1 as uuid} from "uuid";
 const { Overlay } = LayersControl;

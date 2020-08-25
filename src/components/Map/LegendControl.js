@@ -7,10 +7,10 @@ import './legend.css';
 import { state } from 'cerebral/tags'
 
 export default connect({
-  legends: state`App.view.legends`,
-  yieldDataIndex: state`Yield.data_index`,
-  cropLayers: state`Map.crop_layers`,
-  isMobile: state`App.is_mobile`,
+  legends: state`yield.legends`,
+  yieldDataIndex: state`yield.index`,
+  layers: state`map.layers`,
+  isMobile: state`view.is_mobile`,
 },
 
 class LegendControl extends React.Component {  
@@ -27,13 +27,12 @@ class LegendControl extends React.Component {
   }
 
   render() {
-    let self = this;
     let legendPieces = [];
  
-    Object.keys(this.props.yieldDataIndex).forEach(function(crop) {
-      if (self.props.cropLayers[crop].visible) {
-        let levels = self.props.legends[crop];
-        let title = crop.charAt(0).toUpperCase() + crop.slice(1);
+		Object.keys(this.props.yieldDataIndex).forEach((crop) => {
+      let title = crop.charAt(0).toUpperCase() + crop.slice(1);
+			if (this.props.layers[title].visible) {
+				let levels = this.props.legends[crop];
         legendPieces.push(title + ' (bu/ac)');
         legendPieces.push(<br key={uuid.v4()}/>);
         // loop through our density intervals and generate a label with a colored square for each interval

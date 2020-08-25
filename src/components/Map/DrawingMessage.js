@@ -5,7 +5,7 @@ import Control from 'react-leaflet-control';
 import { state } from 'cerebral/tags'
 
 export default connect({
-  editing: state`App.view.editing`,
+  editing: state`view.editing`,
 },
 
 class DrawingMessage extends React.Component {  

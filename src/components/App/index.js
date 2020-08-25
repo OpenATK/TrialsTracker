@@ -1,29 +1,32 @@
 import React from 'react';
 import {connect} from '@cerebral/react';
-import NoteList from '../NoteList/generic.js';
+import NoteList from '../NoteList';
 import TrialsMap from '../Map';
 import MenuBar from '../MenuBar';
 import Connections from '../Connections';
+import LiveDemoToolbar from '../LiveDemoToolbar';
 import './app.css';
-import { signal } from 'cerebral/tags'
+import { signal, state } from 'cerebral/tags'
 
 export default connect({
-
-  init: signal`App.init`,
+  showLiveDemoToolbar: state`livedemo.running`,
+  showConnectionsDialog: state`connections.open`,
+  init: signal`init`,
 },
 
 class App extends React.Component {
  
-  componentWillMount() {
+  componentDidMount() {
 		this.props.init({});
   }
 
   render() {
     return (
       <div className={'app'}>
-				<Connections />
         <div className={'map-menu'}>
           <MenuBar />
+          {this.props.showConnectionsDialog ? <Connections /> : null}
+          {this.props.showLiveDemoToolbar ? <LiveDemoToolbar /> : null}
 					<TrialsMap />
 				</div>
 				<NoteList />

@@ -5,13 +5,13 @@ import FontAwesome from 'react-fontawesome';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  sortMode: state`App.view.sort_mode`,
-  editing: state`App.view.editing`,
-  selectedNote: state`Note.selected_note`,
+  sortMode: state`view.sort_mode`,
+  editing: state`view.editing`,
+  selectedNote: state`notes.selected_note`,
 
-  sortingTabClicked: signal`note.sortingTabClicked`,
-  doneClicked: signal`note.doneEditingButtonClicked`,
-  cancelClicked: signal`note.cancelEditingButtonClicked`,
+  sortingTabClicked: signal`notes.sortingTabClicked`,
+  doneClicked: signal`notes.doneClicked`,
+  cancelClicked: signal`notes.cancelEditingButtonClicked`,
 },
 
   class NoteListMenu extends React.Component {
@@ -23,13 +23,13 @@ export default connect({
             type="button" 
             tabIndex={2}
             className={this.props.editing ? 'done-editing-button' : 'hidden'} 
-            onClick={() => this.props.doneClicked({id:this.props.selectedNote})}>
+            onClick={() => this.props.doneClicked({id:this.props.selectedNote.id, noteType: this.props.selectedNote.type})}>
             DONE 
           </button>
           <button 
             type="button" 
             className={this.props.editing ? 'cancel-editing-button' : 'hidden'} 
-            onClick={() => this.props.cancelClicked({id:this.props.selectedNote})}>
+            onClick={() => this.props.cancelClicked({id:this.props.selectedNote.id, noteType: this.props.selectedNote.type})}>
             CANCEL
           </button>
           <button 
@@ -46,7 +46,7 @@ export default connect({
             onClick={() => this.props.sortingTabClicked({newSortMode: 'fields'})}>
             FIELDS
           </button>
-          <button 
+          {/*<button 
             type="button" 
             disabled={true}
             className={this.props.editing ? 'hidden' :
@@ -58,7 +58,7 @@ export default connect({
             name='search'
             className={this.props.editing ? 'hidden' : 'search-button'}
             onClick={() => {}}
-          />
+          />*/}
         </div>
       );
     }

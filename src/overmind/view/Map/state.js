@@ -9,7 +9,7 @@ import path from "lodash/fp/path";
 
 export default {
 	geohashPolygons: [],
-	dragging_marker: false,
+	dragging: false,
 	geohashesToDraw: {},
 	geohashesOnScreen: {},
 	isLoading: false,
@@ -27,10 +27,14 @@ export default {
       -84.96770381927492
     ]
   ],
-  notePolygons: (local, state) => 
-    flow
-      (mapValues(state.notes))
-      (filter(x => x.geometry.geojson.coordinates[0].length > 0))
+  notePolygons: (local, state) => {
+    let results = _.filter(Object.values(state.notes.notes), 
+      x => x.geometry.geojson.coordinates[0].length > 0)
+
+    //flow
+   //   (mapValues(state.notes.notes))
+    //  (filter(x => x.geometry.geojson.coordinates[0].length > 0))
+  }
   ,
   fields: (local, state) => {
     const fieldStyles = get(state)(`view.Map.fieldStyles`)

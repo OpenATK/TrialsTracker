@@ -33,7 +33,7 @@ async function addFarmToOADA(context, {farm}) {
     },
   ];
   let connection_id = _.get(state, `app.OADAManager.currentConnection`)
-  const ret = await actions.app.oada.put({requests, connection_id})
+  const ret = await actions.oada.put({requests, connection_id})
   const farm_id = _.get(ret, 'responses.0.headers.content-location').substr(1); //Remove leading `/` from /resources/<uuid>
   if (farm_id == null) throw new Error('OADA did not return an _id when creating a farm.');
   const seasonFarm_id = _.get(ret, 'responses.1.headers.content-location').substr(1); //Remove leading `/` from /resources/<uuid>

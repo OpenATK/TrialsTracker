@@ -23,7 +23,7 @@ export default {
     let operations = null;
     if (_.get(state, `app.OADAManager.connected`) === true) {
       let currentConnection = _.get(state, `app.OADAManager.currentConnection`)
-      operations = _.omitBy(_.get(state, `app.oada.${currentConnection}.bookmarks.seasons.2020.operations`) || {}, (o, k) => {return _.startsWith(k, '_')}); //TODO year
+      operations = _.omitBy(_.get(state, `oada.${currentConnection}.bookmarks.seasons.2020.operations`) || {}, (o, k) => {return _.startsWith(k, '_')}); //TODO year
     } else {
       operations = _.get(state, `app.localData.abc123.seasons.2020.operations`) //TODO year, organization
     }

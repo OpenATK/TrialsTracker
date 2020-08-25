@@ -6,9 +6,9 @@ import Control from 'react-leaflet-control';
 import { state, signal } from 'cerebral/tags'
 
 export default connect({
-  editing: state`App.view.editing`,
+  editing: state`view.editing`,
 
-  undoButtonClicked: signal`Map.undoButtonClicked`,
+  undoButtonClicked: signal`notes.undoButtonClicked`,
 },
 
 class UndoControl extends React.Component {  

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   flex: 2;
-  width: 30vw;
+  width: 300px;
   max-width: 300px;
   background-color: #BDBDBD;
   font-family: sans-serif;
@@ -41,7 +41,7 @@
   display: table;
   text-align: center;
   bottom: 20px;
-  right: 20px;
+  right: -225px; 
   height: 45px;
   width: 45px;
   border-radius: 90px;

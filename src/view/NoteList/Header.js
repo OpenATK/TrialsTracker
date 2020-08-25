@@ -23,7 +23,7 @@ export default function Header() {
       className={'note-list-header'}>
       {myState.editing ? 
       <Tabs
-        onTouchTap={() => myActions.doneClicked({id:myState.selectedNote})}
+        onClick={() => myActions.doneClicked({id:myState.selectedNote})}
         value={0}>
         <Tab 
           label="DONE" 
