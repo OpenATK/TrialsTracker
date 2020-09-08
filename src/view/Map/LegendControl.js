@@ -8,7 +8,7 @@ import './legend.css';
 export default function LegendControl() {
   const { actions, state } = overmind();
   const myState = actions.view.Map;
-  let yieldDataIndex = state.Yield.data_index;
+  let yieldDataIndex = state.yield.index;
   
   let legendPieces = [];
  

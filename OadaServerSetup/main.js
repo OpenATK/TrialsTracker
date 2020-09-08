@@ -6,8 +6,8 @@ var serverSetup = require('./serverSetup3.js');
 	- type in the third domain box your host domain, e.g., 'localhost:3000'
 	- press Get Access Token
 */
-var yield_data_directory = process.argv[2];
-var domain = process.argv[3];
-var token = process.argv[4];
+var yield_data_directory = process.argv[2] || './YieldData'
+var domain = process.argv[3] || 'https://localhost';
+var token = process.argv[4] || 'def'
 //Convert and upload data from yield_data_directory to the OADA server
 serverSetup(yield_data_directory, domain, token);

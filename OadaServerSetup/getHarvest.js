@@ -1,9 +1,8 @@
 var _ = require('lodash');
 var md5 = require('md5');
-var uuid = require('uuid');
+var uuid = require('uuid').v4;
 var gh = require('ngeohash');
 var Promise = require('bluebird');
-var uuid = require('uuid');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var tradeMoisture = {
   soybeans:  13,

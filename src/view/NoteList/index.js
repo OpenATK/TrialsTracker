@@ -16,32 +16,34 @@ export default function NoteList() {
   const myActions = actions.notes;
   const myState = state.notes;
   const appState = state.app;
-  let fields = state.app.seasonFields;
 
   let handleClick = function(evt) {
     // call only for note-list element, not children note elements;
     if (!myState.editing) {
+      console.log(evt.target.className);
       if (evt.target.className.substring(0, 9).indexOf('note-list') >= 0) {
         myActions.noteListClicked({});
       }
     }
   }
  
-  let notes_array = _.sortBy(_.values(myState.notes), 'order').map(obj =>
+  let notes = _.sortBy(_.values(myState.notes), 'order').map(note =>
     <Note 
-      note={obj} 
-      key={obj.id}
+      note={note} 
+      id={note.id}
+      key={note.id}
+      type={'notes'}
     />
   );
 
-  /*
-  let fields_array = Object.keys(fields || {}).map((field) =>
-    <FieldNote 
-      id={field} 
-      key={field}
-    />  
-  )
-  */
+  let fields = _.sortBy(_.values(myState.fields), 'order').map(note =>
+    <Note 
+      note={note} 
+      id={note.id}
+      key={note.id}
+      type={'fields'}
+    />
+  );
 
   return (
     <MuiThemeProvider>
@@ -59,11 +61,11 @@ export default function NoteList() {
             onClick={(e) => myActions.addNoteButtonClicked({drawMode: true})}>
             Create a new note...
           </div>
-          {notes_array} 
+          {notes} 
         </div>
         <div
           className={'notes-container'}>
-          {/*fields_array*/} 
+          {fields} 
         </div>
         <div>
           TAG CARDS

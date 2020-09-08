@@ -268,9 +268,9 @@ export default {
 //      await myActions.fetchAndWatch();
 //      await myActions.initSeasonFarms();
 //      await myActions.initSeasonFields();
+//      await actions.notes.initialize();
+      await actions.yield.initialize();
       await actions.view.Map.zoomBounds();
-      await actions.notes.initialize();
-//      await actions.yield.initialize();
     }
   },
   async onFieldChanged({state, actions}, props) {

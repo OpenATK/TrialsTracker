@@ -21,6 +21,7 @@ import gaussian from 'gaussian';
 //import * as map from '../map/sequences.js';
 //import { state, props } from 'cerebral/tags'
 //import oadaMod from '@oada/cerebral-module/sequences'
+import fieldsTree from '../fields/tree'
 const dist = require('gaussian')(0, 1);
 const tree = require('./tree');
 
@@ -35,19 +36,53 @@ export default {
       path: '/bookmarks/notes',
       connection_id: state.app.OADAManager.currentConnection,
       tree,
-      actions: actions.notes.mapOadaToRecords,
+      actions: [actions.notes.mapOadaToRecords],
     });
     state.view.Map.layers = {
       Notes: {visible: true},
       Fields: {visible: true},
     }
-    actions.notes.getTagsList();
+    await actions.notes.getTagsList();
     let notes = await actions.notes.mapOadaToRecords();
 //    actions.notes.checkFieldNotes();
-    let stats = actions.notes.getNoteStats(notes);
+    //let stats = actions.notes.getNoteStats(notes);
     state.notes.loading = false;
     //state.fields.loading = false;
     //getNoteComparisons,
+    actions.notes.initializeFields();
+  },
+  async initializeFields({state, actions}) {
+    //Fetch field and seasons
+    await actions.oada.sync({
+      path: '/bookmarks/fields',
+      connection_id: state.app.OADAManager.currentConnection,
+      tree: fieldsTree,
+      actions: [actions.notes.mapFieldsToNotes], 
+    })
+    actions.notes.mapFieldsToNotes();
+  },
+  async mapFieldsToNotes({actions, state}) {
+    let connection_id = state.app.OADAManager.currentConnection;
+    let oadaFields = state.oada[connection_id].bookmarks.fields.fields || {};
+    Object.keys(oadaFields).forEach((key, i) => {
+      let field = oadaFields[key];
+      let geojson = field.boundary;
+      let { area, bbox, centroid } = actions.view.Map.getGeometryABCs(geojson);
+      let stats = {};
+//      let stats = actions.notes.getNoteStats(geojson);
+      state.notes.fields[key] = {
+        time: Date.now(),
+        id: key,
+        text: field.name + ' - ' + field.farm.name,
+        tags: [],
+        fields: {},
+        boundary: { geojson, bbox, centroid, area },
+        color: rmc.getColor(),
+        stats,
+        order: i,
+        visible: true,
+      }
+    })
   },
   async mapOadaToRecords({state, actions}) {
     state.notes.notes = {};
@@ -73,7 +108,7 @@ export default {
       return {notes}
     })
   },
-  handleNotesWatch({state, actions, effects}, props) {
+  async handleNotesWatch({state, actions, effects}, props) {
     if (props.response.change.type === 'merge') {
       var oldState = _.cloneDeep(state.oada[props.connection_id][props.path]);
       var newState = _.merge(oldState, props.response.change.body);
@@ -82,12 +117,12 @@ export default {
       var nullPath = props.nullPath.replace(/^\//, '').split('/').join('.');
       delete state.oada[props.connection_id][props.path][nullPath];
     }
-    actions.notes.mapOadaToRecords();
+    await actions.notes.mapOadaToRecords();
   },
   // This sequence is used to respond to the watch on /bookmarks/notes
-  handleYieldStats({actions, state}, props) {
+  async handleYieldStats({actions, state}, props) {
     actions.notes.getYieldStats();
-    actions.notes.mapOadaToRecords();
+    await actions.notes.mapOadaToRecords();
   },
   expandComparisonsClicked({state}, props) {
 //    toggle(state`notes.${props`noteType`}.${props`id`}.expanded`)
@@ -95,8 +130,8 @@ export default {
   getNoteStats({actions}, props) {
     let polygons = actions.notes.getPolygons(props);
     polygons = actions.yield.getPolygonStats(polygons);
-    actions.notes.createYieldStats(polygons);
-    actions.notes.watchYieldStats(polygons);
+//    actions.notes.createYieldStats(polygons);
+//    actions.notes.watchYieldStats(polygons);
   },
   // Setup watches on the yield-stats of each note so that as associated yield
   // geohashes are updated, stats on each note are recalculated
@@ -166,7 +201,8 @@ export default {
     state.notes.selectedNote = {};
   },
   toggleNoteDropdown({state}, {id}) {
-    state.notes.noteDropdown = id;
+    state.notes.noteDropdown.id = id;
+    state.notes.noteDropdown.type = state.notes.tab == 0 ? 'notes' : 'fields';
     if (state.notes.noteDropdown.visible) {
       state.notes.noteDropdown.visible = false;
     } else {
@@ -192,43 +228,20 @@ export default {
     state.notes.tab = props.tab;
   },
 
-  async doneClicked({state, actions}, {id}) {
-    state.notes.editing = false;
-    state.notes.notes[id].stats.computing = true;
-    let {geohashes, geohashPolygons} = await actions.notes.getNoteGeohashes({id});
-    actions.notes.addNoteToGeohashIndex({id, geohashes});
-    let {stats} = await actions.notes.computeNoteStats({id, geohashes});
-    actions.notes.setNoteStats({id, stats});
-//    actions.notes.getFieldDataForNotes({);
-//    actions.notes.setFieldDataForNotes();
-    state.view.Map.geohashPolygons = geohashPolygons;
-    /*
-    error: [
-        unset(state`notes.notes.${props`id`}.stats.computing`)
-      ],
-    */
-    state.notes.editing = false;
-  },
-  doneClicked({state, actions}, props) {
-    //	set(props`note`, state`notes.${props`noteType`}.${props`id`}`)
-    state.notes.editing = false;
-    let noteType = state.notes.selectedNote.type;
-    let id = state.notes.selectedNote.id;
-    let note = actions.notes.oadaUpdateNote({
-      noteType,
-      id,
-    })
-    actions.notes.getNoteStats({
+  async doneClicked({state, actions}, props) {
+    let note = await actions.notes.oadaUpdateNote();
+    /*actions.notes.getNoteStats({
       notes: {
-        [noteType]: {
+        [type]: {
           [id]: note
         }
       },
-    })
+    })*/
+    state.notes.editing = false;
   },
-  onFieldUpdated({state, actions}) {
+  async onFieldUpdated({state, actions}) {
     actions.notes.checkFieldNotes()
-    actions.notes.mapOadaToRecords()
+    await actions.notes.mapOadaToRecords()
   },
   // Return props.notes based on the change body contents
   notesFromChange({state}, props) {
@@ -247,12 +260,22 @@ export default {
       return {notes}
     })
   },
-
   // Send note changes to the server
   oadaUpdateNote({actions, state}, props) {
-    var note = _.cloneDeep(state.notes[props.noteType][props.id]);
-    delete note['yield-stats'];
-    state.oada.bookmarks.notes[props.noteType+'-index'][props.id] = note;
+    let {type, id} = state.notes.selectedNote;
+    var note = _.cloneDeep(state.notes[type][id]);
+
+    //TODO: remember why delete yield-stats???
+    //delete note['yield-stats'];
+
+    //Now push to oada
+    if (type === 'notes') {
+      if (!state.oada[state.notes.connection_id].bookmarks.notes[type+'-index']) {
+        state.oada[state.notes.connection_id].bookmarks.notes[type+'-index'] = state.oada[state.notes.connection_id].bookmarks.notes[type+'-index'] || {};
+      }
+      state.oada[state.notes.connection_id].bookmarks.notes[type+'-index'][id] = note;
+    }
+
     return note
   },
 
@@ -339,26 +362,25 @@ export default {
   },
   editNoteButtonClicked({state, actions}, props) {
     state.notes.editing = true;
-    state.notes.selectedNote = props.id;
-	  state.notes.selectedNoteType = props.noteType;
+    state.notes.selectedNote.id = props.id;
+	  state.notes.selectedNote.type = props.type;
     delete state.notes.noteDropdown.id;
     state.notes.noteDropdown.visible = false;
-    actions.notes.toggleNoteDropdown();
+    actions.notes.toggleNoteDropdown(props);
   },
   sortingTabClicked({state}, {newSortMode}) {
     state.app.sortMode = newSortMode;
   },
-  deleteNoteButtonClicked({state, actions}, props) {
+  async deleteNoteButtonClicked({state, actions}) {
     state.notes.noteDropdown.visible = false;
-    delete state.notes.noteDropdown.id
-    let note = state.notes[props.noteType][props.id];
+    let {id, type} = _.clone(state.notes.noteDropdown);
+    let note = state.notes[type][id];
+    state.notes.noteDropdown = {};
     state.notes.editing = false;
-    actions.notes.checkTags({id:props.id}); 
-    delete state.notes.selectedNote
-    delete state.notes[props.noteType][props.id]; // optimistic
-    actions.notes.unwatchNote(props);
-    let connection_id = state.notes.connection_id;
-    delete state.oada[connection_id].bookmarks.notes[props.noteType][props.id];
+    actions.notes.checkTags({id}); 
+    delete state.notes[type][id]; // optimistic
+    await actions.notes.unwatchNote({id, type});
+    delete state.oada[state.notes.connection_id].bookmarks.notes[type+'-index'][id];
   },
   noteTextChanged({state}, props) {
     let selected = state.notes.selectedNote;
@@ -369,13 +391,14 @@ export default {
     state.notes.tagText = props.value;
   },
   noteClicked({state, actions}, props) {
+    actions.view.Map.fitGeometry(props);
     if (!state.notes.editing) {
-      actions.view.Map.fitGeometry(props);
-//    actions.notes.mapToNotePolygon(props);
       state.notes.selectedNote = {
         id: props.id,
         type: props.type
       }
+    } else if (props.evt) {
+      actions.notes.mapClicked({latlng:props.evt})
     }
   },
   setNoteStats({state}, {id, stats}) {
@@ -428,12 +451,6 @@ export default {
     state.notes[noteType][id] = note;
     state.notes.selectedNote = { id, type:noteType };
     state.notes.editing = true;
-    
-    //Now push to oada
-    if (noteType === 'notes') {
-      state.oada[state.notes.connection_id].bookmarks.notes[noteType+'-index'] = state.oada[state.notes.connection_id].bookmarks.notes[noteType+'-index'] || {};
-      state.oada[state.notes.connection_id].bookmarks.notes[noteType+'-index'][id] = note;
-    }
   },
   showHideButtonClicked({actions, effects, state}, {id}) {
   //ALTERNATIVELY TRY THIS
@@ -446,9 +463,6 @@ export default {
   },
   deselectNote({state}) {
     delete state.notes.selectedNote;
-  },
-  mapToNotePolygon({props, state}, {key}) {
-    if (state.notes.notes[key] && state.notes.notes[key].geomtry) state.view.Map.center = state.notes.notes[key].boundary.centroid;
   },
   addTagToNote({state}, {text, id, noteType}) {
     let tags = state.notes.notes[id].tags;
@@ -498,14 +512,14 @@ export default {
     )
   },
   //
-  unwatchNote({actions, state, effects}, props) {
+  unwatchNote({actions, state, effects}, {id, type}) {
     return effects.oada.delete({
-      path: `/bookmarks/notes/${props.noteType}-index/${props.id}`,
+      path: `/bookmarks/notes/${type}-index/${id}`,
       unwatch: true,
       connection_id: state.notes.connection_id,
     }).then(() => {
       return effects.oada.delete({
-        path: `/bookmarks/notes/${props.noteType}-index/${props.id}/yield-stats`,
+        path: `/bookmarks/notes/${type}-index/${id}/yield-stats`,
         unwatch: true,
         connection_id: state.notes.connection_id,
       }).catch(() => {
@@ -538,7 +552,7 @@ export default {
     let token = state.app.OADAManager.token;
     let domain = state.app.OADAManager.domain;
     let stats = {};
-    let availableGeohashes = state.yield.data_index;
+    let availableGeohashes = state.yield.index;
     return Promise.map(Object.keys(availableGeohashes), (crop) => {
       stats[crop] = { 
         area: {
@@ -619,14 +633,14 @@ export default {
       state.notes.tags[tag].references = state.notes.tags[tag].references - 1;
     }
   },
-  onMapClick({state, actions}, props) {
+  mapClicked({state, actions}, props) {
     actions.notes.dropPoint(props);
     let {type, id} = state.notes.selectedNote;
     let { geojson } = state.notes[type][id].boundary;
     let {area, bbox, centroid} = actions.view.Map.getGeometryABCs(geojson);
     state.notes[type][id].boundary = { area, bbox, centroid, geojson }
   },
-  getTagsList({state}) {
+  async getTagsList({state}) {
     let tags = {};
     let notes = state.notes;
     return Promise.map(['fields', 'notes'], (noteType) => {

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import {longestCommonPrefix, recursiveGeohashSearch } from './utils/recursiveGeohashSearch'
 import Promise from 'bluebird'
 //import * as fields from '@oada/fields-module/sequences'
-import { geohashesFromTile, filterGeoahshes, drawTile } from './draw';
+import { geohashesFromTile, fetchGeohashData, drawTile } from './draw';
 import harvest from './getHarvest'
 import tree from './tree'
 
@@ -16,34 +16,26 @@ let C;
 //TODO: Namespace this module and refer to it by the ns
 
 export default {
-  initialize({state, actions}, props) {
-    //oadaMod.connect, just use OADA connection
+  async initialize({state, actions}, props) {
     state.yield.connection_id = state.app.OADAManager.currentConnection;
-//    props.actions = props.actions
-    actions.yield.fetch(props || {});
-  },
-  fetch({actions, state}, props) {
-    let acts = [...(props.actions || []), actions.yield.handleYieldIndexWatch];
-    console.log('acts', acts)
-    let connection_id = state.yield.connection_id;
-    actions.oada.sync({
+    await actions.oada.sync({
       path: '/bookmarks/harvest/tiled-maps/dry-yield-map',
-      connection_id,
+      connection_id: state.yield.connection_id,
       tree,
-      watch: {actions: acts},
+      actions: [actions.yield.handleYieldIndexWatch],
     })
-    actions.yield.mapOadaToYieldIndex();
+    await actions.yield.mapOadaToYieldIndex();
   },
-  mapOadaToYieldIndex({state}) {
+  async mapOadaToYieldIndex({state}) {
     let id = state.yield.connection_id;
     let harvest = state.oada[id].bookmarks.harvest;
     if (harvest && harvest['tiled-maps'] && harvest['tiled-maps']['dry-yield-map']) {
       return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'] || {}), (crop) => {
-        state.map.layers[crop.charAt(0).toUpperCase() + crop.slice(1)] = {visible: true};
+        state.yield.cropLayers[crop] = {visible: true};
         state.yield.index[crop] = {};
         return Promise.map(Object.keys(harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'] || {}), (ghLength) => {
           if (harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength])
-          state.yield.index[crop][ghLength] = harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index'] || {};
+          state.yield.index[crop][ghLength] = _.clone(harvest['tiled-maps']['dry-yield-map']['crop-index'][crop]['geohash-length-index'][ghLength]['geohash-index']) || {};
           return
         })
       }).then(() => {
@@ -83,6 +75,54 @@ export default {
     }).then((polygons) => {
       return {polygons}
     })
+  },
+  tileUnloaded({state, actions, effects}, props) {
+    var connection_id = state.yield.connection_id;
+    var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
+    var geohashes = state.yield.tilesOnScreen[coordsIndex];
+    var index = state.yield.index[props.layer];
+    var watches = state.oada[connection_id].watches;
+    return Promise.map(Object.keys(geohashes || {}), (geohash) => {
+      if (geohash === 'coords') return
+      let path = `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${props.layer}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`
+      if (!index['geohash-'+geohash.length][geohash]) return
+      if (!watches[path]) return 
+      delete state.oada[connection_id].watches[path];
+      return actions.oada.delete({
+        path,
+        unwatch: true,
+        connection_id,
+      }).catch((err) => {
+        if (err.status === 404) return
+      })
+    }).then(()=> {
+      delete state.yield.tilesOnScreen[coordsIndex];
+      return
+    })
+  },
+  async addGeohashesOnScreen({state}, props) {
+  // This case occurs before a token is available. Just save all geohashes and
+  // filter them later when the list of available geohashes becomes known.
+    var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
+    if (!state.yield.tilesOnScreen[coordsIndex]) state.yield.tilesOnScreen[coordsIndex] = {};
+    state.yield.tilesOnScreen[coordsIndex].coords = props.coords;
+    return Promise.map(Object.keys(props.geohashes || {}), (crop) => {
+      return Promise.map(props.geohashes[crop] || [], (geohash) => {
+        if (!state.yield.tilesOnScreen[coordsIndex]) state.yield.tilesOnScreen[coordsIndex] = {};
+        return state.yield.tilesOnScreen[coordsIndex][geohash] = true;
+      })
+    })
+  },
+  geohashesFromTile,
+  drawTile,
+  fetchGeohashData,
+  async createTile({actions, state}, props) {
+    if (props.coords.z) {
+      let {geohashes} = await actions.yield.geohashesFromTile(props);
+      props.geohashes = geohashes;
+      await actions.yield.addGeohashesOnScreen(props);
+      await actions.yield.drawTile(props);
+    }
   },
   // Takes the array of geohashes associated with each polygon and returns the
   // combined stats using those geohashes; returns the polygon object which
@@ -213,63 +253,6 @@ const handleGeohashesOnScreen = sequence('yield.handleGeohashesOnScreen', [
   drawTile,
 ]);
 
-const tileUnloaded = sequence('yield.tileUnloaded', [
-  ({state, props, oada}) => {
-    var connection_id = state.get('yield.connection_id');
-    var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-    var geohashes = state.get(`yield.tilesOnScreen.${coordsIndex}`);
-    var index = state.get(`yield.index.${props.layer}`);
-    var watches = state.get(`oada.${connection_id}.watches`);
-    return Promise.map(Object.keys(geohashes || {}), (geohash) => {
-      if (geohash === 'coords') return
-      let path = `/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/${props.layer}/geohash-length-index/geohash-${geohash.length}/geohash-index/${geohash}`
-      if (!index['geohash-'+geohash.length][geohash]) return
-      if (!watches[path]) return 
-      state.unset(`oada.${connection_id}.watches.${path}`)
-      return oada.delete({
-        path,
-        unwatch: true,
-        connection_id,
-      }).catch((err) => {
-        if (err.status === 404) return
-      })
-    }).then(()=> {
-      return state.unset(`yield.tilesOnScreen.${coordsIndex}`);
-    })
-  },
-]);
-
-const createTile = sequence('yield.createTile', [
-  ({props}) => {createTileZ = props.coords.z},
-  wait(500),
-  when(props`coords.z`,(z) => z === createTileZ), {
-    true: [
-      geohashesFromTile,
-      addGeohashesOnScreen,
-      drawTile,
-    ],
-    false: [],
-  }
-])
-
-
-
-function addGeohashesOnScreen({props, state}) {
-// This case occurs before a token is available. Just save all geohashes and
-// filter them later when the list of available geohashes becomes known.
-	var coordsIndex = props.coords.z.toString() + '-' + props.coords.x.toString() + '-' + props.coords.y.toString();
-	state.set(`yield.tilesOnScreen.${coordsIndex}.coords`, props.coords);
-  return Promise.map(Object.keys(props.geohashes || {}), (crop) => {
-	  return Promise.map(props.geohashes[crop] || [], (geohash) => {
-		  return state.set(`yield.tilesOnScreen.${coordsIndex}.${geohash}`, true);
-    })
-	}).then(() => {
-		return
-	})
-}
-
-
-
 function geohashesToGeojson({state}, props) {
 	let a = Date.now()
 	let geohashPolygons = [];
@@ -295,7 +278,6 @@ function geohashesToGeojson({state}, props) {
 		return {polygons}
 	})
 }
-
 
 */
 

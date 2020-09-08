@@ -1,4 +1,4 @@
-import { createHook } from "overmind-react"
+import { createHook, createConnect } from "overmind-react"
 
 import { namespaced } from 'overmind/config'
 
@@ -11,11 +11,13 @@ import oadaCacheOvermind from '@oada/oada-cache-overmind'
 const oada = oadaCacheOvermind('oada');
 
 export const config = namespaced({
+  app,
   oada,
   view,
   notes,
   yield: yieldmod,
-  app,
 })
+
+export const connect = createConnect();
 
 export default createHook()

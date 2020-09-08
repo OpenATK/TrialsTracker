@@ -74,36 +74,34 @@ export default {
   handleFieldNoteClick({actions}, props) {
     actions.view.Map.mapToFieldPolygon(props);
   },
-  onMapClick({state, actions}, props) {
-    actions.notes.onMapClick(props);
+  mapClicked({state, actions}, props) {
+    actions.notes.mapClicked(props);
   },
   undoDrawPoint({actions, state}, props) {
     actions.view.Map.undo(props);
     actions.notes.recalculateNoteArea();
     actions.notes.getNoteBoundingBox();
   },
-  markerDragEnded({state}) {
+  markerDragEnded({actions, state}) {
+    let {type, id} = state.notes.selectedNote;
     state.view.Map.dragging = false;
+    let geojson = state.notes[type][id].boundary.geojson;
+    let {area, bbox, centroid} = actions.view.Map.getGeometryABCs(geojson);
+    state.notes[type][id].boundary = { area, bbox, centroid, geojson }
+
   },
   markerDragStarted({state}) {
     state.view.Map.dragging = true;
   },
-  setMarkerPosition({state}, {latlng, i}) {
-    state.notes.notes[state.notes.selectedNote].boundary.geojson.coordinates[0][i] = [latlng.lng, latlng.lat];
-  },
-  markerDragged({actions, state}, {noteType, latlng, id, idx}) {
-    state.notes[noteType][id].boundary.geojson.coordinates[0][idx] = [latlng.lng, latlng.lat];
-    let boundary = actions.view.Map.updateGeometry({noteType,id});
-    state.notes[noteType][id].boundary = boundary;
-  },
-  markerDragged({actions, state}, props) {
-    actions.view.Map.setMarkerPosition(props); 
-    actions.notes.recalculateNoteArea();
+  markerDragged({actions, state}, {latlng, i}) {
+    let {type, id} = state.notes.selectedNote;
+    state.notes[type][id].boundary.geojson.coordinates[0][i] = [latlng.lng, latlng.lat];
   },
   handleCurrentLocationButton({state, actions}) {
     actions.view.Map.setMapToCurrentLocation()
   },
   mapMoved({state, actions}, props) {
+    console.log(props.center[0].toString(), props.center[1].toString())
     actions.view.Map.setMapLocation(props);
     state.view.Map.moving = false;
   },
@@ -120,31 +118,51 @@ export default {
       return gjArea.boundary(boundary)/4046.86;
     } else return 0.0
   },
-  computeBoundingBox({}, geojsonPolygon) {
+  computeBoundingBox({}, geojson) {
     let bbox;
-    let coords = geojsonPolygon.coordinates[0];
+    let coords = geojson.geometries ? geojson.geometries[0].coordinates[0] : geojson.coordinates[0];
     let north = coords[0][1];
     let south = coords[0][1];
     let east = coords[0][0];
     let west = coords[0][0];
-    for (let j = 0; j < coords.length; j++) {
-      if (coords[j][1] > north) north = coords[j][1];
-      if (coords[j][1] < south) south = coords[j][1];
-      if (coords[j][0] > east) east = coords[j][0];
-      if (coords[j][0] < west) west = coords[j][0];
-    }
+    (geojson.geometries || [geojson]).forEach(g =>
+      g.coordinates[0].forEach(c => {
+        if (c[1] > north) north = c[1];
+        if (c[1] < south) south = c[1];
+        if (c[0] > east) east = c[0];
+        if (c[0] < west) west = c[0];
+      })
+    )
     bbox = {north, south, east, west};
 
     return bbox;
   },
   getGeometryABCs({state, actions}, geojson) {
     if (geojson) {
-      let area = geojson.coordinates[0].length > 2 ? gjArea.geometry(geojson)/4046.86 : 0.0;
-      let bbox = actions.view.Map.computeBoundingBox(geojson);
+      let area = 0.0;
+      let bbox;
+      if (geojson.geometries) {
+        geojson.geometries.forEach(g => {
+          area += g.coordinates[0].length > 2 ? gjArea.geometry(g)/4046.86 : 0.0;
+        })
+      } else {
+        area = geojson.coordinates[0].length > 2 ? gjArea.geometry(geojson)/4046.86 : 0.0;
+      }
+      bbox = actions.view.Map.computeBoundingBox(geojson);
       let centroid = [(bbox.north + bbox.south)/2, (bbox.east + bbox.west)/2];
       return {area, bbox, centroid}
     }
   },
+  fitGeometry({state, actions}, props) {
+    let note = state.notes[props.type][props.id];
+    if (note.boundary && note.boundary.bbox) {
+      let bbox  = note.boundary.bbox;
+      state.view.Map.bounds = [
+        [bbox.south, bbox.west],
+        [bbox.north, bbox.east]
+      ]
+    }
+  }
 }
 
 function setCurrentLocation({props, state}) {
@@ -154,8 +172,6 @@ function setCurrentLocation({props, state}) {
   }
   state.set('App.model.current_location', obj);
 }
-
-
 
 function undo({props, state}) {
   let id = state.get('notes.selectedNote');
@@ -171,8 +187,8 @@ function mapToFieldPolygon({props, state}) {
 }
 
 function toggleCropLayer({props, state}) {
-  var vis = state.get(`view.Map.crop_layers.${props.crop}.visible`);
-  state.set(`view.Map.crop_layers${props.crop}.visible`, !vis);
+  var vis = state.get(`view.Map.cropLayers.${props.crop}.visible`);
+  state.set(`view.Map.cropLayers${props.crop}.visible`, !vis);
 }
 
 

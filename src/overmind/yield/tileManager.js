@@ -13,6 +13,7 @@ function set(crop, coordsIndex, value, inval) {
 
 function get(crop, coordsIndex) {
   var z = coordsIndex.split('-')[0];
+  if (tiles[crop] && tiles[crop][z]) console.log('hello', z, crop, coordsIndex);
   if (tiles[crop] && tiles[crop][z]) return tiles[crop][z][coordsIndex];
   return
 }

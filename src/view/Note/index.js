@@ -6,7 +6,7 @@ import Color from 'color';
 import { IconMenu, MenuItem, CardHeader, TextField, IconButton, Divider, Card } from 'material-ui'
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
-export default function Note({note}) {
+export default function Note({note, id, type}) {
   const { actions, state } = overmind();
   const myState = state.notes;
   const myActions = actions.notes;
@@ -29,7 +29,6 @@ export default function Note({note}) {
     )
   } else {
     Object.keys(note.stats || {}).forEach((crop) => {
-      console.log('NOTE', crop);
       yields.push(
         <div
           key={note.id+'-yield-text-'+crop}
@@ -106,7 +105,7 @@ export default function Note({note}) {
 
   return (
     <Card
-      onClick={(e) => myActions.noteClicked({id:note.id})}
+      onClick={(e) => myActions.noteClicked({type, id:note.id})}
       className={'note'}
       style={{order: note.order ? myState.order : note.stats ? '0' : '1'}}>
       <CardHeader
@@ -151,17 +150,16 @@ export default function Note({note}) {
           iconButtonElement={
             <IconButton 
               style={{height:'25px', padding: '0px'}}
-              onClick={(e)=>{e.stopPropagation()}}>
+              onClick={(e)=>{myActions.toggleNoteDropdown({id:note.id});e.stopPropagation()}}>
               <MoreVertIcon />
             </IconButton>
           }
-          onRequestChange={()=>{myActions.toggleNoteDropdown({id:note.id})}}
-          open={myState.noteDropdownVisible && myState.noteDropdown === note.id}
+          open={myState.noteDropdown.visible && myState.noteDropdown.id === note.id}
           targetOrigin={{horizontal: 'right', vertical: 'top'}}
           anchorOrigin={{horizontal: 'right', vertical: 'top'}}>
           {selected && myState.editing ? null : <MenuItem 
             primaryText="Edit" 
-            onClick={(e)=>{myActions.editNoteButtonClicked({id:note.id})}}
+            onClick={(e)=>{myActions.editNoteButtonClicked({type, id})}}
           /> }
           {selected && myState.editing ? null : <Divider /> }
           <MenuItem 

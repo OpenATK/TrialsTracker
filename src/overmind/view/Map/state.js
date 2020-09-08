@@ -13,12 +13,15 @@ export default {
 	geohashesToDraw: {},
 	geohashesOnScreen: {},
 	isLoading: false,
-	crop_layers: {},
-	center: [40.98551896940516, -86.18823766708374],
+	cropLayers: {},
+  layers: {},
+	center: [40.9610401,-86.2031383],
 	moving: false,
   zoom: 13,
   bounds: [
-    [
+	  [40.9510401,-86.2131383],
+	  [40.9810401,-86.1931383],
+    /*
       41.44053877385792,
       -84.97886180877687
     ],
@@ -26,6 +29,7 @@ export default {
       41.46330393671208,
       -84.96770381927492
     ]
+    */
   ],
   notePolygons: (local, state) => {
     let results = _.filter(Object.values(state.notes.notes), 

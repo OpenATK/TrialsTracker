@@ -4,4 +4,5 @@ dist/*
 !dist/leaflet.css
 *.swp
 /OadaServerSetup/2015/
+/OadaServerSetup/*.ldb
 *.DS_Store

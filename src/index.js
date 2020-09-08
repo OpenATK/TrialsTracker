@@ -11,7 +11,7 @@ import { createOvermind } from "overmind";
 import { Provider } from "overmind-react";
 import { config } from "./overmind"
 
-const app = createOvermind(config);
+const app = createOvermind(config, {devtools: false});
 
 ReactDOM.render(
   <Provider value={app}>

@@ -1,20 +1,18 @@
 import React from 'react';
+import L from 'leaflet'
 import overmind from "../../overmind"
 import { FeatureGroup, LayersControl, GeoJSON } from 'react-leaflet';
 //import './map.css';
 import './styles.css';
-import RasterLayer from '../RasterLayer/index.js';
+import RasterLayer from '../RasterLayer';
 import {v1 as uuid} from "uuid";
 const { Overlay } = LayersControl;
 
-export default function LayerControl() {
+export default function LayerControl(props) {
   const {actions, state} = overmind();
   const myActions = actions.view.LayerControl;
   const myState = state.view.Control;
   const yieldState = state.yield;
-
-  let yieldDataIndex = state.yield.data_index;
-  let fields = state.app.seasonFields
 
   return (
     <LayersControl 
@@ -30,19 +28,18 @@ export default function LayerControl() {
           />)}
        </FeatureGroup>
       </Overlay> : null }
-
-      {Object.keys(fields).length ? <Overlay 
+      <Overlay 
         checked 
         name='Fields'>
         <FeatureGroup>
-          {Object.keys(fields).map(field => <GeoJSON 
+          {Object.values(state.notes.fields || {}).map(field => <GeoJSON 
             className={'field-polygon'}
-            data={fields[field].boundary.geojson} 
-            key={field}
+            data={field.boundary.geojson} 
+            key={field.id}
           />)}
        </FeatureGroup>
-      </Overlay> : null }
-      {Object.keys(yieldDataIndex || {}).map(crop => 
+      </Overlay>
+      {Object.keys(yieldState.index || {}).map(crop =>
         <Overlay 
         checked={yieldState.cropLayers[crop].visible}
         onChange={() => myActions.toggleCropLayer({crop})}
@@ -50,11 +47,7 @@ export default function LayerControl() {
         key={crop+'-overlay'}>
         <RasterLayer
           key={'RasterLayer-'+crop}
-          data={'Yield.data_index.'+crop}
           layer={crop}
-          url={yieldState.domain+'/bookmarks/harvest/tiled-maps/dry-yield-map/crop-index/'+crop}
-          geohashGridlines={false}
-          tileGridlines={false}
         />
       </Overlay>
     )}

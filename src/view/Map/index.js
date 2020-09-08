@@ -1,4 +1,5 @@
 import React from 'react';
+import LayerControl from './LayerControl'
 import md5 from 'md5';
 import {v4 as uuid} from 'uuid';
 import _ from 'lodash'
@@ -6,7 +7,7 @@ import { CircleMarker, GeoJSON, Map as LeafletMap, Marker, TileLayer } from 'rea
 import './styles.css'
 
 import overmind from '../../overmind'
-import LayerControl from "./LayerControl"
+//import LayerControl from "./LayerControl"
 import LegendControl from "./LegendControl"
 import Fields from './Fields'
 
@@ -15,8 +16,8 @@ export default function Map() {
   const myActions = actions.view.Map;
   const myState = state.view.Map;
   const editing = state.notes.editing;
-  const selectedNote = state.notes.selectedNote.id;
-  const noteType = state.notes.selectedNote.type;
+  const yieldState = state.yield;
+  const {type, id} = state.notes.selectedNote;
 
   let validateMouseEvent = function (evt) {
     if (editing) {
@@ -24,36 +25,47 @@ export default function Map() {
       if (!myState.moving && !myState.dragging) {
         // Don't add a point if a control was clicked.
         if (!evt.originalEvent.toElement.offsetParent) {
-          myActions.onMapClick({latlng: evt.latlng})
+          myActions.mapClicked({latlng: evt.latlng})
         } else if (!evt.originalEvent.toElement.offsetParent.className.includes('control')) {
-          myActions.onMapClick({latlng: evt.latlng})
+          myActions.mapClicked({latlng: evt.latlng})
         }
       }
     }
   }
+  let fieldPolygons = Object.values(state.notes.fields || {}).map(field =>
+    <GeoJSON                                                      
+      className={'note-polygon'}                                           
+      data={field.boundary.geojson}                         
+      color={field.color}                                   
+      style={{fillOpacity:0.4}}                                            
+      onClick={() => actions.notes.noteClicked({id:field.id, type: 'fields'})}
+      dragging={true}
+      key={'note-'+field.id+'-polygon'+md5(JSON.stringify(field.boundary.geojson))}
+    />
+  );
 
   let notePolygons = _.filter(
     Object.keys(state.notes.notes), 
     key => state.notes.notes[key].boundary.geojson.coordinates[0].length > 0
   ).map(key =>
-    <GeoJSON                                                      
-      className={'note-polygon'}                                           
-      data={state.notes.notes[key].boundary.geojson}                         
-      color={state.notes.notes[key].color}                                   
-      style={{fillOpacity:0.4}}                                            
-      onClick={() => myActions.noteClicked({key})}                         
+    <GeoJSON
+      className={'note-polygon'}
+      data={state.notes.notes[key].boundary.geojson}
+      color={state.notes.notes[key].color}
+      style={{fillOpacity:0.4}}
+      onClick={() => actions.notes.noteClicked({id:key, type: 'notes'})}
       dragging={true}
       key={'note-'+key+'-polygon'+md5(JSON.stringify(state.notes.notes[key].boundary.geojson.coordinates))}
     />
   );
 
   let drawMarkers = editing ?
-    state.notes.notes[selectedNote].boundary.geojson.coordinates[0].map((pt, i) =>
+    state.notes[type][id].boundary.geojson.coordinates[0].map((pt, i) =>
       <Marker
         className={'drawing-note-markers'}
-        key={selectedNote+'-'+i} 
+        key={id+'-'+i} 
         position={[pt[1], pt[0]]}
-        color={state.notes.notes[selectedNote].color}
+        color={state.notes[type][id].color}
         draggable={true}
         onDrag={(e)=>{myActions.markerDragged({latlng: e.target._latlng, i})}}
         onDragStart={(e)=>{myActions.markerDragStarted({i})}}
@@ -87,6 +99,7 @@ export default function Map() {
           position={'bottomright'} 
         /> : null}
         {notePolygons}
+        {fieldPolygons}
         {drawMarkers}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
