@@ -51,12 +51,9 @@ export async function fetchGeohashData({state, actions, effects}, {tile, path, g
         }
       }
     })
-    console.log('FETCHED DATA');
     return recursiveDrawOnCanvas(coords, response.data['geohash-data'], 0, tile, legend);
   } catch(err) {
-    console.log('error', err);
     var ghBounds = gh.decode_bbox(geohash);
-    console.log(ghBounds);
     var swLatLng = new latLng(ghBounds[0], ghBounds[1]);
     var neLatLng = new latLng(ghBounds[2], ghBounds[3]);
     var sw = CRS.EPSG3857.latLngToPoint(swLatLng, coords.z);
@@ -110,7 +107,6 @@ export function recursiveDrawOnCanvas(coords, data, startIndex, canvas, legend) 
 			var context = canvas.getContext('2d');
 			context.lineWidth = 0;
 			var col = colorForvalue(val.weight.sum/val.area.sum, levels);
-      console.log(col);
 			context.beginPath();
       context.rect(w, n, width, height);
 			context.fillStyle = Color(col).hex();
